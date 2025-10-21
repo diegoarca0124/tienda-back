@@ -13,10 +13,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
 		let message: string | object = 'Ha ocurrido un error interno, intente más tarde';
 		let code = 'INTERNAL_ERROR';
 		let validationMessages: any = null; // 👈 para almacenar los errores del DTO
+		console.log(exception, ' exception');
 
 		if (exception instanceof HttpException) {
 			status = exception.getStatus();
 			const res = exception.getResponse();
+
+			console.log(res, ' response exception');
 
 			if (typeof res === 'object' && res !== null) {
 				const safeResponse: any = res as any;

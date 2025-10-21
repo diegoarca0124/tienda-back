@@ -19,6 +19,7 @@ import { EditCollaboratorDto } from './dto/edit-collaborator.dto';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 import { logHelper } from '@/common/utils/logger-helper.util';
+import { th } from '@faker-js/faker';
 
 dotenv.config({ path: path.resolve(process.cwd(), `.env.${process.env.NODE_ENV || 'dev'}`) });
 
@@ -40,7 +41,6 @@ export class CollaboratorService {
 			data.role = data.role?.trim().toUpperCase();
 			data.password = await hashPassword(data.password);
 			data.fullnames = `${data.names} ${data.surname}`.trim();
-
 			const collaborator = this.collaboratorRepository.create(data);
 			const saver = await this.collaboratorRepository.save(collaborator);
 			logHelper(
@@ -58,9 +58,11 @@ export class CollaboratorService {
 				'error',
 				'Modulo Collaborator',
 				'create_collaborator()',
-				'Error al crear colaborador',
+				'Error al crear el colaborador.',
 				error.message
 			);
+
+			throw new InternalServerErrorException('Error al crear el colaborador.');
 		}
 	}
 
@@ -82,23 +84,18 @@ export class CollaboratorService {
 
 		let access = await bcrypt.compare(password, collaborator.password);
 		if (!access) {
-			logHelper(this.logger, 'warn', 'Modulo Collaborator', 'login()', 'No pudimos validar tus credenciales.', {
+			logHelper(this.logger, 'warn', 'Modulo Collaborator', 'login()', 'No tienes acceso a la plataforma.', {
 				email: loginDto.email,
 			});
-			throw new UnauthorizedException('No pudimos validar tus credenciales.');
+			throw new UnauthorizedException('No tienes acceso a la plataforma.');
 		}
 
 		const token = await this.authService.generateToken(collaborator);
 
 		if (!token) {
-			logHelper(
-				this.logger,
-				'error',
-				'Modulo Collaborator',
-				'login()',
-				'Ocurrió un error interno al generar el token.',
-				{ email: loginDto.email }
-			);
+			logHelper(this.logger, 'error', 'Modulo Collaborator', 'login()', 'Error interno al generar el token.', {
+				email: loginDto.email,
+			});
 			throw new InternalServerErrorException('Error interno al generar el token.');
 		}
 
@@ -149,86 +146,115 @@ export class CollaboratorService {
 	}
 
 	async get_collaborators(query: { filter?: string; page?: number; limit?: number; status?: string }) {
-		const page = Number(query.page) || 0;
-		const MAX_LIMIT = process.env.MAX_LIMIT_QUERY ? Number(process.env.MAX_LIMIT_QUERY) : 100;
-		const limit = Math.min(Number(query.limit) || 0, MAX_LIMIT);
+		try {
+			const page = Number(query.page) || 0;
+			const MAX_LIMIT = process.env.MAX_LIMIT_QUERY ? Number(process.env.MAX_LIMIT_QUERY) : 100;
+			const limit = Math.min(Number(query.limit) || 0, MAX_LIMIT);
 
-		// ✅ Si page o limit son <= 0, no se consulta nada
-		if (page <= 0 || limit <= 0) {
+			if (page <= 0 || limit <= 0) {
+				return {
+					collaborators: [],
+					totalCollaborators: 0,
+					totalPages: 0,
+					currentPage: page <= 0 ? 0 : page,
+				};
+			}
+
+			const skip = (page - 1) * limit;
+			const queryBuilder = this.collaboratorRepository.createQueryBuilder('collaborator');
+
+			if (query.filter?.trim()) {
+				const searchTerms = query.filter
+					.trim()
+					.split(/\s+/)
+					.slice(0, 5)
+					.map((t) => t.toLowerCase());
+
+				const columns = [
+					'collaborator.fullnames',
+					'collaborator.number_document',
+					'collaborator.email',
+					'collaborator.phone',
+					'collaborator.names',
+				];
+
+				searchTerms.forEach((term, idx) => {
+					const conditions = columns.map((c) => `${c} ILIKE :term${idx}`).join(' OR ');
+					const params = { [`term${idx}`]: `%${term}%` };
+					idx === 0 ? queryBuilder.where(`(${conditions})`, params) : queryBuilder.andWhere(`(${conditions})`, params);
+				});
+			}
+
+			if (query.status && query.status !== 'Todos') {
+				const statusBool = query.status === 'Activos';
+				queryBuilder.andWhere('collaborator.status = :status', { status: statusBool });
+			}
+
+			const [collaborators, totalCollaborators] = await queryBuilder
+				.orderBy('collaborator.createdAt', 'DESC')
+				.skip(skip)
+				.take(limit)
+				.getManyAndCount();
+
 			return {
-				collaborators: [],
-				totalCollaborators: 0,
-				totalPages: 0,
-				currentPage: page <= 0 ? 0 : page,
+				collaborators,
+				totalCollaborators,
+				totalPages: Math.ceil(totalCollaborators / limit),
+				currentPage: page,
 			};
+		} catch (error) {
+			logHelper(
+				this.logger,
+				'error',
+				'Modulo Collaborator',
+				'get_collaborators()',
+				'Error al obtener los colaboradores.',
+				query,
+				error.message
+			);
+
+			throw new InternalServerErrorException('Error al obtener los colaboradores.');
 		}
-
-		const skip = (page - 1) * limit;
-		const queryBuilder = this.collaboratorRepository.createQueryBuilder('collaborator');
-
-		if (query.filter?.trim()) {
-			const searchTerms = query.filter
-				.trim()
-				.split(/\s+/)
-				.slice(0, 5) // Limitar términos si quieres
-				.map((t) => t.toLowerCase());
-
-			const columns = [
-				'collaborator.fullnames',
-				'collaborator.number_document',
-				'collaborator.email',
-				'collaborator.phone',
-				'collaborator.names',
-			];
-
-			searchTerms.forEach((term, idx) => {
-				const conditions = columns.map((c) => `${c} ILIKE :term${idx}`).join(' OR ');
-				const params = { [`term${idx}`]: `%${term}%` };
-				idx === 0 ? queryBuilder.where(`(${conditions})`, params) : queryBuilder.andWhere(`(${conditions})`, params);
-			});
-		}
-
-		if (query.status && query.status !== 'Todos') {
-			const statusBool = query.status === 'Activos';
-			queryBuilder.andWhere('collaborator.status = :status', { status: statusBool });
-		}
-
-		const [collaborators, totalCollaborators] = await queryBuilder
-			.orderBy('collaborator.createdAt', 'DESC')
-			.skip(skip)
-			.take(limit)
-			.getManyAndCount();
-
-		return {
-			collaborators,
-			totalCollaborators,
-			totalPages: Math.ceil(totalCollaborators / limit),
-			currentPage: page,
-		};
 	}
 
 	async get_collaborator(id: string) {
-		const collaborator = await this.collaboratorRepository
-			.createQueryBuilder('collaborator')
-			.select([
-				'collaborator.id',
-				'collaborator.names',
-				'collaborator.surname',
-				'collaborator.email',
-				'collaborator.phone',
-				'collaborator.role',
-				'collaborator.type_document',
-				'collaborator.number_document',
-				'collaborator.prefix',
-				'collaborator.createdAt',
-				'collaborator.updatedAt',
-				'collaborator.statusAt',
-			])
-			.where('collaborator.id = :id', { id })
-			.getOne();
+		try {
+			const collaborator = await this.collaboratorRepository
+				.createQueryBuilder('collaborator')
+				.select([
+					'collaborator.id',
+					'collaborator.names',
+					'collaborator.surname',
+					'collaborator.email',
+					'collaborator.phone',
+					'collaborator.role',
+					'collaborator.type_document',
+					'collaborator.number_document',
+					'collaborator.prefix',
+					'collaborator.createdAt',
+					'collaborator.updatedAt',
+					'collaborator.statusAt',
+				])
+				.where('collaborator.id = :id', { id })
+				.getOne();
 
-		if (!collaborator) throw new NotFoundException('No se encontró el colaborador.');
-		return collaborator;
+			if (!collaborator) {
+				throw new NotFoundException('Colaborador no encontrado.');
+			}
+
+			return collaborator;
+		} catch (error) {
+			logHelper(
+				this.logger,
+				'error',
+				'Modulo Collaborator',
+				'get_collaborator()',
+				'Error al obtener el colaborador.',
+				error.message
+			);
+
+			throw new InternalServerErrorException('Error al obtener el colaborador.');
+		}
 	}
 
 	async update_collaborator(id: string, editCollaboratorDto: EditCollaboratorDto) {
@@ -250,7 +276,7 @@ export class CollaboratorService {
 				.createQueryBuilder()
 				.update(Collaborator)
 				.set(data)
-				.where('id = :id', { id: id + 's' })
+				.where('id = :id', { id: id })
 				.returning([
 					'id',
 					'names',
@@ -266,34 +292,57 @@ export class CollaboratorService {
 					'updatedAt',
 				])
 				.execute();
+
+			logHelper(
+				this.logger,
+				'log',
+				'Modulo Collaborator',
+				'update_collaborator',
+				'Colaborador actualizado correctamente.',
+				{ ...data, id }
+			);
 		} catch (err) {
 			logHelper(
 				this.logger,
 				'error',
 				'Modulo Collaborator',
 				'update_collaborator()',
-				'No se pudo actualizar el colaborador.',
-				data,
+				'Error al actualizar el colaborador.',
+				{ ...data, id },
 				err.message
 			);
+			throw new InternalServerErrorException('Error al actualizar el colaborador.');
 		}
 
 		return result.raw[0];
 	}
 
 	async update_status_collaborator(id: string, status: boolean) {
-		let result;
 		try {
-			result = await this.collaboratorRepository
+			let result = await this.collaboratorRepository
 				.createQueryBuilder()
 				.update(Collaborator)
 				.set({
 					status: !status,
 					statusAt: new Date(),
 				})
-				.where('id = :id', { id: id + 's' })
+				.where('id = :id', { id: id })
 				.returning('*')
 				.execute();
+
+			logHelper(
+				this.logger,
+				'log',
+				'Modulo Collaborator',
+				'update_status_collaborator',
+				'Estado del colaborador actualizado correctamente.',
+				{
+					status: !status,
+					statusAt: new Date(),
+					id,
+				}
+			);
+			return result.raw[0];
 		} catch (err) {
 			logHelper(
 				this.logger,
@@ -307,9 +356,8 @@ export class CollaboratorService {
 				},
 				err.message
 			);
+			throw new InternalServerErrorException('Error al actualizar el estado del colaborador.');
 		}
-
-		return result.raw[0];
 	}
 
 	async validate_email_collaborator(email: string) {

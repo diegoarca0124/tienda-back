@@ -18,7 +18,6 @@ export class CategoryController {
 	constructor(private categoryService: CategoryService) {}
 
 	@Post('create_category')
-	//@Permissions('create_category')
 	@UseGuards(AuthGuard)
 	@UseInterceptors(CreateCategoryInterceptor)
 	create_category(@Body() createCategoryDto: CreateCategoryDto): Promise<Category> {

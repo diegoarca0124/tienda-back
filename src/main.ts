@@ -6,6 +6,8 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { AppException } from './common/exceptions/base.exception';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { AppDataSource } from './data-source';
+import { PrometheusInterceptor } from './common/interceptors/prometheus.interceptor';
+// 🔥 Borra TODAS las métricas previas del registro global
 
 async function bootstrap() {
 	const logger = new Logger('Bootstrap');
@@ -20,7 +22,7 @@ async function bootstrap() {
 
 	const app = await NestFactory.create(AppModule);
 	app.useGlobalFilters(new AllExceptionsFilter());
-	app.useGlobalInterceptors(new LoggingInterceptor());
+	app.useGlobalInterceptors(new LoggingInterceptor(), new PrometheusInterceptor());
 	app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
 	app.setGlobalPrefix('api');
 	app.enableCors();

@@ -1,0 +1,5 @@
+3000 => Grafana
+4000 => Backend
+3001 => Loki
+9090 => Prometheus
+3002 => Prometheus Backend
