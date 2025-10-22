@@ -34,13 +34,16 @@ export class Product {
 	cover: string;
 
 	@Column({ type: 'simple-array', nullable: true })
-	tags?: string[];
+	tags?: string[]; //SEO
 
-	@Column({ type: 'varchar' })
-	label: string;
+	@Column({ type: 'simple-array', nullable: true })
+	labels?: string[]; //Nuevo, Oferta, Cyber, Sale
 
 	@Column({ type: 'boolean', default: false })
 	onSale: boolean;
+
+	@Column({ type: 'boolean', default: false })
+	freeShipping: boolean;
 
 	@Column({ type: 'decimal', precision: 10, scale: 2 })
 	price: number;

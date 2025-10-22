@@ -9,7 +9,7 @@ import {
 	JoinColumn,
 } from 'typeorm';
 import { Product } from './product.entity';
-@Entity('subcategories')
+@Entity('product_physicals')
 export class ProductPhisycal {
 	@PrimaryGeneratedColumn('uuid')
 	id: string;
@@ -33,7 +33,37 @@ export class ProductPhisycal {
 	dimensionUnit: string; // cm, in, mm, etc.
 
 	@Column({ type: 'boolean', default: false })
-	isFragile: boolean;
+	isFragile: boolean; //Es Fragil?
+
+	@Column({ type: 'boolean', default: false })
+	isPerishable: boolean; // Indica si el producto se deteriora con el tiempo
+
+	@Column({ type: 'boolean', default: false })
+	isEcoFriendly: boolean; // Si es reciclable o ecológico
+
+	@Column({ type: 'boolean', default: false })
+	isBiodegradable: boolean;
+
+	@Column({ type: 'boolean', default: false })
+	isHazardous: boolean; // Material peligroso (para envíos regulados)
+
+	@Column({ type: 'boolean', default: false })
+	idRequiresRefrigeration: boolean;
+
+	@Column({ type: 'boolean', default: false })
+	isFlammable: boolean; //Es flamable
+
+	@Column({ type: 'boolean', default: false })
+	isRequiresAssembly: boolean; // Si el producto necesita ser ensamblado
+
+	@Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+	minStorageTemp?: number;
+
+	@Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+	maxStorageTemp?: number;
+
+	@Column({ type: 'varchar', length: 5, default: '°C' })
+	storageTempUnit: string;
 
 	@Column({ type: 'varchar', length: 50, nullable: true })
 	material?: string; //  Material del producto
