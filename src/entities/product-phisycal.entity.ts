@@ -7,6 +7,7 @@ import {
 	OneToMany,
 	ManyToOne,
 	JoinColumn,
+	OneToOne,
 } from 'typeorm';
 import { Product } from './product.entity';
 @Entity('product_physicals')
@@ -74,7 +75,7 @@ export class ProductPhisycal {
 	@Column()
 	productId: string; // ahora puedes asignar directamente desde el DTO
 
-	@ManyToOne(() => Product, (product) => product.productPhotos, { onDelete: 'CASCADE' })
+	@OneToOne(() => Product, (product) => product.productPhisycal, { onDelete: 'CASCADE' })
 	@JoinColumn({ name: 'productId' }) // asegura el nombre de la FK
 	product: Product;
 }

@@ -7,11 +7,14 @@ import {
 	ManyToOne,
 	JoinColumn,
 	OneToMany,
+	OneToOne,
 } from 'typeorm';
 import { Brand } from './brand.entity';
 import { Category } from './category.entity';
 import { Subcategory } from './subcategory.entity';
 import { ProductPhoto } from './product-photo.entity';
+import { ProductSeo } from './product-seo.entity';
+import { ProductPhisycal } from './product-phisycal.entity';
 
 @Entity({ name: 'products' })
 export class Product {
@@ -86,4 +89,10 @@ export class Product {
 
 	@OneToMany(() => ProductPhoto, (productPhoto) => productPhoto.product)
 	productPhotos: ProductPhoto[];
+
+	@OneToOne(() => ProductSeo, (productSeo) => productSeo.product, { cascade: true })
+	productSeo: ProductSeo;
+
+	@OneToOne(() => ProductPhisycal, (productPhisycal) => productPhisycal.product, { cascade: true })
+	productPhisycal: ProductPhisycal;
 }
