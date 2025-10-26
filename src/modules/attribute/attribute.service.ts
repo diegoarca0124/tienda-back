@@ -29,29 +29,6 @@ export class AttributeService {
 		private readonly dataSource: DataSource
 	) {}
 
-	async get_categories_by_select() {
-		try {
-			const categories = await this.categoryRepository
-				.createQueryBuilder('category')
-				.select(['category.id', 'category.name', 'category.status'])
-				.where('category.status = :status', { status: true })
-				.orderBy('category.name', 'ASC')
-				.getMany();
-			return categories;
-		} catch (error) {
-			logHelper(
-				this.logger,
-				'error',
-				'Modulo Attribute',
-				'get_categories_by_select()',
-				'Error al obtener las categorías.',
-				{},
-				error.message
-			);
-			throw new InternalServerErrorException('Error al obtener las categorías.');
-		}
-	}
-
 	async validate_name_attribute(name: string) {
 		const attribute = await this.attributeRepository.findOneBy({ name });
 		return attribute;
@@ -423,4 +400,5 @@ export class AttributeService {
 			throw new InternalServerErrorException('Error al actualizar el atributo.');
 		}
 	}
+	
 }

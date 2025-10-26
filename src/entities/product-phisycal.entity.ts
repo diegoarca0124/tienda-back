@@ -63,7 +63,7 @@ export class ProductPhisycal {
 	@Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
 	maxStorageTemp?: number;
 
-	@Column({ type: 'varchar', length: 5, default: '°C' })
+	@Column({ type: 'varchar', length: 5, default: '°C', nullable: true })
 	storageTempUnit: string;
 
 	@Column({ type: 'varchar', length: 50, nullable: true })

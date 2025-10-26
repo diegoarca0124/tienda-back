@@ -22,12 +22,6 @@ export class AttributeController {
 		return this.attributeService.create_attribute(createAttributeDto);
 	}
 
-	@Get('get_categories_by_select')
-	@UseGuards(AuthGuard)
-	get_categories_by_select() {
-		return this.attributeService.get_categories_by_select();
-	}
-
 	@Get('get_attributes')
 	@UseGuards(AuthGuard)
 	get_attributes(@Query() query: { filter: string; page: number; limit: number; status: string; categories: string }) {

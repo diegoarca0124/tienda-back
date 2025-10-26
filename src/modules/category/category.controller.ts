@@ -74,4 +74,17 @@ export class CategoryController {
 	update_subcategory(@Param('id', ValidateUUID) id: string, @Body() editSubcategoryDto: EditSubcategoryDto) {
 		return this.categoryService.update_subcategory(id, editSubcategoryDto);
 	}
+
+	@Get('get_categories_by_select')
+	@UseGuards(AuthGuard)
+	get_categories_by_select() {
+		return this.categoryService.get_categories_by_select();
+	}
+
+	@Get('get_subcategories_by_select/:id')
+	@UseGuards(AuthGuard)
+	get_subcategories_by_select(@Param('id', ValidateUUID) id: string) {
+		return this.categoryService.get_subcategories_by_select(id);
+	}
+	
 }

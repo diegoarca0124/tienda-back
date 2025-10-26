@@ -377,6 +377,55 @@ export class CategoryService {
 		return result.raw[0];
 	}
 
+	async get_categories_by_select() {
+		try {
+			const categories = await this.categoryRepository
+				.createQueryBuilder('category')
+				.select(['category.id', 'category.name', 'category.status'])
+				.where('category.status = :status', { status: true })
+				.orderBy('category.name', 'ASC')
+				.getMany();
+			return categories;
+		} catch (error) {
+			logHelper(
+				this.logger,
+				'error',
+				'Modulo Attribute',
+				'get_categories_by_select()',
+				'Error al obtener las categorías.',
+				{},
+				error.message
+			);
+			throw new InternalServerErrorException('Error al obtener las categorías.');
+		}
+	}
+
+	async get_subcategories_by_select(id: string) {
+		try {
+			console.log('id',id);
+			
+			const subcategories = await this.subcategoryRepository
+				.createQueryBuilder('subcategory')
+				.select(['subcategory.id', 'subcategory.name', 'subcategory.status'])
+				.where('subcategory.status = :status', { status: true })
+				.andWhere('subcategory.categoryId = :id', { id })
+				.orderBy('subcategory.name', 'ASC')
+				.getMany();
+			return subcategories;
+		} catch (error) {
+			logHelper(
+				this.logger,
+				'error',
+				'Modulo Category',
+				'get_subcategories_by_select()',
+				'Error al obtener las subcategorías.',
+				{},
+				error.message
+			);
+			throw new InternalServerErrorException('Error al obtener las subcategorías.');
+		}
+	}
+
 	async validate_name_category(name: string) {
 		const category = await this.categoryRepository.findOneBy({ name });
 		return category;

@@ -16,13 +16,13 @@ export class Subcategory {
 	@PrimaryGeneratedColumn('uuid')
 	id: string;
 
-	@Column({ type: 'varchar', length: 100 })
+	@Column({ type: 'varchar', length: 100, nullable: true })
 	name: string;
 
-	@Column({ type: 'varchar', length: 500 })
+	@Column({ type: 'varchar', length: 500, nullable: true })
 	slug: string;
 
-	@Column({ type: 'varchar', length: 2000 })
+	@Column({ type: 'varchar', length: 2000, nullable: true })
 	icon: string;
 
 	@Column({ type: 'boolean', default: false })

@@ -9,7 +9,7 @@ import {
 	JoinColumn,
 } from 'typeorm';
 import { Product } from './product.entity';
-@Entity('subcategories')
+@Entity('product_photos')
 export class ProductPhoto {
 	@PrimaryGeneratedColumn('uuid')
 	id: string;
