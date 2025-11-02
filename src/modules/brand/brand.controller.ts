@@ -95,4 +95,10 @@ export class BrandController {
 		if (processedBanner) editBrandDto.bannerUrl = processedBanner;
 		return this.brandService.update_brand(id, editBrandDto);
 	}
+
+	@Get('get_brands_by_select')
+	@UseGuards(AuthGuard)
+	get_brands_by_select() {
+		return this.brandService.get_brands_by_select();
+	}
 }

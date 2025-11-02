@@ -15,6 +15,7 @@ import { Subcategory } from './subcategory.entity';
 import { ProductPhoto } from './product-photo.entity';
 import { ProductSeo } from './product-seo.entity';
 import { ProductPhisycal } from './product-phisycal.entity';
+import { ProductShipping } from './product-shipping.entity';
 
 @Entity({ name: 'products' })
 export class Product {
@@ -42,14 +43,11 @@ export class Product {
 	@Column({ type: 'simple-array', nullable: true })
 	labels?: string[]; //Nuevo, Oferta, Cyber, Sale
 
-	@Column({ type: 'boolean', default: false })
-	onSale: boolean;
-
-	@Column({ type: 'boolean', default: false })
-	freeShipping: boolean;
-
 	@Column({ type: 'decimal', precision: 10, scale: 2 })
-	price: number;
+	priceRegular: number;
+
+	@Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+	priceDiscount: number;
 
 	@Column()
 	brandId: string;
@@ -63,8 +61,11 @@ export class Product {
 	@Column({ type: 'varchar', length: 100, nullable: true })
 	countryOfOrigin?: string;
 
-	@Column({ type: 'boolean', default: false })
+	@Column({ type: 'boolean' })
 	status: boolean;
+
+	@Column({ type: 'varchar' }) // public | private
+	visibility: boolean;
 
 	@Column({ nullable: true })
 	statusAt: Date;
@@ -92,6 +93,9 @@ export class Product {
 
 	@OneToOne(() => ProductSeo, (productSeo) => productSeo.product, { cascade: true })
 	productSeo: ProductSeo;
+
+	@OneToOne(() => ProductShipping, (productShipping) => productShipping.product, { cascade: true })
+	productShipping: ProductShipping;
 
 	@OneToOne(() => ProductPhisycal, (productPhisycal) => productPhisycal.product, { cascade: true })
 	productPhisycal: ProductPhisycal;

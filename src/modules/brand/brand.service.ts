@@ -242,4 +242,27 @@ export class BrandService {
 			console.log(error);
 		}
 	}
+
+	async get_brands_by_select() {
+		try {
+			const brands = await this.brandRepository
+				.createQueryBuilder('brand')
+				.select(['brand.id', 'brand.name', 'brand.status', 'brand.logoUrl'])
+				.where('brand.status = :status', { status: true })
+				.orderBy('brand.name', 'ASC')
+				.getMany();
+			return brands;
+		} catch (error) {
+			logHelper(
+				this.logger,
+				'error',
+				'Modulo Brand',
+				'get_brands_by_select()',
+				'Error al obtener las marcas.',
+				{},
+				error.message
+			);
+			throw new InternalServerErrorException('Error al obtener las marcas.');
+		}
+	}
 }
