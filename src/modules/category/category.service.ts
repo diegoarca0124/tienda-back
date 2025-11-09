@@ -381,7 +381,7 @@ export class CategoryService {
 		try {
 			const categories = await this.categoryRepository
 				.createQueryBuilder('category')
-				.select(['category.id', 'category.name', 'category.status'])
+				.select(['category.id', 'category.name','category.icon' , 'category.status'])
 				.where('category.status = :status', { status: true })
 				.orderBy('category.name', 'ASC')
 				.getMany();
@@ -390,7 +390,7 @@ export class CategoryService {
 			logHelper(
 				this.logger,
 				'error',
-				'Modulo Attribute',
+				'Modulo Category',
 				'get_categories_by_select()',
 				'Error al obtener las categorías.',
 				{},
@@ -406,7 +406,7 @@ export class CategoryService {
 			
 			const subcategories = await this.subcategoryRepository
 				.createQueryBuilder('subcategory')
-				.select(['subcategory.id', 'subcategory.name', 'subcategory.status'])
+				.select(['subcategory.id', 'subcategory.name','subcategory.icon' , 'subcategory.status'])
 				.where('subcategory.status = :status', { status: true })
 				.andWhere('subcategory.categoryId = :id', { id })
 				.orderBy('subcategory.name', 'ASC')

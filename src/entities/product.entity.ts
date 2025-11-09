@@ -16,39 +16,102 @@ import { ProductPhoto } from './product-photo.entity';
 import { ProductSeo } from './product-seo.entity';
 import { ProductPhisycal } from './product-phisycal.entity';
 import { ProductShipping } from './product-shipping.entity';
+import { ProductVariant } from './product-variants.entity';
 
 @Entity({ name: 'products' })
 export class Product {
+	// 🆔 Identificador único
 	@PrimaryGeneratedColumn('uuid')
 	id: string;
 
+	// 🏷️ Información general
 	@Column({ type: 'varchar', length: 250 })
-	name: string;
+	name: string; // Ejemplo: "Smart TV Samsung 55 pulgadas"
 
 	@Column({ type: 'varchar', length: 100 })
-	type: string; //Fisico  | Digital | Servicio
+	type: string; // Ejemplo: "Físico", "Digital" o "Servicio"
 
 	@Column({ type: 'varchar', length: 500 })
-	slug: string;
+	slug: string; // Ejemplo: "smart-tv-samsung-55"
 
 	@Column({ type: 'varchar' })
-	description: string;
+	description: string; // Descripción detallada del producto
 
 	@Column({ type: 'varchar' })
-	cover: string;
+	extract: string; // Resumen corto para vista previa o listado
 
-	@Column({ type: 'simple-array', nullable: true })
-	tags?: string[]; //SEO
+	@Column({ type: 'varchar' })
+	cover: string; // Imagen principal o portada del producto
 
-	@Column({ type: 'simple-array', nullable: true })
-	labels?: string[]; //Nuevo, Oferta, Cyber, Sale
+	// ⚙️ Atributos principales (para agrupar variantes)
+	@Column({ type: 'varchar', length: 100, nullable: true })
+	mainAttribute: string; // Ejemplo: "Talla", "Color"
 
+	@Column({ type: 'varchar', length: 100, nullable: true })
+	mainAttributeValue: string; // Ejemplo: "M", "Rojo"
+
+	// 📦 Información comercial
 	@Column({ type: 'decimal', precision: 10, scale: 2 })
-	priceRegular: number;
+	priceRegular: number; // Precio normal (ej: 299.99)
 
 	@Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
-	priceDiscount: number;
+	priceDiscount: number; // Precio con descuento (ej: 249.99)
 
+	@Column({ type: 'int', nullable: true, default: 0 })
+	stockQuantity: number; // Stock total disponible (ej: 25 unidades)
+
+	@Column({ type: 'varchar', length: 50 })
+	unitOfMeasure: string; // Ejemplo: "unidad", "kg", "litro"
+
+	// 🧾 Condición y garantía
+	@Column({ type: 'varchar', length: 100, nullable: true })
+	condition: string; // Ejemplo: "Nuevo", "Usado", "Reacondicionado"
+
+	@Column({ type: 'varchar', length: 100, nullable: true })
+	warranty: string; // Ejemplo: "1 año de garantía"
+
+	@Column({ type: 'simple-array', nullable: true })
+	tags?: string[]; // Palabras clave, ej: ["oferta", "verano", "nuevo"]
+
+	// 📊 Estado comercial / marketing
+	@Column({ type: 'boolean', default: false })
+	isBestSeller: boolean; // Ejemplo: producto con más ventas
+
+	@Column({ type: 'boolean', default: false })
+	isNewArrival: boolean; // Ejemplo: recién agregado al catálogo
+
+	@Column({ type: 'boolean', default: false })
+	isFeatured: boolean; // Ejemplo: destacado en página principal
+
+	@Column({ type: 'boolean', default: false })
+	isLimitedEdition: boolean;
+
+	@Column({ type: 'boolean', default: false })
+	isPreOrder: boolean; // Indica si está disponible para preventa
+
+	@Column({ type: 'boolean', default: false })
+	isExportable: boolean; // Ejemplo: disponible para venta internacional
+
+	@Column({ type: 'boolean', default: false })
+	allowBackorder: boolean; // Permite comprar aunque no haya stock
+
+	@Column({ type: 'int', default: 0 })
+	viewsCount: number; // Número de veces que se ha visto el producto
+
+	@Column({ type: 'int', default: 0 })
+	salesCount: number; // Número de veces que se ha vendido el producto
+
+	@Column({ type: 'jsonb', nullable: true })
+	countryOfOrigin: { code: string; flag: string; name: string };
+
+	// ⭐ Calificaciones y reseñas
+	@Column({ type: 'int', default: 0 })
+	reviewsCount: number; // Ejemplo: 120 reseñas
+
+	@Column({ type: 'decimal', precision: 3, scale: 2, default: 0 })
+	averageRating: number; // Ejemplo: 4.7 de 5 estrellas
+
+	// 🔗 Relaciones con otras tablas
 	@Column()
 	brandId: string;
 
@@ -57,24 +120,6 @@ export class Product {
 
 	@Column()
 	subcategoryId: string;
-
-	@Column({ type: 'varchar', length: 100, nullable: true })
-	countryOfOrigin?: string;
-
-	@Column({ type: 'boolean' })
-	status: boolean;
-
-	@Column({ type: 'varchar' }) // public | private
-	visibility: boolean;
-
-	@Column({ nullable: true })
-	statusAt: Date;
-
-	@UpdateDateColumn()
-	updatedAt: Date;
-
-	@CreateDateColumn()
-	createdAt: Date;
 
 	@ManyToOne(() => Brand, (brand) => brand.products, { onDelete: 'CASCADE' })
 	@JoinColumn({ name: 'brandId' })
@@ -88,15 +133,34 @@ export class Product {
 	@JoinColumn({ name: 'subcategoryId' })
 	subcategory: Subcategory;
 
-	@OneToMany(() => ProductPhoto, (productPhoto) => productPhoto.product)
+	@OneToMany(() => ProductPhoto, (photo) => photo.product)
 	productPhotos: ProductPhoto[];
 
-	@OneToOne(() => ProductSeo, (productSeo) => productSeo.product, { cascade: true })
+	@OneToOne(() => ProductSeo, (seo) => seo.product, { cascade: true })
 	productSeo: ProductSeo;
 
-	@OneToOne(() => ProductShipping, (productShipping) => productShipping.product, { cascade: true })
+	@OneToOne(() => ProductShipping, (shipping) => shipping.product, { cascade: true })
 	productShipping: ProductShipping;
 
-	@OneToOne(() => ProductPhisycal, (productPhisycal) => productPhisycal.product, { cascade: true })
+	@OneToOne(() => ProductPhisycal, (physical) => physical.product, { cascade: true })
 	productPhisycal: ProductPhisycal;
+
+	@OneToMany(() => ProductVariant, (variant) => variant.product)
+	productVariants: ProductVariant[];
+
+	// ⚙️ Estado y control
+	@Column({ type: 'varchar' })
+	status: boolean; // Ejemplo: true = activo, false = inactivo
+
+	@Column({ type: 'varchar' }) // public | private
+	visibility: boolean; // Ejemplo: "public" o "private"
+
+	@Column({ nullable: true })
+	statusAt: Date; // Fecha en que cambió el estado
+
+	@CreateDateColumn()
+	createdAt: Date; // Fecha de creación
+
+	@UpdateDateColumn()
+	updatedAt: Date; // Fecha de última actualización
 }

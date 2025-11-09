@@ -401,4 +401,49 @@ export class AttributeService {
 		}
 	}
 	
+	async get_attributes_by_select() {
+		try {
+			const attributes = await this.attributeRepository
+				.createQueryBuilder('attribute')
+				.select(['attribute.id', 'attribute.name', 'attribute.status'])
+				.where('attribute.status = :status', { status: true })
+				.orderBy('attribute.name', 'ASC')
+				.getMany();
+			return attributes;
+		} catch (error) {
+			logHelper(
+				this.logger,
+				'error',
+				'Modulo Attribute',
+				'get_attributes_by_select()',
+				'Error al obtener las categorías.',
+				{},
+				error.message
+			);
+			throw new InternalServerErrorException('Error al obtener los atributos.');
+		}
+	}
+
+	async get_attributeValues_by_select(id: string) {
+		try {
+			const values = await this.attributeValuesRepository
+				.createQueryBuilder('attributeValue')
+				.select(['attributeValue.id', 'attributeValue.value', 'attributeValue.status'])
+				.andWhere('attributeValue.attributeId = :id', { id })
+				.orderBy('attributeValue.value', 'ASC')
+				.getMany();
+			return values;
+		} catch (error) {
+			logHelper(
+				this.logger,
+				'error',
+				'Modulo Attribute',
+				'get_attributeValues_by_select()',
+				'Error al obtener los valores del atributo.',
+				{},
+				error.message
+			);
+			throw new InternalServerErrorException('Error al obtener los valores.');
+		}
+	}
 }

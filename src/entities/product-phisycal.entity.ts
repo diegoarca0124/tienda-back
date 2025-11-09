@@ -18,8 +18,8 @@ export class ProductPhisycal {
 	@Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
 	weight?: number; // Peso del producto
 
-	@Column({ type: 'varchar', length: 20, default: 'kg' })
-	weightUnit: string; // kg, g, lb, etc.
+	@Column({ type: 'jsonb', nullable: true })
+	weightUnit: { group: string; name: string; abbr: string };
 
 	@Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
 	height?: number; // Alto del producto
@@ -30,8 +30,8 @@ export class ProductPhisycal {
 	@Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
 	length?: number; // Largo del producto
 
-	@Column({ type: 'varchar', length: 20, default: 'cm' })
-	dimensionUnit: string; // cm, in, mm, etc.
+	@Column({ type: 'jsonb', nullable: true })
+	dimensionUnit: { group: string; name: string; abbr: string };
 
 	@Column({ type: 'boolean', default: false })
 	isFragile: boolean; //Es Fragil?
@@ -63,8 +63,8 @@ export class ProductPhisycal {
 	@Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
 	maxStorageTemp?: number;
 
-	@Column({ type: 'varchar', length: 5, default: '°C', nullable: true })
-	storageTempUnit: string;
+	@Column({ type: 'jsonb', nullable: true })
+	storageTempUnit: { name: string; abbr: string };
 
 	@Column({ type: 'varchar', length: 50, nullable: true })
 	material?: string; //  Material del producto
