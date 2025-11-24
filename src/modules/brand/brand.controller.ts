@@ -35,6 +35,7 @@ export class BrandController {
 		@UploadedFiles() files: { logoUrl?: Express.Multer.File[]; bannerUrl?: Express.Multer.File[] },
 		@Body() createBrandDto: CreateBrandDto
 	) {
+	
 		if (files) {
 			if (files.logoUrl) {
 				const processedLogo = await awsProcessImage(files.logoUrl[0], 'brands', 0.7);

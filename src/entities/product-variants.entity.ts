@@ -10,6 +10,18 @@ export class ProductVariant {
     @JoinColumn({ name: 'productId' }) // asegura el nombre de la FK
     product: Product;
 
+	@Column({ type: 'varchar', length: 255 })
+	name: string;
+
+	@Column({ type: 'int', default: 0 })
+	stock: number;
+
+	@Column({ type: 'varchar', length: 255 })
+	skuPattern: string;
+
+	@Column({ type: 'varchar', length: 255 })
+	sku: string;
+
     @Column()
 	productId: string;
 

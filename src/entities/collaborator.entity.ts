@@ -16,8 +16,8 @@ export class Collaborator {
   @Column({ type: 'varchar', length: 100, nullable: true })
   fullnames: string; 
 
-  @Column({ type: 'varchar', length: 25})
-  type_document: string;
+  @Column({ type: 'jsonb', nullable: true })
+	type_document: { name: string; value: string };
 
   @Column({ type: 'varchar', length: 25})
   number_document: string;

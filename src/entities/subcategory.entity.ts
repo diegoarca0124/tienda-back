@@ -9,7 +9,6 @@ import {
 	JoinColumn,
 } from 'typeorm';
 import { Category } from './category.entity';
-import { Product } from './product.entity';
 
 @Entity('subcategories')
 export class Subcategory {
@@ -44,6 +43,6 @@ export class Subcategory {
 	@JoinColumn({ name: 'categoryId' }) // asegura el nombre de la FK
 	category: Category;
 
-	@OneToMany(() => Product, (product) => product.subcategory)
-	products: Product[];
+	/* @OneToMany(() => Product, (product) => product.subcategory)
+	products: Product[]; */
 }

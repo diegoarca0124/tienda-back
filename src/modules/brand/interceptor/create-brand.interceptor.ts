@@ -17,6 +17,8 @@ export class CreateBrandInterceptor extends BaseValidationInterceptor<CreateBran
 
 	protected async validateBody(body: any): Promise<{ field: string; message: string }[]> {
 		// parseamos country si viene como string
+		console.log('CreateBrandInterceptor',body);
+		
 		const customErrors: { field: string; message: string }[] = [];
 
 		const fieldsErrors = await this.validateFieldsExist(body);
