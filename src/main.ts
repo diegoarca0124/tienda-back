@@ -23,7 +23,12 @@ async function bootstrap() {
 	const app = await NestFactory.create(AppModule);
 	app.useGlobalFilters(new AllExceptionsFilter());
 	app.useGlobalInterceptors(new LoggingInterceptor(), new PrometheusInterceptor());
-	app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+	app.useGlobalPipes(new ValidationPipe(
+		{ 
+			transform: true, 
+			whitelist: true,
+		}
+	));
 	app.setGlobalPrefix('api');
 	app.enableCors();
 

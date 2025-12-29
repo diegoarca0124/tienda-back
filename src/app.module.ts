@@ -12,6 +12,7 @@ import { AttributeModule } from './modules/attribute/attribute.module';
 import { RedisTokenService } from './common/services/redis-token/redis-token.service';
 import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 import { APP_INTERCEPTOR } from '@nestjs/core';
+import { ProductModule } from './modules/product/product.module';
 dotenv.config({ path: path.resolve(process.cwd(), `.env.${process.env.NODE_ENV || 'dev'}`) });
 
 @Module({
@@ -25,6 +26,7 @@ dotenv.config({ path: path.resolve(process.cwd(), `.env.${process.env.NODE_ENV |
 			defaultMetrics: { enabled: false },
 			path: '/metrics',
 		}),
+		ProductModule,
 	],
 	controllers: [AppController],
 	providers: [AppService, RedisTokenService],

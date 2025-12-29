@@ -402,8 +402,6 @@ export class CategoryService {
 
 	async get_subcategories_by_select(id: string) {
 		try {
-			console.log('id',id);
-			
 			const subcategories = await this.subcategoryRepository
 				.createQueryBuilder('subcategory')
 				.select(['subcategory.id', 'subcategory.name','subcategory.icon' , 'subcategory.status'])

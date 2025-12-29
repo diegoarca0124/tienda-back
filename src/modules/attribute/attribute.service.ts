@@ -416,7 +416,7 @@ export class AttributeService {
 				'error',
 				'Modulo Attribute',
 				'get_attributes_by_select()',
-				'Error al obtener las categorías.',
+				'Error al obtener los atributos.',
 				{},
 				error.message
 			);

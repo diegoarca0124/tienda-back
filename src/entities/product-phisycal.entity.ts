@@ -49,7 +49,7 @@ export class ProductPhisycal {
 	isHazardous: boolean; // Material peligroso (para envíos regulados)
 
 	@Column({ type: 'boolean', default: false })
-	idRequiresRefrigeration: boolean;
+	isRequiresRefrigeration: boolean;
 
 	@Column({ type: 'boolean', default: false })
 	isFlammable: boolean; //Es flamable

@@ -12,35 +12,42 @@ export class TypeDocument {
 }
 
 export class CreateCollaboratorDto {
-	@IsString({ message: 'El nombre debe ser una cadena de caracteres.' })
-	@MinLength(3, { message: 'El nombre debe tener minimo 3 caracteres.' })
+	
+	
 	@MaxLength(50, { message: 'El nombre debe tener máximo 50 caracteres.' })
+	@MinLength(3, { message: 'El nombre debe tener minimo 3 caracteres.' })
+	@IsString({ message: 'El nombre debe ser una cadena de caracteres.' })
+	@IsNotEmpty({ message: 'El nombre es obligatorio' })
 	readonly names: string;
 
-	@IsString({ message: 'Los apellidos deben ser una cadena de caracteres.' })
-	@MinLength(3, { message: 'Los apellidos deben tener minimo 3 caracteres.' })
-	@MaxLength(50, { message: 'Los apellidos deben tener máximo 50 caracteres.' })
+	@MaxLength(50, { message: 'El apellido debe tener máximo 50 caracteres.' })
+	@MinLength(3, { message: 'El apellido debe tener minimo 3 caracteres.' })
+	@IsString({ message: 'El apellido debe ser una cadena de caracteres.' })
+	@IsNotEmpty({ message: 'El apellido es obligatorio' })
 	readonly surname: string;
 
-	@IsString({ message: 'El telefono debe ser una cadena de caracteres.' })
-	@MinLength(3, { message: 'El telefono debe tener minimo 3 caracteres.' })
 	@MaxLength(20, { message: 'El telefono debe tener máximo 20 caracteres.' })
+	@MinLength(3, { message: 'El telefono debe tener minimo 3 caracteres.' })
+	@IsString({ message: 'El telefono debe ser una cadena de caracteres.' })
+	@IsNotEmpty({ message: 'El telefono es obligatorio' })
 	readonly phone: string;
 
-	@IsString({ message: 'El rol debe ser una cadena de caracteres.' })
-	@MinLength(3, { message: 'El rol debe tener minimo 3 caracteres.' })
-	@MaxLength(20, { message: 'El rol debe tener máximo 20 caracteres.' })
 	@IsIn(['DEFAULT'], {
 		message: 'El rol no es un valor válido',
 	})
+	@MaxLength(20, { message: 'El rol debe tener máximo 20 caracteres.' })
+	@MinLength(3, { message: 'El rol debe tener minimo 3 caracteres.' })
+	@IsString({ message: 'El rol debe ser una cadena de caracteres.' })
+	@IsNotEmpty({ message: 'El rol es obligatorio' })
 	readonly role: string;
 
 	@IsOptional()
 	readonly fullnames?: string;
 
-	@IsEmail({}, { message: 'El correo no tiene un formato correcto.' })
-	@MinLength(3, { message: 'El correo debe tener minimo 3 caracteres.' })
 	@MaxLength(50, { message: 'El correo debe tener máximo 50 caracteres.' })
+	@MinLength(3, { message: 'El correo debe tener minimo 3 caracteres.' })
+	@IsEmail({}, { message: 'El correo no tiene un formato correcto.' })
+	@IsNotEmpty({ message: 'El correo es obligatorio' })
 	readonly email: string;
 
 	@IsNotEmptyObject({}, { message: 'El tipo de documento no puede ser nulo' })
@@ -48,13 +55,15 @@ export class CreateCollaboratorDto {
 	@ValidateNested()
 	@Type(() => TypeDocument)
 	type_document: TypeDocument;
-
-	@IsString({ message: 'El documento de identidad debe ser una cadena de caracteres.' })
-	@MinLength(3, { message: 'El documento de identidad debe tener minimo 3 caracteres.' })
-	@MaxLength(25, { message: 'El documento de identidad debe tener máximo 25 caracteres.' })
+	
+	@MaxLength(25, { message: 'El número de documento debe tener máximo 25 caracteres.' })
+	@MinLength(3, { message: 'El número de documento debe tener minimo 3 caracteres.' })
+	@IsString({ message: 'El número de documento debe ser una cadena de caracteres.' })
+	@IsNotEmpty({ message: 'El número de documento es obligatorio' })
 	readonly number_document: string;
 
-	@MinLength(6, { message: 'La contraseña debe tener minimo 6 caracteres.' })
 	@MaxLength(20, { message: 'La contraseña debe tener máximo 20 caracteres.' })
+	@MinLength(6, { message: 'La contraseña debe tener minimo 6 caracteres.' })
+	@IsNotEmpty({ message: 'El contraseña es obligatorio' })
 	readonly password: string;
 }
