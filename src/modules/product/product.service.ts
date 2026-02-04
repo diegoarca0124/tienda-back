@@ -1,5 +1,5 @@
 import { Product } from '@/entities/product.entity';
-import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { capitalizeStr } from '@/common/utils/capitalize-str.util';
 import slugify from 'slugify';
@@ -318,6 +318,72 @@ export class ProductService {
 			throw new InternalServerErrorException('Error al obtener los productos.');
 		}
 	}
+
+    async get_product(id: string) {
+        try {
+            let product: any = await this.productRepository.createQueryBuilder('product')
+            .where('product.id = :id', { id })
+            .getOne();
+
+            if (!product) {
+                throw new NotFoundException('Producto no encontrada.');
+            }
+
+            product.cover = product?.cover + '?v=' + Date.now();
+            product.miniature = product?.miniature + '?v=' + Date.now();
+
+            
+
+             let physical: any = await this.productPhisycalRepository.createQueryBuilder('productPhysical')
+            .where('productPhysical.productId = :id', { id })
+            .getOne();
+
+            let shipping: any = await this.productShippingRepository.createQueryBuilder('productShipping')
+            .where('productShipping.productId = :id', { id })
+            .getOne();
+
+            return { product, physical, shipping };
+        } catch (error) {
+            logHelper(this.logger, 'error', 'Modulo Producto', 'get_product()', 'Error al obtener el producto.', error.message);
+            throw new InternalServerErrorException('Error al obtener el producto.');
+        }
+    }
+
+    async get_characteristics_product(id: string){
+        try {
+            let characteristics = await this.productDescriptionRepository.createQueryBuilder('productDescription')
+            .where('productDescription.productId = :id', { id })
+            .getMany();
+            return characteristics;
+        } catch (error) {
+            logHelper(this.logger, 'error', 'Modulo Producto', 'get_variations_product()', 'Error al obtener las caracteristicas del producto.', error.message);
+            throw new InternalServerErrorException('Error al obtener las caracteristicas del producto.');
+        }
+    }
+
+    async get_photos_product(id: string){
+        try {
+            let photos = await this.productPhotoRepository.createQueryBuilder('productPhoto')
+            .where('productPhoto.productId = :id', { id })
+            .getMany();
+            return photos;
+        } catch (error) {
+            logHelper(this.logger, 'error', 'Modulo Producto', 'get_variations_product()', 'Error al obtener las caracteristicas del producto.', error.message);
+            throw new InternalServerErrorException('Error al obtener las caracteristicas del producto.');
+        }
+    }
+
+    async get_variations_product(id: string){
+        try {
+            let variations = await this.productVariantRepository.createQueryBuilder('productVariation')
+            .where('productVariation.productId = :id', { id })
+            .getMany(); 
+            return variations;
+        } catch (error) {
+            logHelper(this.logger, 'error', 'Modulo Producto', 'get_variations_product()', 'Error al obtener las variaciones del producto.', error.message);
+            throw new InternalServerErrorException('Error al obtener las variaciones del producto.');
+        }
+    }
 
     async get_groups_for_create_product(query: { filter?: string }) {
         try {

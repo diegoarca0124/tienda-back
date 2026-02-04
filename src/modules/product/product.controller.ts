@@ -64,4 +64,31 @@ export class ProductController {
     import_product_for_group(@Param('productGroupId', ValidateUUID) productGroupId) {
         return this.productService.import_product_for_group(productGroupId);
     }
+
+    
+    @Get('get_product/:id')
+	@UseGuards(AuthGuard)
+	get_product(@Param('id', ValidateUUID) id) {
+		return this.productService.get_product(id);
+	}
+
+    @Get('get_variations_product/:id')
+	@UseGuards(AuthGuard)
+	get_variations_product(@Param('id', ValidateUUID) id) {
+		return this.productService.get_variations_product(id);
+	}
+
+    @Get('get_characteristics_product/:id')
+	@UseGuards(AuthGuard)
+	get_characteristics_product(@Param('id', ValidateUUID) id) {
+		return this.productService.get_characteristics_product(id);
+	}
+
+    @Get('get_photos_product/:id')
+	@UseGuards(AuthGuard)
+	get_photos_product(@Param('id', ValidateUUID) id) {
+		return this.productService.get_photos_product(id);
+	}
+    
+    
 }
