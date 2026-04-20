@@ -79,7 +79,7 @@ export class CollaboratorController {
 
 	@Get('get_collaborators')
 	@UseGuards(AuthGuard)
-	get_collaborators(@Query() query: { filter: string; page: number; limit: number; status: string }) {
+	get_collaborators(@Query() query: { filter: string; page: number; limit: number; status: string, sort: string }) {
 		return this.collaboratorService.get_collaborators(query);
 	}
 

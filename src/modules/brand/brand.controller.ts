@@ -54,7 +54,7 @@ export class BrandController {
 
 	@Get('get_brands')
 	@UseGuards(AuthGuard)
-	get_brands(@Query() query: { filter: string; page: number; limit: number; status: string }) {
+	get_brands(@Query() query: { filter: string; page: number; limit: number; status: string, sort: string }) {
 		return this.brandService.get_brands(query);
 	}
 

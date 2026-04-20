@@ -35,7 +35,6 @@ export class CollaboratorService {
 	async create_collaborator(createCollaboratorDto: CreateCollaboratorDto) {
 		try {
 			const data = { ...createCollaboratorDto };
-
 			data.names = data.names?.trim().toUpperCase();
 			data.surname = data.surname?.trim().toUpperCase();
 			data.role = data.role?.trim().toUpperCase();
@@ -145,7 +144,7 @@ export class CollaboratorService {
 		return save;
 	}
 
-	async get_collaborators(query: { filter?: string; page?: number; limit?: number; status?: string }) {
+	async get_collaborators(query: { filter?: string; page?: number; limit?: number; status?: string; sort?: string }) {
 		try {
 			const page = Number(query.page) || 0;
 			const MAX_LIMIT = process.env.MAX_LIMIT_QUERY ? Number(process.env.MAX_LIMIT_QUERY) : 100;
@@ -181,17 +180,50 @@ export class CollaboratorService {
 				searchTerms.forEach((term, idx) => {
 					const conditions = columns.map((c) => `${c} ILIKE :term${idx}`).join(' OR ');
 					const params = { [`term${idx}`]: `%${term}%` };
-					idx === 0 ? queryBuilder.where(`(${conditions})`, params) : queryBuilder.andWhere(`(${conditions})`, params);
+
+					idx === 0
+						? queryBuilder.where(`(${conditions})`, params)
+						: queryBuilder.andWhere(`(${conditions})`, params);
 				});
 			}
 
 			if (query.status && query.status !== 'Todos') {
 				const statusBool = query.status === 'Activos';
-				queryBuilder.andWhere('collaborator.status = :status', { status: statusBool });
+
+				queryBuilder.andWhere('collaborator.status = :status', {
+					status: statusBool,
+				});
+			}
+
+			// ORDENAMIENTO
+			if (query.sort?.trim()) {
+				const [field, direction] = query.sort.split(':');
+
+				const allowedFields = ['name', 'email', 'number_document'];
+				const allowedDirections = ['asc', 'desc'];
+
+				if (
+					allowedFields.includes(field) &&
+					allowedDirections.includes(direction?.toLowerCase())
+				) {
+					const fieldMap = {
+						name: 'collaborator.names',
+						email: 'collaborator.email',
+						number_document: 'collaborator.number_document',
+					};
+
+					queryBuilder.orderBy(
+						fieldMap[field],
+						direction.toUpperCase() as 'ASC' | 'DESC',
+					);
+				} else {
+					queryBuilder.orderBy('collaborator.createdAt', 'DESC');
+				}
+			} else {
+				queryBuilder.orderBy('collaborator.createdAt', 'DESC');
 			}
 
 			const [collaborators, totalCollaborators] = await queryBuilder
-				.orderBy('collaborator.createdAt', 'DESC')
 				.skip(skip)
 				.take(limit)
 				.getManyAndCount();

@@ -47,13 +47,16 @@ export class CategoryService {
 		}
 	}
 
-	async get_categories(query: { filter: string; page: number; limit: number; status: string }) {
+	async get_categories(query: { filter: string; page: number; limit: number; status: string; sort: string }) {
 		try {
 			const page = Number(query.page) || 0;
-			const MAX_LIMIT = process.env.MAX_LIMIT_QUERY ? Number(process.env.MAX_LIMIT_QUERY) : 100;
+			const MAX_LIMIT = process.env.MAX_LIMIT_QUERY
+				? Number(process.env.MAX_LIMIT_QUERY)
+				: 100;
+
 			const limit = Math.min(Number(query.limit) || 0, MAX_LIMIT);
 
-			// ✅ Si page o limit son <= 0, no se consulta nada
+			// ✅ Si page o limit son <= 0
 			if (page <= 0 || limit <= 0) {
 				return {
 					categories: [],
@@ -70,25 +73,62 @@ export class CategoryService {
 				const searchTerms = query.filter
 					.trim()
 					.split(/\s+/)
-					.slice(0, 5) // Limitar términos si quieres
+					.slice(0, 5)
 					.map((t) => t.toLowerCase());
 
 				const columns = ['category.name', 'category.description'];
 
 				searchTerms.forEach((term, idx) => {
-					const conditions = columns.map((c) => `${c} ILIKE :term${idx}`).join(' OR ');
-					const params = { [`term${idx}`]: `%${term}%` };
-					idx === 0 ? queryBuilder.where(`(${conditions})`, params) : queryBuilder.andWhere(`(${conditions})`, params);
+					const conditions = columns
+						.map((c) => `${c} ILIKE :term${idx}`)
+						.join(' OR ');
+
+					const params = {
+						[`term${idx}`]: `%${term}%`,
+					};
+
+					idx === 0
+						? queryBuilder.where(`(${conditions})`, params)
+						: queryBuilder.andWhere(`(${conditions})`, params);
 				});
 			}
 
 			if (query.status && query.status !== 'Todos') {
 				const statusBool = query.status === 'Activos';
-				queryBuilder.andWhere('category.status = :status', { status: statusBool });
+
+				queryBuilder.andWhere('category.status = :status', {
+					status: statusBool,
+				});
+			}
+
+			// ✅ ORDENAMIENTO
+			if (query.sort?.trim() && query.sort !== 'Predeterminado') {
+				const [field, direction] = query.sort.split(':');
+
+				const allowedFields = ['name', 'description'];
+				const allowedDirections = ['asc', 'desc'];
+
+				if (
+					allowedFields.includes(field) &&
+					allowedDirections.includes(direction?.toLowerCase())
+				) {
+					const fieldMap = {
+						name: 'category.name',
+						description: 'category.description',
+					};
+
+					queryBuilder.orderBy(
+						fieldMap[field],
+						direction.toUpperCase() as 'ASC' | 'DESC',
+					);
+				} else {
+					queryBuilder.orderBy('category.createdAt', 'DESC');
+				}
+			} else {
+				queryBuilder.orderBy('category.createdAt', 'DESC');
 			}
 
 			const [categories, totalCategories] = await queryBuilder
-				.orderBy('category.createdAt', 'DESC')
 				.skip(skip)
 				.take(limit)
 				.getManyAndCount();

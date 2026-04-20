@@ -91,18 +91,23 @@ export class AttributeService {
 		}
 	}
 
-	async get_attributes(query: { filter: string; page: number; limit: number; status: string; categories: string }) {
+	async get_attributes(query: { filter: string; page: number; limit: number; status: string; categories: string, sort: string }) {
 		try {
-			const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+			const uuidRegex =
+				/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 			const page = Number(query.page) || 0;
-			const MAX_LIMIT = process.env.MAX_LIMIT_QUERY ? Number(process.env.MAX_LIMIT_QUERY) : 100;
+			const MAX_LIMIT = process.env.MAX_LIMIT_QUERY
+				? Number(process.env.MAX_LIMIT_QUERY)
+				: 100;
+
 			const limit = Math.min(Number(query.limit) || 0, MAX_LIMIT);
 
-			// ✅ Si page o limit son <= 0, no se consulta nada
+			// ✅ Si page o limit son <= 0
 			if (page <= 0 || limit <= 0) {
 				return {
-					collaborators: [],
-					totalCollaborators: 0,
+					attributes: [],
+					totalAttributes: 0,
 					totalPages: 0,
 					currentPage: page <= 0 ? 0 : page,
 				};
@@ -112,51 +117,100 @@ export class AttributeService {
 			const queryBuilder = this.attributeRepository.createQueryBuilder('attribute');
 
 			queryBuilder.loadRelationCountAndMap(
-				'attribute.valuesCount', // nombre del campo virtual que aparecerá en el resultado
-				'attribute.attributeValues' // relación que quieres contar
+				'attribute.valuesCount',
+				'attribute.attributeValues'
 			);
 
 			queryBuilder
-				.leftJoinAndSelect('attribute.attributeCategories', 'attributeCategory')
-				.leftJoinAndSelect('attributeCategory.category', 'category');
+				.leftJoinAndSelect(
+					'attribute.attributeCategories',
+					'attributeCategory'
+				)
+				.leftJoinAndSelect(
+					'attributeCategory.category',
+					'category'
+				);
 
+			// FILTRO TEXTO
 			if (query.filter?.trim()) {
 				const searchTerms = query.filter
 					.trim()
 					.split(/\s+/)
-					.slice(0, 5) // Limitar términos si quieres
+					.slice(0, 5)
 					.map((t) => t.toLowerCase());
 
 				const columns = ['attribute.name'];
 
 				searchTerms.forEach((term, idx) => {
-					const conditions = columns.map((c) => `${c} ILIKE :term${idx}`).join(' OR ');
-					const params = { [`term${idx}`]: `%${term}%` };
-					idx === 0 ? queryBuilder.where(`(${conditions})`, params) : queryBuilder.andWhere(`(${conditions})`, params);
+					const conditions = columns
+						.map((c) => `${c} ILIKE :term${idx}`)
+						.join(' OR ');
+
+					const params = {
+						[`term${idx}`]: `%${term}%`,
+					};
+
+					idx === 0
+						? queryBuilder.where(`(${conditions})`, params)
+						: queryBuilder.andWhere(`(${conditions})`, params);
 				});
 			}
 
+			// FILTRO STATUS
 			if (query.status && query.status !== 'Todos') {
 				const statusBool = query.status === 'Activos';
+
 				queryBuilder.andWhere('attribute.status = :status', {
 					status: statusBool,
 				});
 			}
 
+			// FILTRO CATEGORÍAS
 			if (query.categories && query.categories !== 'Todos') {
 				const categoryIds = query.categories.split(',');
-				const validCategoryIds = categoryIds.filter((id) => uuidRegex.test(id));
+
+				const validCategoryIds = categoryIds.filter((id) =>
+					uuidRegex.test(id)
+				);
+
 				if (validCategoryIds.length > 0) {
-					queryBuilder.andWhere('category.id IN (:...validCategoryIds)', {
-						validCategoryIds,
-					});
+					queryBuilder.andWhere(
+						'category.id IN (:...validCategoryIds)',
+						{ validCategoryIds }
+					);
 				}
 			}
 
+			// ✅ ORDENAMIENTO
+			if (query.sort?.trim() && query.sort !== 'Predeterminado') {
+				const [field, direction] = query.sort.split(':');
+
+				const allowedFields = ['name', 'valuesCount'];
+				const allowedDirections = ['asc', 'desc'];
+
+				if (
+					allowedFields.includes(field) &&
+					allowedDirections.includes(direction?.toLowerCase())
+				) {
+					const fieldMap = {
+						name: 'attribute.name',
+						valuesCount: 'attribute.valuesCount',
+					};
+
+					queryBuilder.orderBy(
+						fieldMap[field],
+						direction.toUpperCase() as 'ASC' | 'DESC',
+					);
+				} else {
+					queryBuilder.orderBy('attribute.createdAt', 'DESC');
+				}
+			} else {
+				queryBuilder.orderBy('attribute.createdAt', 'DESC');
+			}
+
 			let [attributes, totalAttributes]: any = await queryBuilder
-				.orderBy('attribute.createdAt', 'DESC')
 				.skip(skip)
-				.take(query.limit)
+				.take(limit)
 				.getManyAndCount();
 
 			attributes = attributes.map((attr) => {
@@ -168,16 +222,18 @@ export class AttributeService {
 					status: attr.status,
 					createdAt: attr.createdAt,
 					updatedAt: attr.updatedAt,
-					valuesCount: (attr as any).valuesCount,
-					categories: attr.attributeCategories.map((ac) => ac.category.name).slice(0, 2),
+					valuesCount: attr.valuesCount,
+					categories: attr.attributeCategories
+						.map((ac) => ac.category.name)
+						.slice(0, 2),
 				};
 			});
 
 			return {
 				attributes,
 				totalAttributes,
-				totalPages: Math.ceil(totalAttributes / query.limit),
-				currentPage: query.page,
+				totalPages: Math.ceil(totalAttributes / limit),
+				currentPage: page,
 			};
 		} catch (error) {
 			logHelper(

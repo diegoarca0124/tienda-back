@@ -25,7 +25,7 @@ export class AttributeController {
 
 	@Get('get_attributes')
 	@UseGuards(AuthGuard)
-	get_attributes(@Query() query: { filter: string; page: number; limit: number; status: string; categories: string }) {
+	get_attributes(@Query() query: { filter: string; page: number; limit: number; status: string; categories: string, sort: string }) {
 		return this.attributeService.get_attributes(query);
 	}
 

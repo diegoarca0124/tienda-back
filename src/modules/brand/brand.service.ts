@@ -33,17 +33,20 @@ export class BrandService {
 		}
 	}
 
-	async get_brands(query: { filter: string; page: number; limit: number; status: string }) {
+	async get_brands(query: { filter: string; page: number; limit: number; status: string, sort: any }) {
 		try {
 			const page = Number(query.page) || 0;
-			const MAX_LIMIT = process.env.MAX_LIMIT_QUERY ? Number(process.env.MAX_LIMIT_QUERY) : 100;
+			const MAX_LIMIT = process.env.MAX_LIMIT_QUERY
+				? Number(process.env.MAX_LIMIT_QUERY)
+				: 100;
+
 			const limit = Math.min(Number(query.limit) || 0, MAX_LIMIT);
 
 			// ✅ Si page o limit son <= 0, no se consulta nada
 			if (page <= 0 || limit <= 0) {
 				return {
-					collaborators: [],
-					totalCollaborators: 0,
+					brands: [],
+					totalBrands: 0,
 					totalPages: 0,
 					currentPage: page <= 0 ? 0 : page,
 				};
@@ -56,7 +59,7 @@ export class BrandService {
 				const searchTerms = query.filter
 					.trim()
 					.split(/\s+/)
-					.slice(0, 5) // Limitar términos si quieres
+					.slice(0, 5)
 					.map((t) => t.toLowerCase());
 
 				const columns = ['brand.name', 'brand.description'];
@@ -64,17 +67,49 @@ export class BrandService {
 				searchTerms.forEach((term, idx) => {
 					const conditions = columns.map((c) => `${c} ILIKE :term${idx}`).join(' OR ');
 					const params = { [`term${idx}`]: `%${term}%` };
-					idx === 0 ? queryBuilder.where(`(${conditions})`, params) : queryBuilder.andWhere(`(${conditions})`, params);
+
+					idx === 0
+						? queryBuilder.where(`(${conditions})`, params)
+						: queryBuilder.andWhere(`(${conditions})`, params);
 				});
 			}
 
 			if (query.status && query.status !== 'Todos') {
 				const statusBool = query.status === 'Activos';
-				queryBuilder.andWhere('brand.status = :status', { status: statusBool });
+
+				queryBuilder.andWhere('brand.status = :status', {
+					status: statusBool,
+				});
+			}
+
+			// ORDENAMIENTO
+			if (query.sort?.trim()) {
+				const [field, direction] = query.sort.split(':');
+
+				const allowedFields = ['name', 'description'];
+				const allowedDirections = ['asc', 'desc'];
+
+				if (
+					allowedFields.includes(field) &&
+					allowedDirections.includes(direction?.toLowerCase())
+				) {
+					const fieldMap = {
+						name: 'brand.name',
+						description: 'brand.description',
+					};
+
+					queryBuilder.orderBy(
+						fieldMap[field],
+						direction.toUpperCase() as 'ASC' | 'DESC',
+					);
+				} else {
+					queryBuilder.orderBy('brand.createdAt', 'DESC');
+				}
+			} else {
+				queryBuilder.orderBy('brand.createdAt', 'DESC');
 			}
 
 			let [brands, totalBrands] = await queryBuilder
-				.orderBy('brand.createdAt', 'DESC')
 				.skip(skip)
 				.take(limit)
 				.getManyAndCount();

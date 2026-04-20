@@ -26,7 +26,7 @@ export class CategoryController {
 
 	@Get('get_categories')
 	@UseGuards(AuthGuard)
-	get_categories(@Query() query: { filter: string; page: number; limit: number; status: string }) {
+	get_categories(@Query() query: { filter: string; page: number; limit: number; status: string, sort: string }) {
 		return this.categoryService.get_categories(query);
 	}
 
