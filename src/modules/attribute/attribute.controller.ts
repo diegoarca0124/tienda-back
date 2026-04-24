@@ -67,6 +67,13 @@ export class AttributeController {
 		return this.attributeService.get_attributes_by_select();
 	}
 
+	@Get('get_attributes_by_category/:id')
+	@UseGuards(AuthGuard)
+	get_attributes_by_category(@Param('id', ValidateUUID) id: string) {
+		return this.attributeService.get_attributes_by_category(id);
+	}
+	
+
 	@Get('get_attributeValues_by_select/:id')
 	@UseGuards(AuthGuard)
 	get_attributeValues_by_select(@Param('id', ValidateUUID) id: string) {

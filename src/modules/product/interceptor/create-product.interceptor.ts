@@ -59,7 +59,7 @@ export class CreateProductInterceptor extends BaseValidationInterceptor<CreatePr
                 return;
             }
 
-            if(files?.['gallery'].length < 1){
+            if(files?.['gallery']?.length < 1){
                 messages.push({ msm: `La galería necesita minimo 1 imagen.`, field: name });
                 return;     
             }

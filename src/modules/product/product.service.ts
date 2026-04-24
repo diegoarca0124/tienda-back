@@ -99,7 +99,6 @@ export class ProductService {
                 if (Array.isArray(data.variations) && data.variations.length > 0) {
                     const variations : any = data.variations.map((item) => ({
                         name: item.name,
-                        skuPattern: item.skuPattern,
                         sku: 'DEFAULT',
                         productId,
                     }));

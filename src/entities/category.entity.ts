@@ -8,17 +8,41 @@ export class Category {
 	@PrimaryGeneratedColumn('uuid')
 	id: string;
 
+	@Column({type: 'bigint',unique: true,})
+	code: number;
+
 	@Column({ type: 'varchar', length: 100 })
 	name: string;
 
 	@Column({ type: 'varchar', length: 500 })
 	slug: string;
 
-	@Column({ type: 'varchar', length: 2000 })
+	@Column({ type: 'varchar', length: 2000, nullable: true })
 	icon: string;
 
 	@Column({ type: 'varchar', length: 2000 })
 	description: string;
+
+	@Column({ type: 'boolean', default: false })
+	isDimensions: boolean;
+
+	@Column({ type: 'boolean', default: false })
+	isCharacteristics: boolean;
+
+	@Column({ type: 'boolean', default: false })
+	isConditiom: boolean;
+
+	@Column({ type: 'boolean', default: false })
+	isWarranty: boolean;
+
+	@Column({ type: 'boolean', default: false })
+	isCountryOfOrigin: boolean;
+
+	@Column({ type: 'boolean', default: false })
+	isMaterial: boolean;
+
+	@Column({ type: 'boolean', default: false })
+	isTemperature: boolean;
 
 	@Column({ type: 'boolean', default: false })
 	status: boolean;

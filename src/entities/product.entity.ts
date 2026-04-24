@@ -52,13 +52,6 @@ export class Product {
 
 	@Column({ type: 'varchar' })
 	miniature: string;
-
-	// ⚙️ Atributos principales (para agrupar variantes)
-	@Column({ type: 'jsonb', nullable: true })
-	mainAttribute: { id: string; name: string }; 
-
-	@Column({ type: 'varchar', length: 100, nullable: true })
-	mainAttributeValue: string; // Ejemplo: "M", "Rojo"
 	
 	@Column({ type: 'jsonb', nullable: true })
 	unitOfMeasure: { group: string; name: string; abbr: string };

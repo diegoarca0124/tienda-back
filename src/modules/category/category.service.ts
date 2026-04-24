@@ -421,7 +421,7 @@ export class CategoryService {
 		try {
 			const categories = await this.categoryRepository
 				.createQueryBuilder('category')
-				.select(['category.id', 'category.name','category.icon' , 'category.status'])
+				.select(['category.id', 'category.name','category.icon' , 'category.status', 'category.isDimensions','category.isCharacteristics', 'category.isConditiom', 'category.isWarranty', 'category.isCountryOfOrigin', 'category.isMaterial', 'category.isTemperature'])
 				.where('category.status = :status', { status: true })
 				.orderBy('category.name', 'ASC')
 				.getMany();

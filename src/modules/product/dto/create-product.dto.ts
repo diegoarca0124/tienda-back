@@ -53,10 +53,6 @@ export class SkuPatternDto {
 }
 
 export class VariationDto {
-  @ValidateNested()
-  @Type(() => SkuPatternDto)
-  skuPattern: SkuPatternDto;
-
   @IsString({ message: 'El nombre de la variación es requerido.' })
   name: string;
 }
@@ -121,7 +117,7 @@ export class CreateProductDto {
 	/* @IsOptional() */
 	/* @IsNotEmpty({ message: 'La propiedad principal es requerida.' }) */
 
-	@IsObject({ message: 'La propiedad principal debe ser un objeto válido.' })
+	/* @IsObject({ message: 'La propiedad principal debe ser un objeto válido.' })
 	@IsOptional()
 	mainAttribute: { id: string; name: string };
 	
@@ -129,25 +125,27 @@ export class CreateProductDto {
 	@MinLength(3, { message: 'El valor de propiedad debe tener minimo 3 caracteres.' })
 	@IsString({ message: 'El valor de propiedad debe ser una cadena de caracteres.' })
 	@IsOptional()
-	/* @IsNotEmpty({ message: 'El valor de la propiedad principal es requerida.' }) */
-	mainAttributeValue: string;
+	mainAttributeValue: string; */
 	
 	@IsObject({ message: 'La unidad debe ser un objeto válido.' })
 	@IsNotEmpty({ message: 'La unidad es requerida.' })
 	unitOfMeasure: { group: string; name: string; abbr: string };
 
+	@ValidateIf(o => o.isConditiom === 'true')
 	@MaxLength(50, { message: 'La condición debe tener máximo 50 caracteres.' })
 	@MinLength(3, { message: 'La condición debe tener minimo 3 caracteres.' })
 	@IsString({ message: 'La condición debe ser una cadena de caracteres.' })
 	@IsNotEmpty({ message: 'La condición es requerida.' })
 	condition: string;
 	
+	@ValidateIf(o => o.isWarranty === 'true')
 	@MaxLength(100, { message: 'La garantía debe tener máximo 100 caracteres.' })
 	@MinLength(3, { message: 'La garantía debe tener minimo 3 caracteres.' })
 	@IsString({ message: 'La garantía debe ser una cadena de caracteres.' })
 	@IsNotEmpty({ message: 'La garantía es requerida.' })
 	warranty: string;
     
+	@ValidateIf(o => o.isCountryOfOrigin === 'true')
     @ValidateNested()
     @Type(() => CountryDto)
 	@IsObject({ message: 'El país debe ser un objeto válido' })
@@ -242,15 +240,15 @@ export class CreateProductDto {
 	})
 	@IsOptional()
     attributes?: ProductAttributeDto[];
-    /* o.boolDimensions === false */
+    /* o.isDimensions === false */
 	// ---------- DIMENSION UNIT ----------
-	@ValidateIf(o => o.boolDimensions === 'true')
+	@ValidateIf(o => o.isDimensions === 'true')
 	@IsObject({ message: 'La unidad de dimensión debe ser un objeto válido.' })
 	@IsNotEmpty({ message: 'La unidad de dimensión es requerida.' })
 	dimensionUnit?: { group: string; name: string; abbr: string };
 
 	// ---------- WEIGHT ----------
-	@ValidateIf(o => o.boolDimensions === 'true')
+	@ValidateIf(o => o.isDimensions === 'true')
 	@Min(0.01, { message: 'El peso debe ser mayor a 0.' })
 	@IsNumber(
 		{ allowInfinity: false, allowNaN: false },
@@ -261,13 +259,13 @@ export class CreateProductDto {
 	weight?: number;
 
 	// ---------- WEIGHT UNIT ----------
-	@ValidateIf(o => o.boolDimensions === 'true')
+	@ValidateIf(o => o.isDimensions === 'true')
 	@IsObject({ message: 'La unidad de peso debe ser un objeto válido.' })
 	@IsNotEmpty({ message: 'La unidad de peso es requerida.' })
 	weightUnit?: { group: string; name: string; abbr: string };
 
     // ---------- HEIGHT ----------
-    @ValidateIf(o => o.boolDimensions === 'true')
+    @ValidateIf(o => o.isDimensions === 'true')
     @Min(0.01, { message: 'La altura debe ser mayor a 0.' })
     @IsNumber(
         { allowInfinity: false, allowNaN: false },
@@ -278,7 +276,7 @@ export class CreateProductDto {
     height?: number;
 
     // ---------- WIDTH ----------
-    @ValidateIf(o => o.boolDimensions === 'true')
+    @ValidateIf(o => o.isDimensions === 'true')
     @Min(0.01, { message: 'El ancho debe ser mayor a 0.' })
     @IsNumber(
         { allowInfinity: false, allowNaN: false },
@@ -289,7 +287,7 @@ export class CreateProductDto {
     width?: number;
 
     // ---------- LENGTH ----------
-    @ValidateIf(o => o.boolDimensions === 'true')
+    @ValidateIf(o => o.isDimensions === 'true')
     @Min(0.01, { message: 'El largo debe ser mayor a 0.' })
     @IsNumber(
         { allowInfinity: false, allowNaN: false },
@@ -299,15 +297,18 @@ export class CreateProductDto {
     @IsNotEmpty({ message: 'El largo es requerido.' })
     length?: number;
 	
+	@ValidateIf(o => o.isMaterial === 'true')
 	@MaxLength(50, { message: 'El material debe tener máximo 50 caracteres.' })
 	@IsString({ message: 'El material debe ser una cadena de caracteres.' })
 	@IsNotEmpty({ message: 'El material es requerido.' })
 	material?: string;
 
+	@ValidateIf(o => o.isTemperature === 'true')
     @IsObject({ message: 'La unidad de temperatura debe ser un objeto válido.' })
 	@IsOptional()
 	storageTempUnit: { name: string; abbr: string };
 
+	@ValidateIf(o => o.isTemperature === 'true')
 	@IsNumber(
 		{ allowInfinity: false, allowNaN: false },
 		{ message: 'La temperatura mínima debe ser un número válido.' }
@@ -316,6 +317,7 @@ export class CreateProductDto {
 	@IsOptional()
 	minStorageTemp: number;
 
+	@ValidateIf(o => o.isTemperature === 'true')
 	@IsNumber(
 		{ allowInfinity: false, allowNaN: false },
 		{ message: 'La temperatura máxima debe ser un número válido.' }
@@ -418,7 +420,7 @@ export class CreateProductDto {
 	@IsOptional()
     variations?: VariationDto[];
 
-	boolDimensions: boolean;
+	isDimensions: boolean;
 
 }
 

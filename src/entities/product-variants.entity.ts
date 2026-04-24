@@ -17,9 +17,6 @@ export class ProductVariant {
 	stock: number;
 
 	@Column({ type: 'varchar', length: 255 })
-	skuPattern: string;
-
-	@Column({ type: 'varchar', length: 255 })
 	sku: string;
 
     @Column()

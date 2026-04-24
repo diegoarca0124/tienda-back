@@ -10,9 +10,8 @@ export class CreateSubcategoryDto {
 	slug: string;
 
 	@MaxLength(2000, { message: 'El icono debe tener máximo 2000 caracteres.' })
-	@MinLength(11, { message: 'El icono debe tener minimo 11 caracteres.' })
 	@IsString({ message: 'El icono debe ser una cadena de caracteres.' })
-	@IsNotEmpty({ message: 'El icono es obligatorio' })
+	@IsOptional()
 	readonly icon: string;
 
 	@IsUUID('4', { message: 'La categoría debe ser un UUID válido' })

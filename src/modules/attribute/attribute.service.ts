@@ -480,6 +480,48 @@ export class AttributeService {
 		}
 	}
 
+	async get_attributes_by_category(id: string){
+		try {
+			console.log('get_attributes_by_category',id);
+			
+			const attributes = await this.attributeRepository
+			.createQueryBuilder('attribute')
+			.innerJoin(
+				'attribute.attributeCategories',
+				'attributeCategory'
+			)
+			.select([
+				'attribute.id',
+				'attribute.name',
+				'attribute.status'
+			])
+			.where('attribute.status = :status', {
+				status: true,
+			})
+			.andWhere(
+				'attributeCategory.categoryId = :categoryId',
+				{ categoryId : id }
+			)
+			.orderBy('attribute.name', 'ASC')
+			.getMany();
+
+			return attributes;
+		} catch (error) {
+			console.log(error);
+			
+			logHelper(
+				this.logger,
+				'error',
+				'Modulo Attribute',
+				'get_attributes_by_select()',
+				'Error al obtener los atributos.',
+				{},
+				error.message
+			);
+			throw new InternalServerErrorException('Error al obtener los atributos.');
+		}
+	}
+
 	async get_attributeValues_by_select(id: string) {
 		try {
 			const values = await this.attributeValuesRepository
