@@ -10,19 +10,12 @@ sharp.cache(false); // 🔹 Desactiva caché de sharp para mejorar rendimiento e
 
 @Injectable()
 export class FileUploadInterceptor {
-  static fileInterceptor() {
-    return FileFieldsInterceptor(
-      [
-        { name: 'cover', maxCount: 1 },
-        { name: 'miniature', maxCount: 1 },
-        { name: 'gallery', maxCount: 10 },
-      ],
-      {
-        storage: memoryStorage(), // 📌 Ahora se almacena en memoria (buffer)
-        fileFilter: (req, file, cb) => {
-         cb(null, true);
-        },
-      },
-    );
-  }
+	static fileInterceptor() {
+		return FileFieldsInterceptor([{ name: 'gallery', maxCount: 10 }], {
+			storage: memoryStorage(), // 📌 Ahora se almacena en memoria (buffer)
+			fileFilter: (req, file, cb) => {
+				cb(null, true);
+			},
+		});
+	}
 }

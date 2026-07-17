@@ -3,10 +3,11 @@ import { BaseValidationInterceptor } from '@/common/interceptors/base-validation
 
 import { AttributeService } from '../attribute.service';
 import { EditAttributeDto } from '../dto/edit-attribute.dto';
+import { AttributeValidator } from '../validators/attribute.validator';
 
 @Injectable()
 export class EditAttributeInterceptor extends BaseValidationInterceptor<EditAttributeDto> {
-	constructor(private readonly attributeService: AttributeService) {
+	constructor(private readonly attributeValidator: AttributeValidator) {
 		super();
 	}
 
@@ -33,14 +34,12 @@ export class EditAttributeInterceptor extends BaseValidationInterceptor<EditAttr
 		const messages: { msm: string; field: string }[] = [];
 
 		if (body.name) {
-			const isNameTaken = await this.attributeService.validate_name_attribute(body.name);
-			if (isNameTaken?.id != body.id) {
-				if (isNameTaken) {
-					messages.push({
-						msm: 'El nombre no esta disponible, intente con otro.',
-						field: 'name',
-					});
-				}
+			const idNameExists = await this.attributeValidator.existNameAttribute(body.name);
+			if (idNameExists && idNameExists.id != body.id) {
+				messages.push({
+					msm: 'Ya existe un atributo con ese nombre.',
+					field: 'name',
+				});
 			}
 		}
 

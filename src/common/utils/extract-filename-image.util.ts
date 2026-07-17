@@ -1,3 +1,3 @@
 export const extractFileNameImage = (url: string) => {
-  return url.split('/').pop() || '';
-}
+	return url.split('/').pop() || '';
+};

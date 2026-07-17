@@ -1,15 +1,23 @@
-import { Entity, Column, PrimaryGeneratedColumn, UpdateDateColumn, CreateDateColumn, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, UpdateDateColumn, CreateDateColumn, OneToMany, Generated } from 'typeorm';
 import { Subcategory } from './subcategory.entity';
 import { AttributeCategory } from './attribute-category.entity';
 import { Product } from './product.entity';
+import { ProductGroup } from './product-group.entity';
 
 @Entity('categories')
 export class Category {
 	@PrimaryGeneratedColumn('uuid')
 	id: string;
 
-	@Column({type: 'bigint',unique: true,})
-	code: number;
+	@Column({ type: 'varchar', unique: true })
+	prefix: string;
+
+	@Column({
+		type: 'bigint',
+		unique: true,
+	})
+	@Generated('increment')
+	code: string;
 
 	@Column({ type: 'varchar', length: 100 })
 	name: string;
@@ -58,6 +66,9 @@ export class Category {
 
 	@OneToMany(() => Subcategory, (subcategory) => subcategory.category)
 	subcategories: Subcategory[];
+
+	@OneToMany(() => ProductGroup, (productGroup) => productGroup.category)
+	productGroups: ProductGroup[];
 
 	@OneToMany(() => Product, (product) => product.category)
 	products: Product[];

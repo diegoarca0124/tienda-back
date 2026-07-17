@@ -4,66 +4,68 @@ import { CreateCategoryDto } from '../dto/create-category.dto';
 import { CategoryService } from '../category.service';
 import { validateSvg } from '@/common/utils/validate-svg.util';
 import { CreateSubcategoryDto } from '../dto/create-subcategory.dto';
-
+import { CategoryValidator } from '../validators/category.validator';
 
 @Injectable()
 export class CreateSubcategoryInterceptor extends BaseValidationInterceptor<CreateSubcategoryDto> {
-  constructor(
-      private readonly categoryService: CategoryService, 
-      
-  ) {
-    super();
-  }
+	constructor(private readonly categoryValidator: CategoryValidator) {
+		super();
+	}
 
-  protected getDtoClass() {
-    return CreateSubcategoryDto;
-  }
+	protected getDtoClass() {
+		return CreateSubcategoryDto;
+	}
 
-  protected async validateBody(body: any): Promise<{ field: string, message: string }[]> {
-    const customErrors: { field: string, message: string }[] = [];
-    
-    const fieldsErrors = await this.validateFieldsExist(body);
-    fieldsErrors.forEach((item) => {
-      customErrors.push({ field: item.field, message: item.msm });
-    });
+	protected async validateBody(body: any): Promise<{ field: string; message: string }[]> {
+		const customErrors: { field: string; message: string }[] = [];
 
-    return customErrors;
-  }
+		const fieldsErrors = await this.validateFieldsExist(body);
+		fieldsErrors.forEach((item) => {
+			customErrors.push({ field: item.field, message: item.msm });
+		});
 
-  protected async validateFiles(files: any): Promise<{ field: string, message: string }[]> {
-    return [];
-  }
+		return customErrors;
+	}
 
-  private async validateFieldsExist(body: any): Promise<{msm:string, field:string}[]> {
-    const messages : {msm:string, field:string}[] = [];
+	protected async validateFiles(files: any): Promise<{ field: string; message: string }[]> {
+		return [];
+	}
 
-    if(body.icon){
-      const resValidateIcon = validateSvg(body.icon);
-      console.log('resValidateIcon',resValidateIcon);
-      if(!resValidateIcon.valid){
-        messages.push(
-          {
-            msm: resValidateIcon.reason || '',
-            field: 'icon'
-          }
-        );
-      }
-    }
+	private async validateFieldsExist(body: any): Promise<{ msm: string; field: string }[]> {
+		const messages: { msm: string; field: string }[] = [];
 
-    if(body.name){
-      const isNameTaken = await this.categoryService.validate_name_subcategory(body.categoryId,body.name);
-      if(isNameTaken?.id != body.id){
-        if (isNameTaken) {
-          messages.push(
-            {
-              msm: 'El titulo no esta disponible, intente con otro.',
-              field: 'name'
-            }
-          );
-        }
-      }
-    }
+		if (body.icon) {
+			const resValidateIcon = validateSvg(body.icon);
+			if (!resValidateIcon.valid) {
+				messages.push({
+					msm: resValidateIcon.reason || 'Error en el formato del icono.',
+					field: 'icon',
+				});
+			}
+		}
 
-    return messages;
-  }
+		if (body.name) {
+			const isNameExist = await this.categoryValidator.existsNameSubcategory(body.name);
+
+			if (isNameExist) {
+				messages.push({
+					msm: 'Ya existe una subcategoría con ese nombre.',
+					field: 'name',
+				});
+			}
+		}
+
+		if (body.prefix) {
+			const isPrefixExist = await this.categoryValidator.existsPrefixSubcategory(body.prefix);
+
+			if (isPrefixExist) {
+				messages.push({
+					msm: 'Ya existe una subcategoría con ese prefijo.',
+					field: 'prefix',
+				});
+			}
+		}
+
+		return messages;
+	}
 }

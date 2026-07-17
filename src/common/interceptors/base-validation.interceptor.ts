@@ -38,6 +38,7 @@ export abstract class BaseValidationInterceptor<T> implements NestInterceptor {
 
 		const dto: any = plainToInstance(this.getDtoClass(), body);
 		const errors = await validate(dto);
+		console.log('validate', errors);
 
 		let groupedErrors: { [key: string]: string[] } = {};
 

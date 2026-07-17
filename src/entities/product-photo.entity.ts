@@ -1,13 +1,4 @@
-import {
-	Entity,
-	Column,
-	PrimaryGeneratedColumn,
-	UpdateDateColumn,
-	CreateDateColumn,
-	OneToMany,
-	ManyToOne,
-	JoinColumn,
-} from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, UpdateDateColumn, CreateDateColumn, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
 import { Product } from './product.entity';
 @Entity('product_photos')
 export class ProductPhoto {

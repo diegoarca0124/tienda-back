@@ -1,0 +1,14 @@
+import { MigrationInterface, QueryRunner } from "typeorm";
+
+export class InitSchema31783501018552 implements MigrationInterface {
+    name = 'InitSchema31783501018552'
+
+    public async up(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`ALTER TABLE "product_descriptions" ADD "isFeatured" boolean NOT NULL DEFAULT false`);
+    }
+
+    public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`ALTER TABLE "product_descriptions" DROP COLUMN "isFeatured"`);
+    }
+
+}

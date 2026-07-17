@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany, Generated } from 'typeorm';
 import { Product } from './product.entity';
 
 @Entity('brands')
@@ -9,6 +9,16 @@ export class Brand {
 	@Column({ type: 'varchar', length: 150, unique: true })
 	name: string;
 
+	@Column({ type: 'varchar', unique: true })
+	prefix: string;
+
+	@Column({
+		type: 'bigint',
+		unique: true,
+	})
+	@Generated('increment')
+	code: string;
+
 	@Column({ type: 'varchar', length: 150, unique: true })
 	slug: string;
 
@@ -18,7 +28,7 @@ export class Brand {
 	@Column({ type: 'jsonb', nullable: true })
 	country: { code: string; flag: string; name: string };
 
-	@Column({ type: 'varchar', length: 255 })
+	@Column({ type: 'varchar', length: 255, nullable: true })
 	websiteUrl: string;
 
 	@Column({ type: 'varchar', length: 255, nullable: true })

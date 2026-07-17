@@ -14,6 +14,10 @@ export class RedisTokenService {
 			host: process.env.REDIS_HOST_TOKEN,
 			port: Number(process.env.REDIS_PORT_TOKEN),
 			password: process.env.REDIS_PASSWORD_TOKEN,
+			connectTimeout: 1000, //Espera un minuto para conexion, si no falla
+			maxRetriesPerRequest: 1, //Solo acepta un intento de conexion
+			enableOfflineQueue: false, //No guarda request pendientes
+			lazyConnect: true, //No conecta redis al iniciar el app
 		});
 	}
 

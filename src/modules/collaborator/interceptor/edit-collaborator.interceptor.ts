@@ -2,68 +2,70 @@ import { Injectable } from '@nestjs/common';
 import { EditCollaboratorDto } from '../dto/edit-collaborator.dto';
 import { BaseValidationInterceptor } from '@/common/interceptors/base-validation.interceptor';
 import { CollaboratorService } from '../collaborator.service';
-
+import { CollaboratorValidator } from '../validators/collaborator.validator';
 
 @Injectable()
 export class EditCollaboratorInterceptor extends BaseValidationInterceptor<EditCollaboratorDto> {
-  constructor(
-      private readonly collaboratorService: CollaboratorService, 
-      
-  ) {
-    super();
-  }
+	constructor(private readonly collaboratorValidator: CollaboratorValidator) {
+		super();
+	}
 
-  protected getDtoClass() {
-    return EditCollaboratorDto;
-  }
+	protected getDtoClass() {
+		return EditCollaboratorDto;
+	}
 
-  protected async validateBody(body: any): Promise<{ field: string, message: string }[]> {
-    const customErrors: { field: string, message: string }[] = [];
-    
-    const fieldsErrors = await this.validateFieldsExist(body);
-    fieldsErrors.forEach((item) => {
-      customErrors.push({ field: item.field, message: item.msm });
-    });
+	protected async validateBody(body: any): Promise<{ field: string; message: string }[]> {
+		console.log('EditCollaboratorInterceptor', body);
 
-    return customErrors;
-  }
+		const customErrors: { field: string; message: string }[] = [];
 
-  protected async validateFiles(files: any): Promise<{ field: string, message: string }[]> {
-    return [];
-  }
+		const fieldsErrors = await this.validateFieldsExist(body);
+		fieldsErrors.forEach((item) => {
+			customErrors.push({ field: item.field, message: item.msm });
+		});
 
-  private async validateFieldsExist(body: any): Promise<{msm:string, field:string}[]> {
-    const messages : {msm:string, field:string}[] = [];
+		return customErrors;
+	}
 
+	protected async validateFiles(files: any): Promise<{ field: string; message: string }[]> {
+		return [];
+	}
 
-    if(body.email){
-      const isEmailTaken = await this.collaboratorService.validate_email_collaborator(body.email);
-      if(isEmailTaken?.id != body.id){
-        if (isEmailTaken) {
-          messages.push(
-            {
-              msm: 'El correo no esta disponible, intente con otro.',
-              field: 'email'
-            }
-          );
-        }
-      }
-    }
+	private async validateFieldsExist(body: any): Promise<{ msm: string; field: string }[]> {
+		const messages: { msm: string; field: string }[] = [];
+		if (body.email) {
+			const isEmailExist = await this.collaboratorValidator.existsEmailCollaborator(body.email);
 
-    if(body.number_document){
-      const isNumberDocumentTaken = await this.collaboratorService.validate_dni_collaborator(body.number_document);
-      if(isNumberDocumentTaken?.id != body.id){
-        if (isNumberDocumentTaken) {
-          messages.push(
-            {
-              msm: 'El numero de documento no esta disponible, intente con otro.',
-              field: 'number_document'
-            }
-          );
-        }
-      }
-    }
+			if (isEmailExist && isEmailExist.id != body.id) {
+				messages.push({
+					msm: 'Ya existe una cuenta con ese correo.',
+					field: 'email',
+				});
+			}
+		}
 
-    return messages;
-  }
+		if (body.number_document) {
+			const isDocumentNumberExist = await this.collaboratorValidator.existsDocumentNumberCollaborator(body.number_document);
+
+			if (isDocumentNumberExist && isDocumentNumberExist.id != body.id) {
+				messages.push({
+					msm: 'Ya existe una cuenta con ese numero de documento.',
+					field: 'number_document',
+				});
+			}
+		}
+
+		if (body.phone) {
+			const isPhoneExist = await this.collaboratorValidator.existsPhoneCollaborator(body.phone);
+
+			if (isPhoneExist && isPhoneExist.id != body.id) {
+				messages.push({
+					msm: 'Ya existe una cuenta con ese numero de telefono.',
+					field: 'phone',
+				});
+			}
+		}
+
+		return messages;
+	}
 }

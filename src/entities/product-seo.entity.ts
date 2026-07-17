@@ -1,12 +1,4 @@
-import {
-	Entity,
-	Column,
-	PrimaryGeneratedColumn,
-	CreateDateColumn,
-	UpdateDateColumn,
-	OneToOne,
-	JoinColumn,
-} from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToOne, JoinColumn } from 'typeorm';
 import { Product } from './product.entity';
 
 @Entity('product_seos')
@@ -42,7 +34,7 @@ export class ProductSeo {
 	isIndexable: boolean; // Si el producto debe indexarse en buscadores
 
 	@Column({ type: 'jsonb', nullable: true })
-	structuredData?: Record<string, any>; 
+	structuredData?: Record<string, any>;
 	// JSON para schema.org (rich snippets)
 
 	// === RELACIONES ===

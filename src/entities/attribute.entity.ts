@@ -1,43 +1,45 @@
-import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
-  OneToMany,
-} from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
 import { AttributeCategory } from './attribute-category.entity';
 import { AttributeValue } from './attribute-value.entity';
+import { ProductDescription } from './product-description.entity';
+import { AttributeGroup } from './attribute-group.entity';
 
 @Entity('attributes')
 export class Attribute {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+	@PrimaryGeneratedColumn('uuid')
+	id: string;
 
-  @Column({ type: 'varchar', length: 150, unique: true })
-  name: string; 
+	@Column({ type: 'varchar', length: 150 })
+	name: string;
 
-  @Column({ type: 'varchar', length: 150, unique: true })
-  code: string; 
+	@Column({ type: 'varchar', length: 250, nullable: true })
+	description: string;
 
-  @Column({ type: 'text', nullable: true })
-  unit: string; 
+	@Column({ nullable: true })
+	attributeGroupId: string;
 
-  @Column({ type: 'boolean', default: false})
-  status: boolean;
+	@Column({ type: 'text', nullable: true })
+	unit: string;
 
-  @Column({ nullable: true})
-  statusAt: Date;
+	@Column({ type: 'boolean', default: false })
+	status: boolean;
 
-  @UpdateDateColumn()
-  updatedAt: Date
+	@Column({ nullable: true })
+	statusAt: Date;
 
-  @CreateDateColumn()
-  createdAt: Date
+	@UpdateDateColumn()
+	updatedAt: Date;
 
-  @OneToMany(() => AttributeCategory, (attributeCategory) => attributeCategory.attribute)
-  attributeCategories: AttributeCategory[];
+	@CreateDateColumn()
+	createdAt: Date;
 
-  @OneToMany(() => AttributeValue, (attributeValue) => attributeValue.attribute)
-  attributeValues: AttributeValue[];
+	@OneToMany(() => AttributeValue, (attributeValue) => attributeValue.attribute)
+	attributeValues: AttributeValue[];
+
+	@OneToMany(() => ProductDescription, (productDescription) => productDescription.attribute)
+	productDescriptions: ProductDescription[];
+
+	@ManyToOne(() => AttributeGroup, (attributeGroup) => attributeGroup.attributes)
+	@JoinColumn({ name: 'attributeGroupId' })
+	attributeGroup: AttributeGroup;
 }

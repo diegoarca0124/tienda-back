@@ -1,18 +1,4 @@
-import {
-	Body,
-	Controller,
-	Post,
-	Req,
-	UseInterceptors,
-	Get,
-	Query,
-	Param,
-	Put,
-	ParseUUIDPipe,
-	UseGuards,
-	HttpCode,
-	HttpStatus,
-} from '@nestjs/common';
+import { Body, Controller, Post, Req, UseInterceptors, Get, Query, Param, Put, ParseUUIDPipe, UseGuards, HttpCode, HttpStatus, Res, StreamableFile } from '@nestjs/common';
 import { CollaboratorService } from './collaborator.service';
 import { CreateCollaboratorDto } from './dto/create-collaborator.dto';
 import { Collaborator } from '@/entities/collaborator.entity';
@@ -22,11 +8,17 @@ import { LoginDto } from './dto/login.dto';
 import { EditCollaboratorInterceptor } from './interceptor/edit-collaborator.interceptor';
 import { EditCollaboratorDto } from './dto/edit-collaborator.dto';
 import { ValidateUUID } from '@/common/pipes/validate-uuid.pipe';
-import { AuthGuard } from '@/common/guards/auth/auth.guard';
-import { AuthService } from './auth.service';
 import * as dotenv from 'dotenv';
 import path from 'path';
-
+import { UpdateStatusCollaboratorsDto } from './dto/update-status-collaborators.dto';
+import { UpdateStatusCollaboratorsInterceptor } from './interceptor/update-status-collaborators.interceptor';
+import { ExportCollaboratorsDto } from './dto/export-colllaborators.dto';
+import { ExportCollaboratorsInterceptor } from './interceptor/export-colllaborators.interceptor';
+import type { Response } from 'express';
+import { ValidateImportCollaboratorsDto } from './dto/validate-import-collaborators.dto';
+import { ValidateImportCollaboratorsInterceptor } from './interceptor/validate-import-collaborators.interceptor';
+import { AuthService } from '@/auth/auth.service';
+import { Public } from '@/auth/decorators/public.decorator';
 dotenv.config({ path: path.resolve(process.cwd(), `.env.${process.env.NODE_ENV || 'dev'}`) });
 
 @Controller('collaborator')
@@ -37,94 +29,91 @@ export class CollaboratorController {
 	) {}
 
 	@Post('create_collaborator')
-	@UseGuards(AuthGuard)
 	@UseInterceptors(CreateCollaboratorInterceptor)
-	create_collaborator(@Body() createCollaboratorDto: CreateCollaboratorDto): Promise<Collaborator | undefined> {
-		return this.collaboratorService.create_collaborator(createCollaboratorDto);
+	create_collaborator(@Body() createCollaboratorDto: CreateCollaboratorDto, @Req() request): Promise<any> {
+		return this.collaboratorService.create_collaborator(createCollaboratorDto, request);
 	}
 
 	@Post('login')
+	@Public()
 	@UseInterceptors(LoginInterceptor)
-	login(@Body() loginDto: LoginDto, @Req() request: any) {
+	login(@Body() loginDto: LoginDto): Promise<{ data: any; message: string }> {
 		return this.collaboratorService.login(loginDto);
 	}
 
 	@Get('logout')
 	@HttpCode(HttpStatus.OK)
-	async logout(@Req() req: Request) {
+	async logout(@Req() req: any) {
 		if (process.env.TOKEN_REVOCATION === 'true') {
-			const authHeader = req.headers['authorization'];
-			if (!authHeader) {
+			const jti = req.user.jti;
+			if (!jti) {
 				return {
 					success: false,
 					revoked: false,
-					message: 'No se proporcionó el token',
+					message: 'No se proporcionó el JTI de acceso.',
 				};
 			}
-			const token = authHeader.split(' ')[1];
-			await this.authService.revokeToken(token);
+			await this.authService.revokeToken(jti);
 			return {
 				success: true,
 				revoked: true,
-				message: 'Sesion cerrada y token revocado correctamente',
+				message: 'Sesión cerrada correctamente.',
 			};
 		} else {
 			return {
 				success: true,
 				revoked: false,
-				message: 'Sesion cerrada correctamente, pero la revocación de tokens está deshabilitada',
+				message: 'Sesión cerrada correctamente.',
 			};
 		}
 	}
 
 	@Get('get_collaborators')
-	@UseGuards(AuthGuard)
-	get_collaborators(@Query() query: { filter: string; page: number; limit: number; status: string, sort: string }) {
+	get_collaborators(@Query() query: { filter: string; page: number; limit: number; status: string; sort: string }) {
 		return this.collaboratorService.get_collaborators(query);
 	}
 
 	@Get('get_collaborator/:id')
-	@UseGuards(AuthGuard)
 	get_collaborator(@Param('id', ValidateUUID) id) {
 		return this.collaboratorService.get_collaborator(id);
 	}
 
 	@Put('update_collaborator/:id')
-	@UseGuards(AuthGuard)
 	@UseInterceptors(EditCollaboratorInterceptor)
-	update_collaborator(@Param('id', ValidateUUID) id: string, @Body() editCollaboratorDto: EditCollaboratorDto) {
-		return this.collaboratorService.update_collaborator(id, editCollaboratorDto);
+	update_collaborator(
+		@Param('id', ValidateUUID) id: string,
+		@Body() editCollaboratorDto: EditCollaboratorDto,
+		@Req() request
+	): Promise<{ success: boolean; message: string; data: Collaborator }> {
+		return this.collaboratorService.update_collaborator(id, editCollaboratorDto, request);
 	}
 
 	@Put('update_status_collaborator/:id')
-	@UseGuards(AuthGuard)
-	update_status_collaborator(@Param('id', ValidateUUID) id: string, @Body() data: { status: boolean }) {
-		return this.collaboratorService.update_status_collaborator(id, data.status);
+	update_status_collaborator(
+		@Param('id', ValidateUUID) id: string, 
+		@Body() data: { status: boolean }, 
+		@Req() request
+	): Promise<{ data: Collaborator; message: string }> {
+		return this.collaboratorService.update_status_collaborator(id, data.status, request);
 	}
 
-	@Get('validate_token')
-	@HttpCode(HttpStatus.OK)
-	async validateToken(@Req() req: Request) {
-		const authHeader = req.headers['authorization'];
+	@Post('update_status_collaborators')
+	@UseInterceptors(UpdateStatusCollaboratorsInterceptor)
+	update_status_collaborators(@Body() updateStatusCollaboratorsDto: UpdateStatusCollaboratorsDto, @Req() request): Promise<{ data: any; message: string }> {
+		return this.collaboratorService.update_status_collaborators(updateStatusCollaboratorsDto, request);
+	}
 
-		if (!authHeader) {
-			return { valid: false, message: 'No se proporcionó el token' };
-		}
+	@Post('export_collaborators')
+	@UseInterceptors(ExportCollaboratorsInterceptor)
+	async export_collaborators(@Body() exportCollaboratorsDto: ExportCollaboratorsDto, @Req() request): Promise<any> {
+		const result = await this.collaboratorService.export_collaborators(exportCollaboratorsDto, request);
+		return result;
+	}
 
-		const token = authHeader.split(' ')[1];
-
-		try {
-			const payload = await this.authService.validateToken(token);
-			return {
-				valid: true,
-				message: 'Token válido y vigente',
-				payload,
-			};
-		} catch (error) {
-			return {
-				valid: false,
-				message: error.message || 'Token inválido o expirado',
-			};
-		}
+	@Post('validate_import_collaborators')
+	@UseInterceptors(ValidateImportCollaboratorsInterceptor)
+	async validate_import_collaborators(@Body() validateImportCollaboratorsDto: ValidateImportCollaboratorsDto, @Req() request): Promise<any> {
+		const result = await this.collaboratorService.validate_import_collaborators(validateImportCollaboratorsDto, request);
+		return result;
 	}
 }

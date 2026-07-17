@@ -13,16 +13,42 @@ import { ProductShipping } from '@/entities/product-shipping.entity';
 import { ProductVariant } from '@/entities/product-variants.entity';
 import { ProductGroup } from '@/entities/product-group.entity';
 import { ProductGroupItem } from '@/entities/product-group-item.entity';
+import { AttributeValue } from '@/entities/attribute-value.entity';
+import { AttributeGroup } from '@/entities/attribute-group.entity';
+import { AttributeCategory } from '@/entities/attribute-category.entity';
+import { Attribute } from '@/entities/attribute.entity';
+import { ProductValidator } from './validators/product.validator';
+import { Brand } from '@/entities/brand.entity';
+import { Category } from '@/entities/category.entity';
+import { Subcategory } from '@/entities/subcategory.entity';
+import { KibanaService } from '@/common/services/kibana/kibana.service';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Product, ProductDescription, ProductPhisycal, ProductPhoto, ProductSeo, ProductShipping, ProductVariant, ProductGroup, ProductGroupItem]),
-    JwtModule.register({
-      secret: 'praxis',
-      signOptions: { expiresIn: '1d' },
-    }),
-  ],
-  providers: [ProductService, RedisTokenService],
-  controllers: [ProductController]
+	imports: [
+		TypeOrmModule.forFeature([
+			Product,
+			ProductDescription,
+			ProductPhisycal,
+			ProductPhoto,
+			ProductSeo,
+			ProductShipping,
+			ProductVariant,
+			ProductGroup,
+			ProductGroupItem,
+			AttributeValue,
+			AttributeGroup,
+			AttributeCategory,
+			Attribute,
+			Brand,
+			Category,
+			Subcategory,
+		]),
+		JwtModule.register({
+			secret: 'praxis',
+			signOptions: { expiresIn: '1d' },
+		}),
+	],
+	providers: [ProductService, RedisTokenService, ProductValidator, KibanaService],
+	controllers: [ProductController],
 })
 export class ProductModule {}

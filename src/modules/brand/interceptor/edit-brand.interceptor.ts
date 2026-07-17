@@ -4,10 +4,11 @@ import { validateSvg } from '@/common/utils/validate-svg.util';
 import { BrandService } from '../brand.service';
 import { validateUrl } from '@/common/utils/validate-url.util';
 import { EditBrandDto } from '../dto/edit-brand-dto';
+import { BrandValidator } from '../validators/brand.validator';
 
 @Injectable()
 export class EditBrandInterceptor extends BaseValidationInterceptor<EditBrandDto> {
-	constructor(private readonly brandService: BrandService) {
+	constructor(private readonly brandService: BrandValidator) {
 		super();
 	}
 
@@ -38,9 +39,7 @@ export class EditBrandInterceptor extends BaseValidationInterceptor<EditBrandDto
 		return customErrors;
 	}
 
-	private async validateImages(files?: {
-		[key: string]: Express.Multer.File[];
-	}): Promise<{ msm: string; field: string }[]> {
+	private async validateImages(files?: { [key: string]: Express.Multer.File[] }): Promise<{ msm: string; field: string }[]> {
 		const messages: { msm: string; field: string }[] = [];
 		const maxSize = 3 * 1024 * 1024; // 3 MB
 
@@ -68,17 +67,24 @@ export class EditBrandInterceptor extends BaseValidationInterceptor<EditBrandDto
 
 	private async validateFieldsExist(body: any): Promise<{ msm: string; field: string }[]> {
 		const messages: { msm: string; field: string }[] = [];
-		console.log(body);
 
 		if (body.name) {
-			const isNameTaken = await this.brandService.validate_name_brand(body.name);
-			if (isNameTaken?.id != body.id) {
-				if (isNameTaken) {
-					messages.push({
-						msm: 'El nombre no esta disponible, intente con otro.',
-						field: 'name',
-					});
-				}
+			const isNameExist = await this.brandService.existsNameBrand(body.name);
+			if (isNameExist && isNameExist.id != body.id) {
+				messages.push({
+					msm: 'Ya existe una marca con ese nombre.',
+					field: 'name',
+				});
+			}
+		}
+
+		if (body.prefix) {
+			const isPrefixExist = await this.brandService.existsPrefixBrand(body.prefix);
+			if (isPrefixExist && isPrefixExist.id != body.id) {
+				messages.push({
+					msm: 'Ya existe una marca con ese prefijo.',
+					field: 'name',
+				});
 			}
 		}
 

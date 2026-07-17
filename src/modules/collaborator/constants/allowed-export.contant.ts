@@ -1,0 +1,15 @@
+export const ALLOWED_EXPORT = [
+    'names',
+    'surname',
+    'type_document',
+    'number_document',
+    'email',
+    'prefix',
+    'phone',
+    'role',
+    'status',
+    'createdAt',
+    'updatedAt',
+    'statusAt',
+    'lastDateLogin',
+]

@@ -4,66 +4,68 @@ import { CreateCategoryDto } from '../dto/create-category.dto';
 import { CategoryService } from '../category.service';
 import { validateSvg } from '@/common/utils/validate-svg.util';
 import { EditCategoryDto } from '../dto/edit-category.dto';
-
+import { CategoryValidator } from '../validators/category.validator';
 
 @Injectable()
 export class EditCategoryInterceptor extends BaseValidationInterceptor<EditCategoryDto> {
-  constructor(
-      private readonly categoryService: CategoryService, 
-      
-  ) {
-    super();
-  }
+	constructor(private readonly categoryValidator: CategoryValidator) {
+		super();
+	}
 
-  protected getDtoClass() {
-    return EditCategoryDto;
-  }
+	protected getDtoClass() {
+		return EditCategoryDto;
+	}
 
-  protected async validateBody(body: any): Promise<{ field: string, message: string }[]> {
-    const customErrors: { field: string, message: string }[] = [];
-    
-    const fieldsErrors = await this.validateFieldsExist(body);
-    fieldsErrors.forEach((item) => {
-      customErrors.push({ field: item.field, message: item.msm });
-    });
+	protected async validateBody(body: any): Promise<{ field: string; message: string }[]> {
+		const customErrors: { field: string; message: string }[] = [];
 
-    return customErrors;
-  }
+		const fieldsErrors = await this.validateFieldsExist(body);
+		fieldsErrors.forEach((item) => {
+			customErrors.push({ field: item.field, message: item.msm });
+		});
 
-  protected async validateFiles(files: any): Promise<{ field: string, message: string }[]> {
-    return [];
-  }
+		return customErrors;
+	}
 
-  private async validateFieldsExist(body: any): Promise<{msm:string, field:string}[]> {
-    const messages : {msm:string, field:string}[] = [];
+	protected async validateFiles(files: any): Promise<{ field: string; message: string }[]> {
+		return [];
+	}
 
-    if(body.icon){
-      const resValidateIcon = validateSvg(body.icon);
-      console.log('resValidateIcon',resValidateIcon);
-      if(!resValidateIcon.valid){
-        messages.push(
-          {
-            msm: resValidateIcon.reason || '',
-            field: 'icon'
-          }
-        );
-      }
-    }
+	private async validateFieldsExist(body: any): Promise<{ msm: string; field: string }[]> {
+		const messages: { msm: string; field: string }[] = [];
 
-    if(body.name){
-      const isNameTaken = await this.categoryService.validate_name_category(body.name);
-      if(isNameTaken?.id != body.id){
-        if (isNameTaken) {
-          messages.push(
-            {
-              msm: 'El titulo no esta disponible, intente con otro.',
-              field: 'name'
-            }
-          );
-        }
-      }
-    }
+		if (body.icon) {
+			const resValidateIcon = validateSvg(body.icon);
+			if (!resValidateIcon.valid) {
+				messages.push({
+					msm: resValidateIcon.reason || 'Error en el formato del icono.',
+					field: 'icon',
+				});
+			}
+		}
 
-    return messages;
-  }
+		if (body.name) {
+			const isNameExist = await this.categoryValidator.existsNameCategory(body.name);
+
+			if (isNameExist && isNameExist.id != body.id) {
+				messages.push({
+					msm: 'Ya existe una categoría con ese nombre.',
+					field: 'name',
+				});
+			}
+		}
+
+		if (body.prefix) {
+			const isPrefixExist = await this.categoryValidator.existsPrefixCategory(body.prefix);
+
+			if (isPrefixExist && isPrefixExist.id != body.id) {
+				messages.push({
+					msm: 'Ya existe una categoría con ese prefijo.',
+					field: 'prefix',
+				});
+			}
+		}
+
+		return messages;
+	}
 }

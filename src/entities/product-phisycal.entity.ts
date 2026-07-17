@@ -1,14 +1,4 @@
-import {
-	Entity,
-	Column,
-	PrimaryGeneratedColumn,
-	UpdateDateColumn,
-	CreateDateColumn,
-	OneToMany,
-	ManyToOne,
-	JoinColumn,
-	OneToOne,
-} from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, UpdateDateColumn, CreateDateColumn, OneToMany, ManyToOne, JoinColumn, OneToOne } from 'typeorm';
 import { Product } from './product.entity';
 @Entity('product_physicals')
 export class ProductPhisycal {

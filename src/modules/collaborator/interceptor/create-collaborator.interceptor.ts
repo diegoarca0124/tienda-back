@@ -2,10 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { CreateCollaboratorDto } from '../dto/create-collaborator.dto';
 import { CollaboratorService } from '../collaborator.service';
 import { BaseValidationInterceptor } from '@/common/interceptors/base-validation.interceptor';
+import { CollaboratorValidator } from '../validators/collaborator.validator';
 
 @Injectable()
 export class CreateCollaboratorInterceptor extends BaseValidationInterceptor<CreateCollaboratorDto> {
-	constructor(private readonly collaboratorService: CollaboratorService) {
+	constructor(private readonly collaboratorValidator: CollaboratorValidator) {
 		super();
 	}
 
@@ -30,28 +31,36 @@ export class CreateCollaboratorInterceptor extends BaseValidationInterceptor<Cre
 
 	private async validateFieldsExist(body: any): Promise<{ msm: string; field: string }[]> {
 		const messages: { msm: string; field: string }[] = [];
-
 		if (body.email) {
-			const isEmailTaken = await this.collaboratorService.validate_email_collaborator(body.email);
-			if (isEmailTaken?.id != body.id) {
-				if (isEmailTaken) {
-					messages.push({
-						msm: 'El correo no esta disponible, intente con otro.',
-						field: 'email',
-					});
-				}
+			const isEmailExist = await this.collaboratorValidator.existsEmailCollaborator(body.email);
+
+			if (isEmailExist) {
+				messages.push({
+					msm: 'Ya existe una cuenta con ese correo.',
+					field: 'email',
+				});
 			}
 		}
 
 		if (body.number_document) {
-			const isNumberDocumentTaken = await this.collaboratorService.validate_dni_collaborator(body.number_document);
-			if (isNumberDocumentTaken?.id != body.id) {
-				if (isNumberDocumentTaken) {
-					messages.push({
-						msm: 'El numero de documento no esta disponible, intente con otro.',
-						field: 'number_document',
-					});
-				}
+			const isDocumentNumberExist = await this.collaboratorValidator.existsDocumentNumberCollaborator(body.number_document);
+
+			if (isDocumentNumberExist) {
+				messages.push({
+					msm: 'Ya existe una cuenta con ese numero de documento.',
+					field: 'number_document',
+				});
+			}
+		}
+
+		if (body.phone) {
+			const isPhoneExist = await this.collaboratorValidator.existsPhoneCollaborator(body.phone);
+
+			if (isPhoneExist) {
+				messages.push({
+					msm: 'Ya existe una cuenta con ese numero de telefono.',
+					field: 'phone',
+				});
 			}
 		}
 

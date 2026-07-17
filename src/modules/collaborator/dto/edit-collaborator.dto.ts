@@ -1,69 +1,69 @@
-import { Type } from 'class-transformer';
-import { IsEmail, IsIn, IsNotEmpty, IsNotEmptyObject, IsObject, IsOptional, IsString, MaxLength, MinLength, ValidateNested } from 'class-validator';
+import { capitalizeWords, normalizeText } from '@/common/utils/string.util';
+import { Transform, Type } from 'class-transformer';
+import { IsDefined, IsEmail, IsIn, IsNotEmpty, IsNotEmptyObject, IsObject, IsOptional, IsString, Matches, MaxLength, MinLength, ValidateIf, ValidateNested } from 'class-validator';
+import { IsValidDocumentNumber } from '../validators/valid-document-number.validator';
 
-export class TypeDocument {
-	@IsString({ message: 'El nombre del documento es requerido' })
-	@IsNotEmpty({ message: 'El nombre del documento no puede estar vacío' })
-	name: string;
-
-	@IsString({ message: 'El valor del documento es requerido' })
-	@IsNotEmpty({ message: 'El valor del documento no puede estar vacío' })
-	value: string;
-}
+const DOCUMENT_VALUES = ['DNI', 'CE - Carné de Extranjería', 'Pasaporte'];
 
 export class EditCollaboratorDto {
+	@Transform(({ value }) => capitalizeWords(value))
 	@MaxLength(50, { message: 'El nombre debe tener máximo 50 caracteres.' })
 	@MinLength(3, { message: 'El nombre debe tener minimo 3 caracteres.' })
 	@IsString({ message: 'El nombre debe ser una cadena de caracteres.' })
-	@IsNotEmpty({ message: 'El nombre es obligatorio' })
+	@IsNotEmpty({ message: 'El nombre no debe estar vacio.' })
+	@IsDefined({ message: 'El nombre es obligatorio.' })
 	readonly names: string;
 
+	@Transform(({ value }) => capitalizeWords(value))
 	@MaxLength(50, { message: 'El apellido debe tener máximo 50 caracteres.' })
 	@MinLength(3, { message: 'El apellido debe tener minimo 3 caracteres.' })
 	@IsString({ message: 'El apellido debe ser una cadena de caracteres.' })
-	@IsNotEmpty({ message: 'El apellido es obligatorio' })
+	@IsNotEmpty({ message: 'El apellido no debe estar vacio.' })
+	@IsDefined({ message: 'El apellido es obligatorio.' })
 	readonly surname: string;
 
-	@MaxLength(20, { message: 'El telefono debe tener máximo 20 caracteres.' })
-	@MinLength(3, { message: 'El telefono debe tener minimo 3 caracteres.' })
-	@IsString({ message: 'El telefono debe ser una cadena de caracteres.' })
-	@IsNotEmpty({ message: 'El telefono es obligatorio' })
+	@Matches(/^\d{9}$/, { message: 'El telefono debe tener exactamente 9 dígitos.' })
+	@IsString({ message: 'El teléfono debe ser una cadena de texto.' })
+	@IsNotEmpty({ message: 'El telefono no debe estar vacio.' })
+	@IsDefined({ message: 'El telefono es obligatorio.' })
+	@Transform(({ value }) => String(value).trim())
 	readonly phone: string;
 
-	@IsIn(['DEFAULT'], {
-		message: 'El rol no es un valor válido',
-	})
+	@IsIn(['DEFAULT'], { message: 'El rol no es un valor válido.' })
 	@MaxLength(20, { message: 'El rol debe tener máximo 20 caracteres.' })
 	@MinLength(3, { message: 'El rol debe tener minimo 3 caracteres.' })
 	@IsString({ message: 'El rol debe ser una cadena de caracteres.' })
-	@IsNotEmpty({ message: 'El rol es obligatorio' })
+	@IsNotEmpty({ message: 'El rol no debe estar vacio.' })
+	@IsDefined({ message: 'El rol es obligatorio.' })
 	readonly role: string;
 
 	@IsOptional()
 	readonly fullnames?: string;
 
+	@Transform(({ value }) => normalizeText(value).toLowerCase())
 	@MaxLength(50, { message: 'El correo debe tener máximo 50 caracteres.' })
-	@MinLength(3, { message: 'El correo debe tener minimo 3 caracteres.' })
 	@IsEmail({}, { message: 'El correo no tiene un formato correcto.' })
-	@IsNotEmpty({ message: 'El correo es obligatorio' })
+	@IsNotEmpty({ message: 'El correo no debe estar vacio.' })
+	@IsDefined({ message: 'El correo es obligatorio.' })
 	readonly email: string;
 
-	@IsNotEmptyObject({}, { message: 'El tipo de documento no puede ser nulo' })
-	@IsObject({ message: 'El tipo de documento debe ser un objeto válido' })
-	@ValidateNested()
-	@Type(() => TypeDocument)
-	type_document: TypeDocument;
-	
-	@MaxLength(25, { message: 'El número de documento debe tener máximo 25 caracteres.' })
-	@MinLength(3, { message: 'El número de documento debe tener minimo 3 caracteres.' })
-	@IsString({ message: 'El número de documento debe ser una cadena de caracteres.' })
-	@IsNotEmpty({ message: 'El número de documento es obligatorio' })
+	@IsIn(DOCUMENT_VALUES, { message: 'El tipo de documento no es válido.' })
+	@IsString({ message: 'El tipo de documento debe ser texto.' })
+	@IsNotEmpty({ message: 'El tipo de documento no debe estar vacío.' })
+	@IsDefined({ message: 'El tipo de documento es obligatorio.' })
+	readonly type_document: string;
+
+	@IsValidDocumentNumber()
+	@IsString({ message: 'El número de documento debe ser texto.' })
+	@IsNotEmpty({ message: 'El número de documento no debe estar vacio.' })
+	@IsDefined({ message: 'El número de documento es obligatorio.' })
+	@Transform(({ value }) => String(value).trim())
 	readonly number_document: string;
 
 	@MaxLength(20, { message: 'La contraseña debe tener máximo 20 caracteres.' })
 	@MinLength(6, { message: 'La contraseña debe tener minimo 6 caracteres.' })
 	@IsOptional()
-	readonly password: string;
+	password: string;
 
-	readonly updatedAt?: Date;
+	updatedAt?: Date;
 }

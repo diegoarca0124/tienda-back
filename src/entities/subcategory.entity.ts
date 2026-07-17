@@ -1,13 +1,4 @@
-import {
-	Entity,
-	Column,
-	PrimaryGeneratedColumn,
-	UpdateDateColumn,
-	CreateDateColumn,
-	OneToMany,
-	ManyToOne,
-	JoinColumn,
-} from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, UpdateDateColumn, CreateDateColumn, OneToMany, ManyToOne, JoinColumn, Generated } from 'typeorm';
 import { Category } from './category.entity';
 import { Product } from './product.entity';
 
@@ -18,6 +9,16 @@ export class Subcategory {
 
 	@Column({ type: 'varchar', length: 100, nullable: true })
 	name: string;
+
+	@Column({ type: 'varchar', unique: true })
+	prefix: string;
+
+	@Column({
+		type: 'bigint',
+		unique: true,
+	})
+	@Generated('increment')
+	code: string;
 
 	@Column({ type: 'varchar', length: 500, nullable: true })
 	slug: string;
