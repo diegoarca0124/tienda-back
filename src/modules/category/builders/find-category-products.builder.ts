@@ -1,6 +1,7 @@
 import { Product } from '@/entities/product.entity';
 import { SelectQueryBuilder } from 'typeorm';
 import { FindCategoryProductsQueryDto } from '../dto/find-category-products.dto';
+import { escapeLikePattern } from '@/common/utils/escape-like-pattern.util';
 
 const PRICE_EXPRESSION = `COALESCE(NULLIF(product."priceDiscount", 0), product."priceRegular")`;
 
@@ -39,11 +40,20 @@ export class FindCategoryProductsBuilder {
 			'subcategory.name',
 		];
 
-		const terms = filter.trim().split(/\s+/).slice(0, 5).map(term => term.toLowerCase());
+		const terms = filter
+			.trim()
+			.split(/\s+/)
+			.slice(0, 5)
+			.map(term => escapeLikePattern(term.toLowerCase()));
 
 		terms.forEach((term, index) => {
-			const conditions = columns.map(column => `${column} ILIKE :term${index}`).join(' OR ');
-			qb.andWhere(`(${conditions})`, {[`term${index}`]: `%${term}%`,});
+			const conditions = columns
+				.map(column => `${column} ILIKE :term${index} ESCAPE '\\'`)
+				.join(' OR ');
+
+			qb.andWhere(`(${conditions})`, {
+				[`term${index}`]: `%${term}%`,
+			});
 		});
 	}
 
