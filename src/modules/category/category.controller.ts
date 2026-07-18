@@ -75,7 +75,10 @@ export class CategoryController {
 	}
 
 	@Get('findCategoryProducts/:id')
-	findCategoryProducts(@Param('id', ValidateUUID) id: string, @Query() query: FindCategoryProductsQueryDto) {
+	findCategoryProducts(
+		@Param('id', ValidateUUID) id: string, 
+		@Query() query: FindCategoryProductsQueryDto
+	) {
 		console.log('query',query);
 		return this.categoryService.findCategoryProducts(id, query);
 	}

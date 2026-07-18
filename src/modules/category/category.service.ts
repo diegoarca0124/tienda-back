@@ -598,97 +598,96 @@ export class CategoryService {
 		}
 	}
 	
-	async findCategoryProducts(
-		categoryId: string, 
-		query: FindCategoryProductsQueryDto
-	){
-		console.log(query);
-		
-		const skip = (query.page - 1) * query.limit;
-
-		if (
-			(query.minPrice !== undefined && !Number.isFinite(query.minPrice)) ||
-			(query.maxPrice !== undefined && !Number.isFinite(query.maxPrice)) ||
-			(query.minPrice !== undefined && Number(query.minPrice) < 0) ||
-			(query.maxPrice !== undefined && Number(query.maxPrice) < 0) ||
-			(
-				query.minPrice !== undefined &&
-				query.maxPrice !== undefined &&
-				query.minPrice > query.maxPrice
-			)
-		) {
-			query.minPrice = undefined;
-			query.maxPrice = undefined;
-		}
-
-		const exists = await this.categoryRepository.exists({ where: { id: categoryId } });
-		if (!exists) {
-			throw new NotFoundException('No se encontró el registro.');
-		}
-
-		const queryBuilder = this.productRepository
-		.createQueryBuilder('product')
-		.leftJoinAndSelect('product.category', 'category')
-		.leftJoinAndSelect('product.subcategory', 'subcategory')
-		.leftJoinAndSelect('product.brand', 'brand')
-		.select([
-			'product.id',
-			'product.name',
-			'product.cover',
-			'product.status',
-			'product.createdAt',
-			'product.priceRegular',
-			'product.quality',
-			'product.stockQuantity',
-			'product.priceDiscount',
-			'category.id',
-			'category.name',
-			'subcategory.id',
-			'subcategory.name',
-			'subcategory.prefix',
-			'subcategory.code',
-			'brand.id',
-			'brand.name',
-			'brand.logoUrl',
-		])
-		.where('product.categoryId = :categoryId', {
-			categoryId,
-		});
-
-		FindCategoryProductsBuilder.applyFilters(
-			queryBuilder,
-			query
-		);
-
-		let [products, totalProducts] = await queryBuilder
-		.skip(skip)
-		.take(query.limit)
-		.getManyAndCount();
-
-		products = products.map(product => ({
-			...product,
-			quality_label: getQualityLabel(product.quality),
-		}));
-
-		return {
-			products,
-			meta: {
-				totalProducts,
-				totalPages: Math.ceil(totalProducts / query.limit),
-				currentPage: query.page,
-				limit: query.limit,
-			},
-			filters: {
-				filter: query.filter,
-				status: query.status,
-				sort: query.sort,
-				subcategoryIds: query.subcategoryIds,
-				quality: query.quality,
-				visibility: query.visibility,
-				minPrice: query.minPrice,
-				maxPrice: query.maxPrice,
+	async findCategoryProducts(categoryId: string, query: FindCategoryProductsQueryDto){
+		try {
+			const skip = (query.page - 1) * query.limit;
+			if (
+				(query.minPrice !== undefined && !Number.isFinite(query.minPrice)) ||
+				(query.maxPrice !== undefined && !Number.isFinite(query.maxPrice)) ||
+				(query.minPrice !== undefined && Number(query.minPrice) < 0) ||
+				(query.maxPrice !== undefined && Number(query.maxPrice) < 0) ||
+				(
+					query.minPrice !== undefined &&
+					query.maxPrice !== undefined &&
+					query.minPrice > query.maxPrice
+				)
+			) {
+				query.minPrice = undefined;
+				query.maxPrice = undefined;
 			}
-		};
+
+			const exists = await this.categoryRepository.exists({ where: { id: categoryId } });
+			if (!exists) {
+				throw new NotFoundException('No se encontró el registro.');
+			}
+
+			const queryBuilder = this.productRepository
+			.createQueryBuilder('product')
+			.leftJoinAndSelect('product.category', 'category')
+			.leftJoinAndSelect('product.subcategory', 'subcategory')
+			.leftJoinAndSelect('product.brand', 'brand')
+			.select([
+				'product.id',
+				'product.name',
+				'product.cover',
+				'product.status',
+				'product.createdAt',
+				'product.priceRegular',
+				'product.quality',
+				'product.stockQuantity',
+				'product.priceDiscount',
+				'category.id',
+				'category.name',
+				'subcategory.id',
+				'subcategory.name',
+				'subcategory.prefix',
+				'subcategory.code',
+				'brand.id',
+				'brand.name',
+				'brand.logoUrl',
+			])
+			.where('product.categoryId = :categoryId', {
+				categoryId,
+			});
+
+			FindCategoryProductsBuilder.applyFilters(
+				queryBuilder,
+				query
+			);
+
+			let [products, totalProducts] = await queryBuilder
+			.skip(skip)
+			.take(query.limit)
+			.getManyAndCount();
+
+			products = products.map(product => ({
+				...product,
+				quality_label: getQualityLabel(product.quality),
+			}));
+
+			return {
+				products,
+				meta: {
+					totalProducts,
+					totalPages: Math.ceil(totalProducts / query.limit),
+					currentPage: query.page,
+					limit: query.limit,
+				},
+				filters: {
+					filter: query.filter,
+					status: query.status,
+					sort: query.sort,
+					subcategoryIds: query.subcategoryIds,
+					quality: query.quality,
+					visibility: query.visibility,
+					minPrice: query.minPrice,
+					maxPrice: query.maxPrice,
+				}
+			};
+		} catch (err) {
+			if (err) throw err;
+			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
+		}
 	}
 
 	async get_categories_with_subcategories() {

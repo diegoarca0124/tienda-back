@@ -84,24 +84,36 @@ export class FindCategoryProductsQueryDto {
 	visibility: string = 'Todos';
 
 	@IsOptional()
-	@IsNumber({ allowNaN: false, allowInfinity: false })
-	@Transform(({ value }) => {
-		value = rejectRepeatedParameter(value, 'minPrice');
+    @IsString()
+    @Transform(({ value }) => {
+        value = rejectRepeatedParameter(value, 'minPrice');
 
-		if (value === undefined || value === null || value === '') return undefined;
+        if (
+            value === undefined ||
+            value === null ||
+            value === ''
+        ) {
+            return undefined;
+        }
 
-		return Number(value);
-	})
-	minPrice?: string;
+        return String(value).trim();
+    })
+    minPrice?: string;
 
-	@IsOptional()
-	@IsNumber({ allowNaN: false, allowInfinity: false })
-	@Transform(({ value }) => {
-		value = rejectRepeatedParameter(value, 'maxPrice');
+    @IsOptional()
+    @IsString()
+    @Transform(({ value }) => {
+        value = rejectRepeatedParameter(value, 'maxPrice');
 
-		if (value === undefined || value === null || value === '') return undefined;
+        if (
+            value === undefined ||
+            value === null ||
+            value === ''
+        ) {
+            return undefined;
+        }
 
-		return Number(value);
-	})
-	maxPrice?: string;
+        return String(value).trim();
+    })
+    maxPrice?: string;
 }
