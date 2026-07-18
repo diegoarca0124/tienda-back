@@ -70,17 +70,18 @@ export class FindCategoryProductsBuilder {
 		qb.andWhere('product.visibility = :visibility', { visibility });
 	}
 
-	private static applyPrice(qb: SelectQueryBuilder<Product>, minPrice?: string, maxPrice?: string) {
-		if (minPrice) {
-			qb.andWhere(`${PRICE_EXPRESSION} >= :minPrice`, {
-				minPrice: Number(minPrice),
-			});
-		}
-		if (maxPrice) {
-			qb.andWhere(`${PRICE_EXPRESSION} <= :maxPrice`, {
-				maxPrice: Number(maxPrice),
-			});
-		}
+	private static applyPrice(qb: SelectQueryBuilder<Product>,minPrice?: number,maxPrice?: number,) {
+	if (minPrice !== undefined) {
+		qb.andWhere(`${PRICE_EXPRESSION} >= :minPrice`, {
+		minPrice,
+		});
+	}
+
+	if (maxPrice !== undefined) {
+		qb.andWhere(`${PRICE_EXPRESSION} <= :maxPrice`, {
+		maxPrice,
+		});
+	}
 	}
 
 	private static applyQuality(qb: SelectQueryBuilder<Product>, quality: string) {
