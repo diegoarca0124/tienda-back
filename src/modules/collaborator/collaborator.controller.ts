@@ -19,6 +19,8 @@ import { ValidateImportCollaboratorsDto } from './dto/validate-import-collaborat
 import { ValidateImportCollaboratorsInterceptor } from './interceptor/validate-import-collaborators.interceptor';
 import { AuthService } from '@/auth/auth.service';
 import { Public } from '@/auth/decorators/public.decorator';
+import { FindCollaboratorsQueryDto } from './dto/find-collaborators.dto';
+import { QueryParamsErrorsPipe } from '@/common/pipes/query-params-errors.pipe';
 dotenv.config({ path: path.resolve(process.cwd(), `.env.${process.env.NODE_ENV || 'dev'}`) });
 
 @Controller('collaborator')
@@ -68,9 +70,12 @@ export class CollaboratorController {
 		}
 	}
 
-	@Get('get_collaborators')
-	get_collaborators(@Query() query: { filter: string; page: number; limit: number; status: string; sort: string }) {
-		return this.collaboratorService.get_collaborators(query);
+	@Get('getCollaborators')
+	getCollaborators(
+		@Query(new QueryParamsErrorsPipe(FindCollaboratorsQueryDto))
+		query: unknown,
+	) {
+		return this.collaboratorService.getCollaborators(query as FindCollaboratorsQueryDto);
 	}
 
 	@Get('get_collaborator/:id')

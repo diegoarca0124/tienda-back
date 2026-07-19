@@ -24,13 +24,12 @@ export class FindCategoryProductsBuilder {
 	private static applySearch(qb: SelectQueryBuilder<Product>, filter: string): void {
 		const search = filter?.trim();
 		if (!search) return;
-
-		const pattern = `%${escapeLikePattern(search)}%`;
-
-		qb.andWhere(
-			`(product.name ILIKE :pattern ESCAPE '\\' OR product.extract ILIKE :pattern ESCAPE '\\' OR brand.name ILIKE :pattern ESCAPE '\\' OR subcategory.name ILIKE :pattern ESCAPE '\\')`,
-			{ pattern },
-		);
+		const normalizedSearch = search.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+		const pattern = `%${escapeLikePattern(normalizedSearch)}%`;
+		const normalizeField = (field: string) => `translate(lower(COALESCE(${field}, '')), 'áéíóúüñ', 'aeiouun')`;
+		const fields = ['product.name', 'product.extract', 'brand.name', 'subcategory.name'];
+		const conditions = fields.map(field => `${normalizeField(field)} LIKE lower(:pattern) ESCAPE '\\'`).join(' OR ');
+		qb.andWhere(`(${conditions})`, { pattern });
 	}
 
 	private static applyStatus(qb: SelectQueryBuilder<Product>, status: string) {

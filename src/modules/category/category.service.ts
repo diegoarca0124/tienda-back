@@ -601,6 +601,7 @@ export class CategoryService {
 	async findCategoryProducts(categoryId: string, query: FindCategoryProductsQueryDto){
 		try {
 			const skip = (query.page - 1) * query.limit;
+			
 			if (query.minPrice !== undefined && query.maxPrice !== undefined && query.minPrice > query.maxPrice) {
 				throw new BadRequestException({
 					code: 'INVALID_QUERY_PARAMS',

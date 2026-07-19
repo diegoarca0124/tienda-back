@@ -78,11 +78,7 @@ export class CategoryController {
 	@Get('findCategoryProducts/:id')
 	findCategoryProducts(
 		@Param('id', ValidateUUID) id: string, 
-		@Query(
-			new QueryParamsErrorsPipe(
-				FindCategoryProductsQueryDto,
-			)
-		)
+		@Query(new QueryParamsErrorsPipe(FindCategoryProductsQueryDto))
 		query: unknown,
 	) {
 		return this.categoryService.findCategoryProducts(id, query as FindCategoryProductsQueryDto);

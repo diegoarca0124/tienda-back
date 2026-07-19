@@ -23,6 +23,8 @@ import { AuthService } from '@/auth/auth.service';
 import { KibanaService } from '@/common/services/kibana/kibana.service';
 import { getPagination } from '@/common/utils/get-pagination.util';
 import { ALLOWED_EXPORT } from './constants/allowed-export.contant';
+import { FindCollaboratorBuilder } from './builders/find-collaborators.builder';
+import { FindCollaboratorsQueryDto } from './dto/find-collaborators.dto';
 
 dotenv.config({ path: path.resolve(process.cwd(), `.env.${process.env.NODE_ENV || 'dev'}`) });
 
@@ -128,98 +130,49 @@ export class CollaboratorService {
 		};
 	}
 
-	async get_collaborators(query: { filter: string; page: number; limit: number; status?: string; sort?: string }) {
+	async getCollaborators(query: FindCollaboratorsQueryDto) {
 		try {
-			const pagination = getPagination(query.page, query.limit);
-			const queryBuilder = this.collaboratorRepository.createQueryBuilder('collaborator');
+			const skip = (query.page - 1) * query.limit;
 
-			if (query.filter?.trim()) {
-				const searchTerms = query
-					.filter!.trim()
-					.split(/\s+/)
-					.slice(0, 5)
-					.map((t) => t.toLowerCase());
+			const queryBuilder = this.collaboratorRepository
+			.createQueryBuilder('collaborator')
+			.select([
+				'collaborator.id',
+				'collaborator.names',
+				'collaborator.surname',
+				'collaborator.email',
+				'collaborator.fullnames',
+				'collaborator.status',
+				'collaborator.number_document',
+				'collaborator.type_document',
+				'collaborator.prefix',
+				'collaborator.phone',
+				'collaborator.role',
+				'collaborator.createdAt',
+			]);
 
-				const columns = ['collaborator.fullnames', 'collaborator.number_document', 'collaborator.email', 'collaborator.phone', 'collaborator.names'];
-
-				searchTerms.forEach((term, idx) => {
-					const conditions = columns.map((c) => `${c} ILIKE :term${idx}`).join(' OR ');
-					const params = { [`term${idx}`]: `%${term}%` };
-
-					idx === 0 ? queryBuilder.where(`(${conditions})`, params) : queryBuilder.andWhere(`(${conditions})`, params);
-				});
-			}
-
-			if (query.status && query.status !== 'Todos') {
-				const statusBool = query.status === 'Activos';
-				queryBuilder.andWhere('collaborator.status = :status', {
-					status: statusBool,
-				});
-			}
-
-			// ORDENAMIENTO
-			if (query.sort?.trim() && query.sort !== 'Predeterminado') {
-				const [field, direction] = query.sort.split(':');
-
-				if (!field || !direction) {
-					queryBuilder.orderBy('collaborator.createdAt', 'DESC');
-				} else {
-					const fieldMap: Record<string, string> = {
-						name: 'collaborator.names',
-						email: 'collaborator.email',
-						number_document: 'collaborator.number_document',
-					};
-
-					const allowedDirections = ['asc', 'desc'];
-
-					if (
-						fieldMap[field] &&
-						allowedDirections.includes(direction.toLowerCase())
-					) {
-						queryBuilder.orderBy(
-							fieldMap[field],
-							direction.toUpperCase() as 'ASC' | 'DESC',
-						);
-					} else {
-						queryBuilder.orderBy('collaborator.createdAt', 'DESC');
-					}
-				}
-			} else {
-				queryBuilder.orderBy('collaborator.createdAt', 'DESC');
-			}
+			FindCollaboratorBuilder.applyFilters(
+				queryBuilder, query
+			);
 
 			const [collaborators, totalCollaborators] = await queryBuilder
-			.skip(pagination.skip)
-			.take(pagination.limit)
+			.skip(skip)
+			.take(query.limit)
 			.getManyAndCount();
-
-			if (
-				collaborators.length === 0 &&
-				totalCollaborators > 0 &&
-				pagination.page > 1
-			) {
-				const firstPageCollaborators = await queryBuilder
-					.skip(0)
-					.take(pagination.limit)
-					.getMany();
-
-				return {
-					collaborators: firstPageCollaborators,
-					meta: {
-						totalCollaborators,
-						totalPages: Math.ceil(totalCollaborators / pagination.limit),
-						currentPage: 1,
-					},
-				};
-			}
 
 			return {
 				collaborators,
 				meta: {
 					totalCollaborators,
-					totalPages: Math.ceil(totalCollaborators / pagination.limit),
-					currentPage: pagination.page,
+					totalPages: Math.ceil(totalCollaborators / query.limit),
+					currentPage: query.page,
+					limit: query.limit,
 				},
+				filters: {
+					filter: query.filter,
+					status: query.status,
+					sort: query.sort,
+				}
 			};
 		} catch (err: any) {
 			if (err) throw err;
