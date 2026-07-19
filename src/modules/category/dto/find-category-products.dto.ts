@@ -10,8 +10,6 @@ const ALLOWED_VISIBILITY = ['Todos', 'public', 'private'] as const;
 const configuredMaxLimit = Number(process.env.MAX_LIMIT_QUERY);
 const MAX_LIMIT = Number.isSafeInteger(configuredMaxLimit) && configuredMaxLimit > 0 ? configuredMaxLimit : 100;
 
-const UUID_V4 = '[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}';
-
 const rejectRepeatedParameter = (value: unknown, parameter: string): unknown => {
 	if (Array.isArray(value)) {
 		throw new BadRequestException({
@@ -30,6 +28,13 @@ const transformOptionalPrice = (value: unknown, parameter: string): number | und
 	return Number(value);
 };
 
+const transformPositiveInteger = (value: unknown, parameter: string, defaultValue: number): number => {
+	value = rejectRepeatedParameter(value, parameter);
+	if (value === undefined) return defaultValue;
+	if (typeof value !== 'string' || !/^[1-9]\d*$/.test(value)) return Number.NaN;
+	return Number(value);
+};
+
 export class FindCategoryProductsQueryDto {
 	@Transform(({ value }) => {
 		value = rejectRepeatedParameter(value, 'filter');
@@ -39,19 +44,13 @@ export class FindCategoryProductsQueryDto {
 	@MaxLength(150)
 	filter: string = '';
 
-	@Transform(({ value }) => {
-		value = rejectRepeatedParameter(value, 'page');
-		return value === undefined ? 1 : Number(value);
-	})
+	@Transform(({ value }) => transformPositiveInteger(value, 'page', 1))
 	@IsInt()
 	@Min(1)
 	@Max(100_000)
 	page: number = 1;
 
-	@Transform(({ value }) => {
-		value = rejectRepeatedParameter(value, 'limit');
-		return value === undefined ? 10 : Number(value);
-	})
+	@Transform(({ value }) => transformPositiveInteger(value, 'limit', 10))
 	@IsInt()
 	@Min(1)
 	@Max(MAX_LIMIT)
@@ -77,7 +76,7 @@ export class FindCategoryProductsQueryDto {
 		value = rejectRepeatedParameter(value, 'subcategoryIds');
 		if (value === undefined || value === 'Todos') return undefined;
 		if (typeof value !== 'string') return value;
-		return value.split(',').map(id => id.trim().toLowerCase());
+		return [...new Set(value.split(',').map(id => id.trim().toLowerCase()))];
 	})
 	@IsOptional()
 	@IsUUID('4', { each: true })

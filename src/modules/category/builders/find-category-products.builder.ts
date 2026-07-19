@@ -38,7 +38,6 @@ export class FindCategoryProductsBuilder {
 		const terms = filter
 			.trim()
 			.split(/\s+/)
-			.slice(0, 5)
 			.map(term => escapeLikePattern(term.toLowerCase()));
 
 		terms.forEach((term, index) => {
@@ -95,7 +94,7 @@ export class FindCategoryProductsBuilder {
 		}
 	}
 
-		private static applySort(qb: SelectQueryBuilder<Product>, sort: string): void {
+	private static applySort(qb: SelectQueryBuilder<Product>, sort: string): void {
 		if (!sort || sort === 'Predeterminado') {
 			qb.orderBy('product.createdAt', 'DESC').addOrderBy('product.id', 'ASC');
 			return;
