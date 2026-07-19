@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { Transform } from 'class-transformer';
-import { IsIn, IsInt, IsNumber, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator';
+import { IsIn, IsInt, IsNumber, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min, ValidateIf } from 'class-validator';
 
 const ALLOWED_STATUS = ['Todos', 'draft', 'published'] as const;
 const ALLOWED_SORT = ['Predeterminado', 'name:asc', 'name:desc', 'priceRegular:asc', 'priceRegular:desc', 'quality:asc', 'quality:desc', 'stockQuantity:asc', 'stockQuantity:desc'] as const;
@@ -11,7 +11,6 @@ const configuredMaxLimit = Number(process.env.MAX_LIMIT_QUERY);
 const MAX_LIMIT = Number.isSafeInteger(configuredMaxLimit) && configuredMaxLimit > 0 ? configuredMaxLimit : 100;
 
 const UUID_V4 = '[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}';
-const SUBCATEGORY_IDS_REGEX = new RegExp(`^(Todos|${UUID_V4}(,${UUID_V4})*)$`, 'i');
 
 const rejectRepeatedParameter = (value: unknown, parameter: string): unknown => {
 	if (Array.isArray(value)) {
@@ -20,8 +19,15 @@ const rejectRepeatedParameter = (value: unknown, parameter: string): unknown => 
 			message: 'Los parámetros de la URL no son válidos.',
 		});
 	}
-
 	return value;
+};
+
+const transformOptionalPrice = (value: unknown, parameter: string): number | undefined => {
+	value = rejectRepeatedParameter(value, parameter);
+	if (value === undefined) return undefined;
+	if (typeof value !== 'string' || value.trim() === '') return Number.NaN;
+	if (!/^\d+(\.\d+)?$/.test(value.trim())) return Number.NaN;
+	return Number(value);
 };
 
 export class FindCategoryProductsQueryDto {
@@ -69,13 +75,13 @@ export class FindCategoryProductsQueryDto {
 
 	@Transform(({ value }) => {
 		value = rejectRepeatedParameter(value, 'subcategoryIds');
-		if (value === undefined) return 'Todos';
+		if (value === undefined || value === 'Todos') return undefined;
 		if (typeof value !== 'string') return value;
-		return value.split(',').map(id => id.trim()).join(',');
+		return value.split(',').map(id => id.trim().toLowerCase());
 	})
-	@IsString()
-	@Matches(SUBCATEGORY_IDS_REGEX)
-	subcategoryIds: string = 'Todos';
+	@IsOptional()
+	@IsUUID('4', { each: true })
+	subcategoryIds?: string[];
 
 	@Transform(({ value }) => {
 		value = rejectRepeatedParameter(value, 'quality');
@@ -93,21 +99,13 @@ export class FindCategoryProductsQueryDto {
 	@IsIn(ALLOWED_VISIBILITY)
 	visibility: typeof ALLOWED_VISIBILITY[number] = 'Todos';
 
-	@Transform(({ value }) => {
-		value = rejectRepeatedParameter(value, 'minPrice');
-		if (value === undefined) return undefined;
-		return value === '' ? Number.NaN : Number(value);
-	})
+	@Transform(({ value }) => transformOptionalPrice(value, 'minPrice'))
 	@IsOptional()
 	@IsNumber({ allowNaN: false, allowInfinity: false })
 	@Min(0)
 	minPrice?: number;
 
-	@Transform(({ value }) => {
-		value = rejectRepeatedParameter(value, 'maxPrice');
-		if (value === undefined) return undefined;
-		return value === '' ? Number.NaN : Number(value);
-	})
+	@Transform(({ value }) => transformOptionalPrice(value, 'maxPrice'))
 	@IsOptional()
 	@IsNumber({ allowNaN: false, allowInfinity: false })
 	@Min(0)

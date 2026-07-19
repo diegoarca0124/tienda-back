@@ -19,14 +19,9 @@ export class FindCategoryProductsBuilder {
 		this.applySort(qb, query.sort);
 	}
 
-	private static applySubcategory(qb: SelectQueryBuilder<Product>, subcategoryIds?: string) {
-		if (!subcategoryIds || subcategoryIds === 'Todos') return;
-
-		const ids = subcategoryIds.split(',').map(id => id.trim()).filter(Boolean);
-
-		if (!ids.length) return;
-
-		qb.andWhere('product.subcategoryId IN (:...ids)', { ids });
+	private static applySubcategory(qb: SelectQueryBuilder<Product>, subcategoryIds?: string[]): void {
+		if (!subcategoryIds?.length) return;
+		qb.andWhere('product.subcategoryId IN (:...subcategoryIds)', { subcategoryIds });
 	}
 
 	private static applySearch(qb: SelectQueryBuilder<Product>, filter: string) {
@@ -100,54 +95,32 @@ export class FindCategoryProductsBuilder {
 		}
 	}
 
-	private static applySort(
-        qb: SelectQueryBuilder<Product>,
-        sort: string,
-    ) {
-        if (!sort || sort === 'Predeterminado') {
-            qb.orderBy('product.createdAt', 'DESC');
-            return;
-        }
+		private static applySort(qb: SelectQueryBuilder<Product>, sort: string): void {
+		if (!sort || sort === 'Predeterminado') {
+			qb.orderBy('product.createdAt', 'DESC').addOrderBy('product.id', 'ASC');
+			return;
+		}
 
-        const [field, direction] = sort.split(':');
-        const order = direction?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+		const [field, direction] = sort.split(':');
+		const order = direction === 'asc' ? 'ASC' : 'DESC';
 
-        switch (field) {
-            case 'name':
-                qb.orderBy('product.name', order);
-                break;
+		switch (field) {
+			case 'name':
+				qb.orderBy('product.name', order);
+				break;
+			case 'quality':
+				qb.orderBy('product.quality', order);
+				break;
+			case 'stockQuantity':
+				qb.orderBy('product.stockQuantity', order);
+				break;
+			case 'priceRegular':
+				qb.addSelect(PRICE_EXPRESSION, 'sort_price').orderBy('sort_price', order);
+				break;
+			default:
+				qb.orderBy('product.createdAt', 'DESC');
+		}
 
-            case 'description':
-                qb.orderBy('product.description', order);
-                break;
-
-            case 'quality':
-                qb.orderBy('product.quality', order);
-                break;
-
-            case 'stockQuantity':
-                qb.orderBy('product.stockQuantity', order);
-                break;
-
-            case 'categoryId':
-                qb.orderBy('category.name', order);
-                break;
-
-            case 'priceRegular':
-                qb.addSelect(
-                    `CASE
-                        WHEN product."priceDiscount" > 0
-                        THEN product."priceDiscount"
-                        ELSE product."priceRegular"
-                    END`,
-                    'sort_price',
-                );
-
-                qb.orderBy('sort_price', order);
-            break;
-
-            default:
-                qb.orderBy('product.createdAt', 'DESC');
-        }
-    }
+		qb.addOrderBy('product.id', 'ASC');
+	}
 }

@@ -601,28 +601,12 @@ export class CategoryService {
 	async findCategoryProducts(categoryId: string, query: FindCategoryProductsQueryDto){
 		try {
 			const skip = (query.page - 1) * query.limit;
-			let minPrice = query.minPrice;
-			let maxPrice = query.maxPrice;
-
-			const invalidPrices =
-				(minPrice !== undefined && (!Number.isFinite(minPrice) || minPrice < 0)) ||
-				(maxPrice !== undefined && (!Number.isFinite(maxPrice) || maxPrice < 0)) ||
-				(
-					minPrice !== undefined &&
-					maxPrice !== undefined &&
-					minPrice > maxPrice
-				);
-
-			if (invalidPrices) {
-				minPrice = undefined;
-				maxPrice = undefined;
+			if (query.minPrice !== undefined && query.maxPrice !== undefined && query.minPrice > query.maxPrice) {
+				throw new BadRequestException({
+					code: 'INVALID_QUERY_PARAMS',
+					message: 'Los parámetros de la URL no son válidos.',
+				});
 			}
-
-			const normalizedQuery = {
-				...query,
-				minPrice,
-				maxPrice,
-			};
 
 			const exists = await this.categoryRepository.exists({ where: { id: categoryId } });
 			if (!exists) {
@@ -659,8 +643,7 @@ export class CategoryService {
 			});
 
 			FindCategoryProductsBuilder.applyFilters(
-				queryBuilder,
-				query
+				queryBuilder, query
 			);
 
 			let [products, totalProducts] = await queryBuilder
