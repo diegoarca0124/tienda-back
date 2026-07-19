@@ -22,9 +22,9 @@ export class FindCollaboratorBuilder {
         qb.andWhere(`(${conditions})`, { pattern });
     }
 
-    private static applyStatus(qb: SelectQueryBuilder<Collaborator>, status: string) {
-        if (!status || status === 'Todos') return;
-        qb.andWhere('collaborator.status = :status', { status });
+    private static applyStatus(qb: SelectQueryBuilder<Collaborator>, status: string): void {
+        if (status === 'Todos') return;
+        qb.andWhere('collaborator.status = :status', { status: status === 'Activos' });
     }
 
     private static applySort(qb: SelectQueryBuilder<Collaborator>, sort: string): void {

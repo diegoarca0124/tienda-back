@@ -21,7 +21,6 @@ import { ExportCollaboratorsDto } from './dto/export-colllaborators.dto';
 import { ValidateImportCollaboratorsDto } from './dto/validate-import-collaborators.dto';
 import { AuthService } from '@/auth/auth.service';
 import { KibanaService } from '@/common/services/kibana/kibana.service';
-import { getPagination } from '@/common/utils/get-pagination.util';
 import { ALLOWED_EXPORT } from './constants/allowed-export.contant';
 import { FindCollaboratorBuilder } from './builders/find-collaborators.builder';
 import { FindCollaboratorsQueryDto } from './dto/find-collaborators.dto';

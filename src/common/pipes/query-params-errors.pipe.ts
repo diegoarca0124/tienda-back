@@ -13,6 +13,7 @@ export class QueryParamsErrorsPipe implements PipeTransform {
         this.validationPipe = new ValidationPipe({
             transform: true,
             whitelist: true,
+            forbidNonWhitelisted: true,
             exceptionFactory: () =>
                 new BadRequestException({
                     code: 'INVALID_QUERY_PARAMS',
