@@ -20,6 +20,7 @@ import { UpdateCatSubcatProductsDto } from './dto/update-catsubcat-products.dto'
 import { UpdateCategoryInSubcategoryDto } from './dto/update-category-in-subcategory.dto';
 import { UpdateCategoryInSubcategoryInterceptor } from './interceptor/update-category-in-subcategory.interceptor';
 import { FindCategoryProductsQueryDto } from './dto/find-category-products.dto';
+import { QueryParamsErrorsPipe } from '@/common/pipes/query-params-errors.pipe';
 
 @Controller('category')
 export class CategoryController {
@@ -77,10 +78,14 @@ export class CategoryController {
 	@Get('findCategoryProducts/:id')
 	findCategoryProducts(
 		@Param('id', ValidateUUID) id: string, 
-		@Query() query: FindCategoryProductsQueryDto
+		@Query(
+			new QueryParamsErrorsPipe(
+				FindCategoryProductsQueryDto,
+			)
+		)
+		query: unknown,
 	) {
-		console.log('query',query);
-		return this.categoryService.findCategoryProducts(id, query);
+		return this.categoryService.findCategoryProducts(id, query as FindCategoryProductsQueryDto);
 	}
 
 	@Get('get_categories_with_subcategories')

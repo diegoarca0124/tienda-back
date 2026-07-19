@@ -1,111 +1,115 @@
 import { BadRequestException } from '@nestjs/common';
 import { Transform } from 'class-transformer';
-import { IsInt, IsNumber, IsOptional, IsString, isUUID } from 'class-validator';
+import { IsIn, IsInt, IsNumber, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator';
 
 const ALLOWED_STATUS = ['Todos', 'draft', 'published'] as const;
 const ALLOWED_SORT = ['Predeterminado', 'name:asc', 'name:desc', 'priceRegular:asc', 'priceRegular:desc', 'quality:asc', 'quality:desc', 'stockQuantity:asc', 'stockQuantity:desc'] as const;
-const MAX_LIMIT = Number(process.env.MAX_LIMIT_QUERY || 100);
-const ALLOWED_QUALITY = ['Todos', 'low', 'high', 'medium'] as const;
+const ALLOWED_QUALITY = ['Todos', 'low', 'medium', 'high'] as const;
 const ALLOWED_VISIBILITY = ['Todos', 'public', 'private'] as const;
 
-const rejectRepeatedParameter = (value: unknown, parameter: string) => {
-    console.log('rejectRepeatedParameter',value);
-    
+const configuredMaxLimit = Number(process.env.MAX_LIMIT_QUERY);
+const MAX_LIMIT = Number.isSafeInteger(configuredMaxLimit) && configuredMaxLimit > 0 ? configuredMaxLimit : 100;
+
+const UUID_V4 = '[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}';
+const SUBCATEGORY_IDS_REGEX = new RegExp(`^(Todos|${UUID_V4}(,${UUID_V4})*)$`, 'i');
+
+const rejectRepeatedParameter = (value: unknown, parameter: string): unknown => {
 	if (Array.isArray(value)) {
-		throw new BadRequestException(`El parámetro "${parameter}" no puede enviarse más de una vez.`);
+		throw new BadRequestException({
+			code: 'INVALID_QUERY_PARAMS',
+			message: 'Los parámetros de la URL no son válidos.',
+		});
 	}
 
 	return value;
 };
 
 export class FindCategoryProductsQueryDto {
-	@IsOptional()
-	@IsString()
 	@Transform(({ value }) => {
 		value = rejectRepeatedParameter(value, 'filter');
-		return typeof value === 'string' ? value.trim() : '';
+		return value === undefined ? '' : typeof value === 'string' ? value.trim() : value;
 	})
+	@IsString()
+	@MaxLength(150)
 	filter: string = '';
 
-	@IsInt()
 	@Transform(({ value }) => {
 		value = rejectRepeatedParameter(value, 'page');
-		const page = Number(value);
-		return Number.isSafeInteger(page) && page > 0 && page <= 100000 ? page : 1;
+		return value === undefined ? 1 : Number(value);
 	})
+	@IsInt()
+	@Min(1)
+	@Max(100_000)
 	page: number = 1;
 
-	@IsInt()
 	@Transform(({ value }) => {
 		value = rejectRepeatedParameter(value, 'limit');
-		const limit = Number(value);
-		return Number.isSafeInteger(limit) && limit > 0 ? Math.min(limit, MAX_LIMIT) : 10;
+		return value === undefined ? 10 : Number(value);
 	})
+	@IsInt()
+	@Min(1)
+	@Max(MAX_LIMIT)
 	limit: number = 10;
 
-	@IsString()
 	@Transform(({ value }) => {
 		value = rejectRepeatedParameter(value, 'status');
-		return typeof value === 'string' && ALLOWED_STATUS.includes(value as any) ? value : 'Todos';
+		return value === undefined ? 'Todos' : value;
 	})
-	status: string = 'Todos';
-
 	@IsString()
+	@IsIn(ALLOWED_STATUS)
+	status: typeof ALLOWED_STATUS[number] = 'Todos';
+
 	@Transform(({ value }) => {
 		value = rejectRepeatedParameter(value, 'sort');
-		return typeof value === 'string' && ALLOWED_SORT.includes(value as any) ? value : 'Predeterminado';
+		return value === undefined ? 'Predeterminado' : value;
 	})
-	sort: string = 'Predeterminado';
-
 	@IsString()
+	@IsIn(ALLOWED_SORT)
+	sort: typeof ALLOWED_SORT[number] = 'Predeterminado';
+
 	@Transform(({ value }) => {
 		value = rejectRepeatedParameter(value, 'subcategoryIds');
-
-		if (typeof value !== 'string' || !value.trim()) return 'Todos';
-
-		const ids = value.split(',').map(id => id.trim()).filter(id => isUUID(id));
-
-		return ids.length ? ids.join(',') : 'Todos';
+		if (value === undefined) return 'Todos';
+		if (typeof value !== 'string') return value;
+		return value.split(',').map(id => id.trim()).join(',');
 	})
+	@IsString()
+	@Matches(SUBCATEGORY_IDS_REGEX)
 	subcategoryIds: string = 'Todos';
 
-	@IsString()
 	@Transform(({ value }) => {
 		value = rejectRepeatedParameter(value, 'quality');
-		return typeof value === 'string' && ALLOWED_QUALITY.includes(value as any) ? value : 'Todos';
+		return value === undefined ? 'Todos' : value;
 	})
-	quality: string = 'Todos';
-
 	@IsString()
+	@IsIn(ALLOWED_QUALITY)
+	quality: typeof ALLOWED_QUALITY[number] = 'Todos';
+
 	@Transform(({ value }) => {
 		value = rejectRepeatedParameter(value, 'visibility');
-		return typeof value === 'string' && ALLOWED_VISIBILITY.includes(value as any) ? value : 'Todos';
+		return value === undefined ? 'Todos' : value;
 	})
-	visibility: string = 'Todos';
+	@IsString()
+	@IsIn(ALLOWED_VISIBILITY)
+	visibility: typeof ALLOWED_VISIBILITY[number] = 'Todos';
 
+	@Transform(({ value }) => {
+		value = rejectRepeatedParameter(value, 'minPrice');
+		if (value === undefined) return undefined;
+		return value === '' ? Number.NaN : Number(value);
+	})
 	@IsOptional()
 	@IsNumber({ allowNaN: false, allowInfinity: false })
-	@Transform(({ value }) => {
-	value = rejectRepeatedParameter(value, 'minPrice');
-
-	if (value === undefined || value === null || value === '') {
-		return undefined;
-	}
-
-	return Number(value);
-	})
+	@Min(0)
 	minPrice?: number;
 
+	@Transform(({ value }) => {
+		value = rejectRepeatedParameter(value, 'maxPrice');
+		if (value === undefined) return undefined;
+		return value === '' ? Number.NaN : Number(value);
+	})
 	@IsOptional()
 	@IsNumber({ allowNaN: false, allowInfinity: false })
-	@Transform(({ value }) => {
-	value = rejectRepeatedParameter(value, 'maxPrice');
-
-	if (value === undefined || value === null || value === '') {
-		return undefined;
-	}
-
-	return Number(value);
-	})
+	@Min(0)
 	maxPrice?: number;
 }

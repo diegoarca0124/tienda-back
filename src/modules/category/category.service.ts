@@ -601,20 +601,28 @@ export class CategoryService {
 	async findCategoryProducts(categoryId: string, query: FindCategoryProductsQueryDto){
 		try {
 			const skip = (query.page - 1) * query.limit;
-			if (
-				(query.minPrice !== undefined && !Number.isFinite(query.minPrice)) ||
-				(query.maxPrice !== undefined && !Number.isFinite(query.maxPrice)) ||
-				(query.minPrice !== undefined && Number(query.minPrice) < 0) ||
-				(query.maxPrice !== undefined && Number(query.maxPrice) < 0) ||
+			let minPrice = query.minPrice;
+			let maxPrice = query.maxPrice;
+
+			const invalidPrices =
+				(minPrice !== undefined && (!Number.isFinite(minPrice) || minPrice < 0)) ||
+				(maxPrice !== undefined && (!Number.isFinite(maxPrice) || maxPrice < 0)) ||
 				(
-					query.minPrice !== undefined &&
-					query.maxPrice !== undefined &&
-					query.minPrice > query.maxPrice
-				)
-			) {
-				query.minPrice = undefined;
-				query.maxPrice = undefined;
+					minPrice !== undefined &&
+					maxPrice !== undefined &&
+					minPrice > maxPrice
+				);
+
+			if (invalidPrices) {
+				minPrice = undefined;
+				maxPrice = undefined;
 			}
+
+			const normalizedQuery = {
+				...query,
+				minPrice,
+				maxPrice,
+			};
 
 			const exists = await this.categoryRepository.exists({ where: { id: categoryId } });
 			if (!exists) {
