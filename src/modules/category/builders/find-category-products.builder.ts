@@ -6,10 +6,7 @@ import { escapeLikePattern } from '@/common/utils/escape-like-pattern.util';
 const PRICE_EXPRESSION = `COALESCE(NULLIF(product."priceDiscount", 0), product."priceRegular")`;
 
 export class FindCategoryProductsBuilder {
-	static applyFilters(
-		qb: SelectQueryBuilder<Product>,
-		query: FindCategoryProductsQueryDto,
-	) {
+	static applyFilters(qb: SelectQueryBuilder<Product>,query: FindCategoryProductsQueryDto) {
 		this.applySubcategory(qb, query.subcategoryIds);
 		this.applySearch(qb, query.filter);
 		this.applyStatus(qb, query.status);
@@ -24,38 +21,20 @@ export class FindCategoryProductsBuilder {
 		qb.andWhere('product.subcategoryId IN (:...subcategoryIds)', { subcategoryIds });
 	}
 
-	private static applySearch(qb: SelectQueryBuilder<Product>, filter: string) {
-		if (!filter?.trim()) return;
+	private static applySearch(qb: SelectQueryBuilder<Product>, filter: string): void {
+		const search = filter?.trim();
+		if (!search) return;
 
-		const columns = [
-			'product.name',
-			'product.description',
-			'product.extract',
-			'brand.name',
-			'subcategory.name',
-		];
+		const pattern = `%${escapeLikePattern(search)}%`;
 
-		const terms = filter
-			.trim()
-			.split(/\s+/)
-			.map(term => escapeLikePattern(term.toLowerCase()));
-
-		terms.forEach((term, index) => {
-			const conditions = columns
-				.map(column => `${column} ILIKE :term${index} ESCAPE '\\'`)
-				.join(' OR ');
-
-			qb.andWhere(`(${conditions})`, {
-				[`term${index}`]: `%${term}%`,
-			});
-		});
+		qb.andWhere(
+			`(product.name ILIKE :pattern ESCAPE '\\' OR product.extract ILIKE :pattern ESCAPE '\\' OR brand.name ILIKE :pattern ESCAPE '\\' OR subcategory.name ILIKE :pattern ESCAPE '\\')`,
+			{ pattern },
+		);
 	}
 
 	private static applyStatus(qb: SelectQueryBuilder<Product>, status: string) {
-		if (!status || status === 'Todos') {
-			return;
-		}
-
+		if (!status || status === 'Todos') return;
 		qb.andWhere('product.status = :status', { status });
 	}
 
@@ -65,17 +44,17 @@ export class FindCategoryProductsBuilder {
 	}
 
 	private static applyPrice(qb: SelectQueryBuilder<Product>,minPrice?: number,maxPrice?: number,) {
-	if (minPrice !== undefined) {
-		qb.andWhere(`${PRICE_EXPRESSION} >= :minPrice`, {
-		minPrice,
-		});
-	}
+		if (minPrice !== undefined) {
+			qb.andWhere(`${PRICE_EXPRESSION} >= :minPrice`, {
+			minPrice,
+			});
+		}
 
-	if (maxPrice !== undefined) {
-		qb.andWhere(`${PRICE_EXPRESSION} <= :maxPrice`, {
-		maxPrice,
-		});
-	}
+		if (maxPrice !== undefined) {
+			qb.andWhere(`${PRICE_EXPRESSION} <= :maxPrice`, {
+			maxPrice,
+			});
+		}
 	}
 
 	private static applyQuality(qb: SelectQueryBuilder<Product>, quality: string) {
