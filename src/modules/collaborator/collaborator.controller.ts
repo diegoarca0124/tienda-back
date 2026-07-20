@@ -14,8 +14,8 @@ import { UpdateStatusCollaboratorsInterceptor } from './interceptor/update-statu
 import { ExportCollaboratorsDto } from './dto/export-colllaborators.dto';
 import { ExportCollaboratorsInterceptor } from './interceptor/export-colllaborators.interceptor';
 import type { Response } from 'express';
-import { ValidateImportCollaboratorsDto } from './dto/validate-import-collaborators.dto';
-import { ValidateImportCollaboratorsInterceptor } from './interceptor/validate-import-collaborators.interceptor';
+import { ImportCollaboratorsDto } from './dto/import-collaborators.dto';
+import { ImportCollaboratorsInterceptor } from './interceptor/import-collaborators.interceptor';
 import { AuthService } from '@/auth/auth.service';
 import { Public } from '@/auth/decorators/public.decorator';
 import { FindCollaboratorsQueryDto } from './dto/find-collaborators.dto';
@@ -31,10 +31,13 @@ export class CollaboratorController {
 		private readonly authService: AuthService
 	) {}
 
-	@Post('create_collaborator')
+	@Post('createCollaborator')
 	@UseInterceptors(CreateCollaboratorInterceptor)
-	create_collaborator(@Body() createCollaboratorDto: CreateCollaboratorDto, @Req() request): Promise<any> {
-		return this.collaboratorService.create_collaborator(createCollaboratorDto, request);
+	createCollaborator(
+		@Body() dto: CreateCollaboratorDto, 
+		@Req() request
+	): Promise<any> {
+		return this.collaboratorService.createCollaborator(dto, request);
 	}
 
 	@Post('login')
@@ -79,19 +82,21 @@ export class CollaboratorController {
 		return this.collaboratorService.getCollaborators(query as FindCollaboratorsQueryDto);
 	}
 
-	@Get('get_collaborator/:id')
-	get_collaborator(@Param('id', ValidateUUID) id) {
-		return this.collaboratorService.get_collaborator(id);
+	@Get('getCollaborator/:id')
+	getCollaborator(
+		@Param('id', ValidateUUID) id
+	) {
+		return this.collaboratorService.getCollaborator(id);
 	}
 
-	@Put('update_collaborator/:id')
+	@Put('updateCollaborator/:id')
 	@UseInterceptors(EditCollaboratorInterceptor)
-	update_collaborator(
+	updateCollaborator(
 		@Param('id', ValidateUUID) id: string,
-		@Body() editCollaboratorDto: EditCollaboratorDto,
+		@Body() dto: EditCollaboratorDto,
 		@Req() request
-	): Promise<{ success: boolean; message: string; data: Collaborator }> {
-		return this.collaboratorService.update_collaborator(id, editCollaboratorDto, request);
+	): Promise<{ data: Collaborator; message: string }> {
+		return this.collaboratorService.updateCollaborator(id, dto, request);
 	}
 
 	@Put('updateCollaboratorStatus/:id')
@@ -106,23 +111,30 @@ export class CollaboratorController {
 	@Post('updateCollaboratorsStatus')
 	@UseInterceptors(UpdateStatusCollaboratorsInterceptor)
 	updateCollaboratorsStatus(
-		@Body() updateCollaboratorsStatusDto: UpdateCollaboratorsStatusDto, 
+		@Body() dto: UpdateCollaboratorsStatusDto, 
 		@Req() request
 	): Promise<{ data: any; message: string }> {
-		return this.collaboratorService.updateCollaboratorsStatus(updateCollaboratorsStatusDto, request);
+		return this.collaboratorService.updateCollaboratorsStatus(dto, request);
 	}
 
-	@Post('export_collaborators')
+	@Post('exportCollaborators')
+	@HttpCode(HttpStatus.OK)
 	@UseInterceptors(ExportCollaboratorsInterceptor)
-	async export_collaborators(@Body() exportCollaboratorsDto: ExportCollaboratorsDto, @Req() request): Promise<any> {
-		const result = await this.collaboratorService.export_collaborators(exportCollaboratorsDto, request);
+	async exportCollaborators(
+		@Body() exportCollaboratorsDto: ExportCollaboratorsDto, 
+		@Req() request
+	): Promise<any> {
+		const result = await this.collaboratorService.exportCollaborators(exportCollaboratorsDto, request);
 		return result;
 	}
 
-	@Post('validate_import_collaborators')
-	@UseInterceptors(ValidateImportCollaboratorsInterceptor)
-	async validate_import_collaborators(@Body() validateImportCollaboratorsDto: ValidateImportCollaboratorsDto, @Req() request): Promise<any> {
-		const result = await this.collaboratorService.validate_import_collaborators(validateImportCollaboratorsDto, request);
+	@Post('importCollaborators')
+	@UseInterceptors(ImportCollaboratorsInterceptor)
+	async importCollaborators(
+		@Body() dto: ImportCollaboratorsDto, 
+		@Req() request
+	): Promise<any> {
+		const result = await this.collaboratorService.importCollaborators(dto, request);
 		return result;
 	}
 }

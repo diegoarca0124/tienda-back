@@ -2,8 +2,7 @@ import { capitalizeWords, normalizeText } from '@/common/utils/string.util';
 import { Transform, Type } from 'class-transformer';
 import { IsDefined, IsEmail, IsIn, IsNotEmpty, IsNotEmptyObject, IsObject, IsOptional, IsString, Matches, MaxLength, MinLength, ValidateIf, ValidateNested } from 'class-validator';
 import { IsValidDocumentNumber } from '../validators/valid-document-number.validator';
-
-const DOCUMENT_VALUES = ['DNI', 'CE - Carné de Extranjería', 'Pasaporte'];
+import { ALLOWED_DOCUMENT } from '../constants/allowed-document.constant';
 
 export class EditCollaboratorDto {
 	@Transform(({ value }) => capitalizeWords(value))
@@ -47,7 +46,7 @@ export class EditCollaboratorDto {
 	@IsDefined({ message: 'El correo es obligatorio.' })
 	readonly email: string;
 
-	@IsIn(DOCUMENT_VALUES, { message: 'El tipo de documento no es válido.' })
+	@IsIn(ALLOWED_DOCUMENT, { message: 'El tipo de documento no es válido.' })
 	@IsString({ message: 'El tipo de documento debe ser texto.' })
 	@IsNotEmpty({ message: 'El tipo de documento no debe estar vacío.' })
 	@IsDefined({ message: 'El tipo de documento es obligatorio.' })

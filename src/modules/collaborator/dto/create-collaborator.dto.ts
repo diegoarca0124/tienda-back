@@ -2,11 +2,10 @@ import { capitalizeWords, normalizeText } from '@/common/utils/string.util';
 import { Transform } from 'class-transformer';
 import { IsDefined, IsEmail, IsIn, IsNotEmpty, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 import { IsValidDocumentNumber } from '../validators/valid-document-number.validator';
-
-const DOCUMENT_VALUES = ['DNI', 'CE - Carné de Extranjería', 'Pasaporte'];
+import { ALLOWED_DOCUMENT } from '../constants/allowed-document.constant';
 
 export class CreateCollaboratorDto {
-	@Transform(({ value }) => capitalizeWords(value))
+	@Transform(({ value }) => typeof value === 'string'? capitalizeWords(value): value,)
 	@MaxLength(50, { message: 'El nombre debe tener máximo 50 caracteres.' })
 	@MinLength(3, { message: 'El nombre debe tener minimo 3 caracteres.' })
 	@IsString({ message: 'El nombre debe ser una cadena de caracteres.' })
@@ -14,7 +13,7 @@ export class CreateCollaboratorDto {
 	@IsDefined({ message: 'El nombre es obligatorio.' })
 	readonly names: string;
 
-	@Transform(({ value }) => capitalizeWords(value))
+	@Transform(({ value }) => typeof value === 'string'? capitalizeWords(value): value,)
 	@MaxLength(50, { message: 'El apellido debe tener máximo 50 caracteres.' })
 	@MinLength(3, { message: 'El apellido debe tener minimo 3 caracteres.' })
 	@IsString({ message: 'El apellido debe ser una cadena de caracteres.' })
@@ -47,7 +46,7 @@ export class CreateCollaboratorDto {
 	@IsDefined({ message: 'El correo es obligatorio.' })
 	readonly email: string;
 
-	@IsIn(DOCUMENT_VALUES, { message: 'El tipo de documento no es válido.' })
+	@IsIn(ALLOWED_DOCUMENT, { message: 'El tipo de documento no es válido.' })
 	@IsString({ message: 'El tipo de documento debe ser texto.' })
 	@IsNotEmpty({ message: 'El tipo de documento no debe estar vacío.' })
 	@IsDefined({ message: 'El tipo de documento es obligatorio.' })

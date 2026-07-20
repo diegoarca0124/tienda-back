@@ -11,5 +11,5 @@ export const ALLOWED_EXPORT = [
     'createdAt',
     'updatedAt',
     'statusAt',
-    'lastDateLogin',
+    'lastDatelogin',
 ]

@@ -3,18 +3,18 @@ import { BaseValidationInterceptor } from '@/common/interceptors/base-validation
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { CollaboratorService } from '../collaborator.service';
-import { ValidateImportCollaboratorDto, ValidateImportCollaboratorsDto } from '../dto/validate-import-collaborators.dto';
+import { ImportCollaboratorsDto, ValidateImportCollaboratorDto } from '../dto/import-collaborators.dto';
 import { CreateCollaboratorDto } from '../dto/create-collaborator.dto';
 import { CollaboratorValidator } from '../validators/collaborator.validator';
 
 @Injectable()
-export class ValidateImportCollaboratorsInterceptor extends BaseValidationInterceptor<ValidateImportCollaboratorsDto> {
+export class ImportCollaboratorsInterceptor extends BaseValidationInterceptor<ImportCollaboratorsDto> {
 	constructor(private readonly collaboratorValidator: CollaboratorValidator) {
 		super();
 	}
 
 	protected getDtoClass() {
-		return ValidateImportCollaboratorsDto;
+		return ImportCollaboratorsDto;
 	}
 
 	protected async validateBody(body: any): Promise<{ field: string; message: any }[]> {

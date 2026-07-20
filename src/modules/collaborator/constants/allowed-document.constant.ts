@@ -1,0 +1,1 @@
+export const ALLOWED_DOCUMENT = ['DNI', 'CE - Carné de Extranjería', 'Pasaporte'];

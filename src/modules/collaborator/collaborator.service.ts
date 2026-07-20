@@ -17,14 +17,14 @@ import { EditCollaboratorDto } from './dto/edit-collaborator.dto';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 import { ExportCollaboratorsDto } from './dto/export-colllaborators.dto';
-import { ValidateImportCollaboratorsDto } from './dto/validate-import-collaborators.dto';
+import { ImportCollaboratorsDto } from './dto/import-collaborators.dto';
 import { AuthService } from '@/auth/auth.service';
 import { KibanaService } from '@/common/services/kibana/kibana.service';
-import { ALLOWED_EXPORT } from './constants/allowed-export.contant';
 import { FindCollaboratorBuilder } from './builders/find-collaborators.builder';
 import { FindCollaboratorsQueryDto } from './dto/find-collaborators.dto';
 import { UpdateCollaboratorStatusDto } from './dto/update-collaborator-status.dto';
 import { UpdateCollaboratorsStatusDto } from './dto/update-collaborators-status.dto';
+import { ALLOWED_EXPORT } from './constants/allowed-export.constant';
 
 dotenv.config({ path: path.resolve(process.cwd(), `.env.${process.env.NODE_ENV || 'dev'}`) });
 
@@ -36,15 +36,15 @@ export class CollaboratorService {
 		private kibanaService: KibanaService
 	) {}
 
-	async create_collaborator(createCollaboratorDto: CreateCollaboratorDto, request: any) {
+	async createCollaborator(dto: CreateCollaboratorDto, request: any) {
 		try {
 			const result = await this.collaboratorRepository
 				.createQueryBuilder()
 				.insert()
 				.into(Collaborator)
 				.values({
-					...createCollaboratorDto,
-					password: await hashPassword(createCollaboratorDto.password),
+					...dto,
+					password: await hashPassword(dto.password),
 				})
 				.returning(['id'])
 				.execute();
@@ -55,11 +55,13 @@ export class CollaboratorService {
 				throw new InternalServerErrorException('No se pudo registrar el colaborador.');
 			}
 
+			const { password, ...safeData } = dto;
+
 			this.kibanaService.audit({
-				action: 'create_collaborator',
+				action: 'createCollaborator',
 				performedBy: request.user.id,
 				targetId: '',
-				requestBody: JSON.stringify(createCollaboratorDto),
+				requestBody: JSON.stringify(safeData),
 				response: JSON.stringify({ id }),
 				requestId: request.requestId,
 			});
@@ -180,7 +182,7 @@ export class CollaboratorService {
 		}
 	}
 
-	async get_collaborator(id: string) {
+	async getCollaborator(id: string) {
 		try {
 			const collaborator = await this.collaboratorRepository
 				.createQueryBuilder('collaborator')
@@ -215,7 +217,7 @@ export class CollaboratorService {
 		}
 	}
 
-	async update_collaborator(id: string, editCollaboratorDto: EditCollaboratorDto, request: any) {
+	async updateCollaborator(id: string, dto: EditCollaboratorDto, request: any) {
 		const exists = await this.collaboratorRepository.exists({
 			where: { id },
 		});
@@ -225,7 +227,7 @@ export class CollaboratorService {
 		}
 
 		const updateData = {
-			...editCollaboratorDto,
+			...dto,
 			updatedAt: () => 'CURRENT_TIMESTAMP',
 		};
 
@@ -266,10 +268,10 @@ export class CollaboratorService {
 				throw new InternalServerErrorException('No se pudo recuperar el registro actualizado.');
 			}
 
-			const { password, ...safeData } = editCollaboratorDto;
+			const { password, ...safeData } = dto;
 			
 			this.kibanaService.audit({
-				action: 'update_collaborator',
+				action: 'updateCollaborator',
 				performedBy: request.user.id,
 				targetId: id,
 				requestBody: JSON.stringify(safeData),
@@ -278,7 +280,6 @@ export class CollaboratorService {
 			});
 
 			return {
-				success: true,
 				message: 'Registro actualizado correctamente.',
 				data: result.raw[0],
 			};
@@ -318,7 +319,7 @@ export class CollaboratorService {
 			const updatedCollaborator = result.raw[0];
 
 			this.kibanaService.audit({
-				action: 'update_status_collaborator',
+				action: 'updateCollaboratorStatus',
 				performedBy: request.user.id,
 				targetId: id,
 				requestBody: JSON.stringify(dto),
@@ -365,7 +366,7 @@ export class CollaboratorService {
 			const updatedIds: string[] = result.raw.map((item: { id: string }) => item.id);
 
 			this.kibanaService.audit({
-				action: 'update_status_collaborators',
+				action: 'updateCollaboratorsStatus',
 				performedBy: request.user.id,
 				targetId: updatedIds,
 				requestBody: JSON.stringify(dto),
@@ -386,112 +387,80 @@ export class CollaboratorService {
 		}
 	}
 
-	async export_collaborators(exportCollaboratorsDto: ExportCollaboratorsDto, request: any) {
-		try {
+	async exportCollaborators(dto: ExportCollaboratorsDto, request: any) {
+		const allowedFields = new Set(ALLOWED_EXPORT);
+		const fields = dto.data.filter(({ checked, field }) => checked && allowedFields.has(field)).map(({ field }) => field);
 
-			const allowedFields = new Set(ALLOWED_EXPORT);
+		if (!fields.length) throw new BadRequestException('Debe seleccionar al menos un campo válido para exportar.');
 
-			const fields = exportCollaboratorsDto.data.filter(({ checked, field }) => checked && allowedFields
-			.has(field)).map(({ field }) => field);
+		const { scope, ids = [], sort, maskData } = dto;
+		const requiresIds = scope === 'selected' || scope === 'page';
 
-			if (!fields.length) {
-				throw new BadRequestException('Debe seleccionar al menos un campo válido para exportar.',);
-			}
+		if (requiresIds && !ids.length) throw new BadRequestException('Debe seleccionar al menos un colaborador para exportar.');
 
-			const { scope, ids, sort, maskData } = exportCollaboratorsDto;
-			const queryBuilder = this.collaboratorRepository.createQueryBuilder('collaborator');
+		const queryBuilder = this.collaboratorRepository.createQueryBuilder('collaborator');
 
-			if ((scope === 'selected' || scope === 'page') && (!ids || !ids.length)) {
-				throw new BadRequestException('Debe seleccionar al menos un colaborador para exportar.');
-			}
+		if (requiresIds) queryBuilder.andWhere('collaborator.id IN (:...ids)', { ids: [...new Set(ids)] });
 
-			if ((scope === 'selected' || scope === 'page') && ids?.length) {
-				queryBuilder.andWhere('collaborator.id IN (:...ids)', { ids });
-			}
+		const fieldMap = {
+			names: 'collaborator.names',
+			email: 'collaborator.email',
+			number_document: 'collaborator.number_document',
+		} as const;
 
-			const fieldMap = {
-				name: 'collaborator.names',
-				email: 'collaborator.email',
-				number_document: 'collaborator.number_document',
-			} as const;
+		if (sort?.trim() && sort !== 'Predeterminado') {
+			const [field, rawDirection] = sort.split(':');
+			const direction = rawDirection?.toUpperCase();
 
-			if (sort?.trim() && sort !== 'Predeterminado') {
-				const [field, direction] = sort.split(':');
+			if (!(field in fieldMap)) throw new BadRequestException('El campo de ordenamiento es inválido.');
+			if (direction !== 'ASC' && direction !== 'DESC') throw new BadRequestException('La dirección de ordenamiento es inválida.');
 
-				if (!(field in fieldMap)) {
-					throw new BadRequestException('El campo de ordenamiento es inválido.');
-				}
-
-				if (!['asc', 'desc'].includes(direction?.toLowerCase())) {
-					throw new BadRequestException('La dirección de ordenamiento es inválida.');
-				}
-
-				queryBuilder.orderBy(fieldMap[field as keyof typeof fieldMap], direction.toUpperCase() as 'ASC' | 'DESC');
-			} else {
-				queryBuilder.orderBy('collaborator.createdAt', 'DESC');
-			}
-
-			let collaborators: Collaborator[];
-
-			try {
-				collaborators = await queryBuilder.getMany();
-			} catch {
-				throw new InternalServerErrorException('No fue posible obtener la información para la exportación.');
-			}
-
-			if (!collaborators.length) {
-				throw new NotFoundException('No se encontraron colaboradores para exportar.');
-			}
-
-			const data = collaborators.map((collaborator) => {
-				const row: Record<string, unknown> = {};
-
-				fields.forEach((field) => {
-					let value = collaborator[field];
-
-					if (value instanceof Date) {
-						value = value.toISOString().split('T')[0];
-					}
-
-					if (maskData) {
-						switch (field) {
-							case 'email':
-								value = this.maskEmail(value as string);
-								break;
-							case 'number_document':
-								value = this.maskDocument(value as string);
-								break;
-						}
-					}
-
-					row[field] = value ?? '';
-				});
-
-				return row;
-			});
-
-			await this.kibanaService.audit({
-				action: 'export_collaborators',
-				performedBy: request.user.id,
-				targetId: '',
-				requestBody: JSON.stringify(exportCollaboratorsDto),
-				response: JSON.stringify({ exportedRecords: data.length }),
-				requestId: request.requestId,
-			});
-
-			return {
-				fields,
-				data,
-			};
-		} catch (err: any) {
-			if (err) throw err;
-			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
+			queryBuilder.orderBy(fieldMap[field as keyof typeof fieldMap], direction);
+		} else {
+			queryBuilder.orderBy('collaborator.createdAt', 'DESC');
 		}
+
+		let collaborators: Collaborator[];
+
+		try {
+			collaborators = await queryBuilder.getMany();
+		} catch {
+			throw new InternalServerErrorException('No fue posible obtener la información para la exportación.');
+		}
+
+		if (!collaborators.length) throw new NotFoundException('No se encontraron colaboradores para exportar.');
+
+		const data = collaborators.map((collaborator) => {
+			const row: Record<string, unknown> = {};
+
+			for (const field of fields) {
+				let value = collaborator[field];
+
+				if (value instanceof Date) value = value.toISOString().slice(0, 10);
+				if (maskData && typeof value === 'string' && field === 'email') value = this.maskEmail(value);
+				if (maskData && typeof value === 'string' && field === 'number_document') value = this.maskDocument(value);
+
+				row[field] = value ?? '';
+			}
+
+			return row;
+		});
+
+		await this.kibanaService.audit({
+			action: 'exportCollaborators',
+			performedBy: request.user.id,
+			targetId: '',
+			requestBody: JSON.stringify(dto),
+			response: JSON.stringify({ exportedRecords: data.length }),
+			requestId: request.requestId,
+		});
+
+		return { fields, data };
 	}
 
-	async validate_import_collaborators(validateImportCollaboratorsDto: ValidateImportCollaboratorsDto, request: any) {
+	async importCollaborators(dto: ImportCollaboratorsDto, request: any) {
 		try {
-			const { data, mode, identifyBy } = validateImportCollaboratorsDto;
+			const { data, mode, identifyBy } = dto;
 			const defaultPassword = await hashPassword('123456');
 			const cleanData = await Promise.all(
 				data.map(async ({ index, ...item }) => ({
@@ -518,7 +487,8 @@ export class CollaboratorService {
 				}
 				if (mode === 'update') {
 					if (existing) {
-						Object.assign(existing, item);
+						const { password, ...updateData } = item;
+						Object.assign(existing, updateData);
 						toUpdate.push(existing);
 					}
 				}
@@ -540,7 +510,7 @@ export class CollaboratorService {
 			}
 
 			this.kibanaService.audit({
-				action: 'validate_import_collaborators',
+				action: 'importCollaborators',
 				performedBy: request.user.id,
 				targetId: '',
 				requestBody: JSON.stringify({
