@@ -16,7 +16,6 @@ import * as bcrypt from 'bcryptjs';
 import { EditCollaboratorDto } from './dto/edit-collaborator.dto';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
-import { UpdateStatusCollaboratorsDto } from './dto/update-status-collaborators.dto';
 import { ExportCollaboratorsDto } from './dto/export-colllaborators.dto';
 import { ValidateImportCollaboratorsDto } from './dto/validate-import-collaborators.dto';
 import { AuthService } from '@/auth/auth.service';
@@ -24,6 +23,8 @@ import { KibanaService } from '@/common/services/kibana/kibana.service';
 import { ALLOWED_EXPORT } from './constants/allowed-export.contant';
 import { FindCollaboratorBuilder } from './builders/find-collaborators.builder';
 import { FindCollaboratorsQueryDto } from './dto/find-collaborators.dto';
+import { UpdateCollaboratorStatusDto } from './dto/update-collaborator-status.dto';
+import { UpdateCollaboratorsStatusDto } from './dto/update-collaborators-status.dto';
 
 dotenv.config({ path: path.resolve(process.cwd(), `.env.${process.env.NODE_ENV || 'dev'}`) });
 
@@ -287,7 +288,7 @@ export class CollaboratorService {
 		}
 	}
 
-	async update_status_collaborator(id: string, status: boolean, request: any) {
+	async updateCollaboratorStatus(id: string, dto: UpdateCollaboratorStatusDto, request: any) {
 		try {
 			const exists = await this.collaboratorRepository.exists({ where: { id } });
 
@@ -299,7 +300,7 @@ export class CollaboratorService {
 				.createQueryBuilder()
 				.update(Collaborator)
 				.set({
-					status: !status,
+					status: dto.status,
 					statusAt: () => 'CURRENT_TIMESTAMP',
 				})
 				.where('id = :id', { id })
@@ -320,10 +321,7 @@ export class CollaboratorService {
 				action: 'update_status_collaborator',
 				performedBy: request.user.id,
 				targetId: id,
-				requestBody: JSON.stringify({ 
-					previousStatus: status,
-    				newStatus: updatedCollaborator.status
-				 }),
+				requestBody: JSON.stringify(dto),
 				response: JSON.stringify(result.raw[0]),
 				requestId: request.requestId,
 			});
@@ -337,9 +335,9 @@ export class CollaboratorService {
 		}
 	}
 
-	async update_status_collaborators(updateStatusCollaboratorsDto: UpdateStatusCollaboratorsDto, request: any) {
+	async updateCollaboratorsStatus(dto: UpdateCollaboratorsStatusDto, request: any) {
 		try {
-			const ids = [...new Set(updateStatusCollaboratorsDto.ids)];
+			const ids = [...new Set(dto.ids)];
 
 			if (!ids.length) {
 				throw new BadRequestException('Debe seleccionar al menos un registro.');
@@ -349,7 +347,7 @@ export class CollaboratorService {
 				.createQueryBuilder()
 				.update(Collaborator)
 				.set({
-					status: updateStatusCollaboratorsDto.status,
+					status: dto.status,
 					statusAt: () => 'CURRENT_TIMESTAMP',
 				})
 				.where('id IN (:...ids)', { ids })
@@ -370,9 +368,7 @@ export class CollaboratorService {
 				action: 'update_status_collaborators',
 				performedBy: request.user.id,
 				targetId: updatedIds,
-				requestBody: JSON.stringify({
-					status: updateStatusCollaboratorsDto.status,
-				}),
+				requestBody: JSON.stringify(dto),
 				response: JSON.stringify({
 					updatedIds,
 					total: updatedIds.length,

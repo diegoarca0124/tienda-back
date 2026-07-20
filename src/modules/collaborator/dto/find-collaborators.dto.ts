@@ -1,9 +1,8 @@
 import { BadRequestException } from '@nestjs/common';
 import { Transform } from 'class-transformer';
 import { IsIn, IsInt, IsNumber, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min, ValidateIf } from 'class-validator';
-
-const ALLOWED_STATUS = ['Todos', 'Activos','Inactivos'] as const;
-const ALLOWED_SORT = ['Predeterminado', 'names:asc', 'names:desc', 'email:asc', 'email:desc', 'number_document:asc', 'number_document:desc'] as const;
+import { ALLOWED_STATUS } from '../constants/allowed-status.constant';
+import { ALLOWED_SORT } from '../constants/allowed-sort.constant';
 
 const configuredMaxLimit = Number(process.env.MAX_LIMIT_QUERY);
 const MAX_LIMIT = Number.isSafeInteger(configuredMaxLimit) && configuredMaxLimit > 0 ? configuredMaxLimit : 100;

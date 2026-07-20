@@ -10,7 +10,6 @@ import { EditCollaboratorDto } from './dto/edit-collaborator.dto';
 import { ValidateUUID } from '@/common/pipes/validate-uuid.pipe';
 import * as dotenv from 'dotenv';
 import path from 'path';
-import { UpdateStatusCollaboratorsDto } from './dto/update-status-collaborators.dto';
 import { UpdateStatusCollaboratorsInterceptor } from './interceptor/update-status-collaborators.interceptor';
 import { ExportCollaboratorsDto } from './dto/export-colllaborators.dto';
 import { ExportCollaboratorsInterceptor } from './interceptor/export-colllaborators.interceptor';
@@ -21,6 +20,8 @@ import { AuthService } from '@/auth/auth.service';
 import { Public } from '@/auth/decorators/public.decorator';
 import { FindCollaboratorsQueryDto } from './dto/find-collaborators.dto';
 import { QueryParamsErrorsPipe } from '@/common/pipes/query-params-errors.pipe';
+import { UpdateCollaboratorStatusDto } from './dto/update-collaborator-status.dto';
+import { UpdateCollaboratorsStatusDto } from './dto/update-collaborators-status.dto';
 dotenv.config({ path: path.resolve(process.cwd(), `.env.${process.env.NODE_ENV || 'dev'}`) });
 
 @Controller('collaborator')
@@ -93,19 +94,22 @@ export class CollaboratorController {
 		return this.collaboratorService.update_collaborator(id, editCollaboratorDto, request);
 	}
 
-	@Put('update_status_collaborator/:id')
-	update_status_collaborator(
+	@Put('updateCollaboratorStatus/:id')
+	updateCollaboratorStatus(
 		@Param('id', ValidateUUID) id: string, 
-		@Body() data: { status: boolean }, 
+		@Body() dto: UpdateCollaboratorStatusDto, 
 		@Req() request
 	): Promise<{ data: Collaborator; message: string }> {
-		return this.collaboratorService.update_status_collaborator(id, data.status, request);
+		return this.collaboratorService.updateCollaboratorStatus(id, dto, request);
 	}
 
-	@Post('update_status_collaborators')
+	@Post('updateCollaboratorsStatus')
 	@UseInterceptors(UpdateStatusCollaboratorsInterceptor)
-	update_status_collaborators(@Body() updateStatusCollaboratorsDto: UpdateStatusCollaboratorsDto, @Req() request): Promise<{ data: any; message: string }> {
-		return this.collaboratorService.update_status_collaborators(updateStatusCollaboratorsDto, request);
+	updateCollaboratorsStatus(
+		@Body() updateCollaboratorsStatusDto: UpdateCollaboratorsStatusDto, 
+		@Req() request
+	): Promise<{ data: any; message: string }> {
+		return this.collaboratorService.updateCollaboratorsStatus(updateCollaboratorsStatusDto, request);
 	}
 
 	@Post('export_collaborators')

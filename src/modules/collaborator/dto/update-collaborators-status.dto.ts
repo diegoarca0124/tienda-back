@@ -1,7 +1,7 @@
 import { TransformBoolean } from '@/common/decorators/transform-boolean.decorator';
 import { ArrayNotEmpty, IsArray, IsBoolean, IsDefined, IsNotEmpty, IsUUID } from 'class-validator';
 
-export class UpdateStatusCollaboratorsDto {
+export class UpdateCollaboratorsStatusDto {
 	@IsDefined({ message: 'Los colaboradores son obligatorios.' })
 	@IsArray({ message: 'Los colaboradores deben ser un arreglo.' })
 	@ArrayNotEmpty({ message: 'Debe seleccionar al menos un colaborador.' })
