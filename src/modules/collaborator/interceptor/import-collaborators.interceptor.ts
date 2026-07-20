@@ -2,10 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { BaseValidationInterceptor } from '@/common/interceptors/base-validation.interceptor';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { CollaboratorService } from '../collaborator.service';
 import { ImportCollaboratorsDto, ValidateImportCollaboratorDto } from '../dto/import-collaborators.dto';
-import { CreateCollaboratorDto } from '../dto/create-collaborator.dto';
 import { CollaboratorValidator } from '../validators/collaborator.validator';
+
+type RowErrors = Record<string, string[]>;
+type ValidationResult = { field: string; message: any };
+type ImportRowResult = Record<number, RowErrors>;
+type DuplicateField = 'email' | 'phone';
 
 @Injectable()
 export class ImportCollaboratorsInterceptor extends BaseValidationInterceptor<ImportCollaboratorsDto> {
@@ -17,97 +20,132 @@ export class ImportCollaboratorsInterceptor extends BaseValidationInterceptor<Im
 		return ImportCollaboratorsDto;
 	}
 
-	protected async validateBody(body: any): Promise<{ field: string; message: any }[]> {
-		const result: any = [];
-
-		if (!Array.isArray(body.data)) {
-			return [{ field: 'data', message: ['Debe enviar un arreglo válido.'] }];
-		}
-
-		const REQUIRED_FIELDS = ValidateImportCollaboratorDto.REQUIRED_FIELDS;
-		const receivedFields = new Set<string>();
-		for (const row of body.data) {
-			Object.keys(row).forEach((key) => receivedFields.add(key));
-		}
-		const missingColumns = REQUIRED_FIELDS.filter((field) => !receivedFields.has(field));
-
-		for (let i = 0; i < body.data.length; i++) {
-			const raw = body.data[i];
-			const dto = plainToInstance(ValidateImportCollaboratorDto, {
-				...raw,
-			});
-
-			const validationErrors = await validate(dto, {
-				whitelist: true,
-				forbidUnknownValues: false,
-				skipMissingProperties: false,
-			});
-
-			const rowError: Record<string, string[]> = {};
-
-			for (const err of validationErrors) {
-				const field = err.property;
-				if (!rowError[field]) {
-					rowError[field] = [];
-				}
-				for (const msg of Object.values(err.constraints || {})) {
-					rowError[field].push(msg);
-				}
-			}
-
-			if (body.mode == 'news') {
-				if (dto.email) {
-					const isEmailExist = await this.collaboratorValidator.existsEmailCollaborator(dto.email);
-
-					if (isEmailExist) {
-						if (!rowError.email) rowError.email = [];
-						rowError.email.push('El correo ya se encuentra registrado.');
-					}
-				}
-
-				if (dto.number_document) {
-					const isDocumentNumberExist = await this.collaboratorValidator.existsDocumentNumberCollaborator(dto.number_document);
-					console.log('isDocumentNumberExist', isDocumentNumberExist);
-
-					if (isDocumentNumberExist) {
-						if (!rowError.number_document) rowError.number_document = [];
-						rowError.number_document.push('El número de documento ya se encuentra registrado.');
-					}
-				}
-			}
-
-			if (Object.keys(rowError).length > 0) {
-				result.push({
-					[i]: rowError,
-				});
-			}
-		}
-
-		if (result.length > 0 || missingColumns.length > 0) {
-			return [
-				{
-					field: 'data',
-					message: result,
-				},
-				{
-					field: 'missing_columns',
-					message: missingColumns,
-				},
-				{
-					field: 'total',
-					message: body.data.length,
-				},
-				{
-					field: 'errors',
-					message: result.length,
-				},
-			];
-		}
-
-		return [];
+	protected async validateBody(body: any): Promise<ValidationResult[]> {
+		if (!Array.isArray(body.data)) return [{ field: 'data', message: ['Debe enviar un arreglo válido.'] }];
+		const missingColumns = this.getMissingColumns(body.data);
+		const duplicateErrors = this.getDuplicateErrors(body.data);
+		const rowErrors = await this.validateRows(body.data, body.mode, duplicateErrors);
+		if (!rowErrors.length && !missingColumns.length) return [];
+		return this.buildValidationResult(body.data.length, rowErrors, missingColumns);
 	}
 
-	protected async validateFiles(): Promise<{ field: string; message: string }[]> {
+	private async validateRows(data: unknown[], mode: string, duplicateErrors: Map<number, RowErrors>): Promise<ImportRowResult[]> {
+		const result: ImportRowResult[] = [];
+		for (let index = 0; index < data.length; index++) {
+			const rowErrors = await this.validateRow(data[index], mode, duplicateErrors.get(index));
+			if (Object.keys(rowErrors).length) result.push({ [index]: rowErrors });
+		}
+		return result;
+	}
+
+	private async validateRow(raw: unknown, mode: string, internalErrors?: RowErrors): Promise<RowErrors> {
+		if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+			return { row: ['La fila debe ser un objeto válido.'] };
+		}
+		const dto = plainToInstance(ValidateImportCollaboratorDto, raw);
+		const rowErrors = await this.getDtoErrors(dto);
+		this.mergeErrors(rowErrors, internalErrors);
+		await this.addDatabaseErrors(dto, mode, rowErrors);
+		return rowErrors;
+	}
+
+	private async getDtoErrors(dto: ValidateImportCollaboratorDto): Promise<RowErrors> {
+		const errors = await validate(dto, {
+			whitelist: true,
+			forbidUnknownValues: false,
+			skipMissingProperties: false,
+		});
+		const rowErrors: RowErrors = {};
+		for (const error of errors) {
+			const messages = Object.values(error.constraints ?? {});
+			if (messages.length) rowErrors[error.property] = messages;
+		}
+		return rowErrors;
+	}
+
+	private async addDatabaseErrors(dto: ValidateImportCollaboratorDto, mode: string, rowErrors: RowErrors): Promise<void> {
+		if (mode !== 'news') return;
+		if (dto.email && await this.collaboratorValidator.existsEmailCollaborator(dto.email)) {
+			this.addError(rowErrors, 'email', 'El correo ya se encuentra registrado.');
+		}
+		if (dto.phone && await this.collaboratorValidator.existsPhoneCollaborator(dto.phone)) {
+			this.addError(rowErrors, 'phone', 'El teléfono ya se encuentra registrado.');
+		}
+		if (dto.number_document && await this.collaboratorValidator.existsDocumentNumberCollaborator(dto.number_document)) {
+			this.addError(rowErrors, 'number_document', 'El número de documento ya se encuentra registrado.');
+		}
+	}
+
+	private getDuplicateErrors(data: unknown[]): Map<number, RowErrors> {
+		const errors = new Map<number, RowErrors>();
+		this.findDuplicates(data, 'email', 'El correo', errors);
+		this.findDuplicates(data, 'phone', 'El teléfono', errors);
+		return errors;
+	}
+
+	private findDuplicates(data: unknown[], field: DuplicateField, label: string, errors: Map<number, RowErrors>): void {
+		const occurrences = new Map<string, number[]>();
+		data.forEach((row, index) => {
+			if (!row || typeof row !== 'object' || Array.isArray(row)) return;
+			const value = this.normalizeValue((row as Record<string, unknown>)[field]);
+			if (!value) return;
+			const indexes = occurrences.get(value) ?? [];
+			indexes.push(index);
+			occurrences.set(value, indexes);
+		});
+		occurrences.forEach((indexes, value) => {
+			if (indexes.length < 2) return;
+			const rows = indexes.map((index) => this.getRowNumber(data[index], index));
+			const message = `${label} está repetido en las filas ${rows.join(', ')}.`;
+			indexes.forEach((index) => {
+				const rowErrors = errors.get(index) ?? {};
+				this.addError(rowErrors, field, message);
+				errors.set(index, rowErrors);
+			});
+		});
+	}
+
+	private getMissingColumns(data: unknown[]): string[] {
+		const receivedFields = new Set<string>();
+		for (const row of data) {
+			if (!row || typeof row !== 'object' || Array.isArray(row)) continue;
+			Object.keys(row).forEach((field) => receivedFields.add(field));
+		}
+		return ValidateImportCollaboratorDto.REQUIRED_FIELDS.filter((field) => !receivedFields.has(field));
+	}
+
+	private getRowNumber(row: unknown, index: number): string | number {
+		if (!row || typeof row !== 'object' || Array.isArray(row)) return index + 1;
+		const value = (row as Record<string, unknown>).index;
+		return typeof value === 'string' || typeof value === 'number' ? value : index + 1;
+	}
+
+	private normalizeValue(value: unknown): string {
+		return String(value ?? '').trim().toLowerCase();
+	}
+
+	private mergeErrors(target: RowErrors, source?: RowErrors): void {
+		if (!source) return;
+		for (const [field, messages] of Object.entries(source)) {
+			messages.forEach((message) => this.addError(target, field, message));
+		}
+	}
+
+	private addError(errors: RowErrors, field: string, message: string): void {
+		errors[field] ??= [];
+		errors[field].push(message);
+	}
+
+	private buildValidationResult(total: number, rowErrors: ImportRowResult[], missingColumns: string[]): ValidationResult[] {
+		return [
+			{ field: 'data', message: rowErrors },
+			{ field: 'missing_columns', message: missingColumns },
+			{ field: 'total', message: total },
+			{ field: 'errors', message: rowErrors.length },
+		];
+	}
+
+	protected async validateFiles(): Promise<ValidationResult[]> {
 		return [];
 	}
 }
