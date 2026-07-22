@@ -4,7 +4,7 @@ import { escapeLikePattern } from '@/common/utils/escape-like-pattern.util';
 import { FindCollaboratorsQueryDto } from '../dto/find-collaborators.dto';
 import { Collaborator } from '@/entities/collaborator.entity';
 
-export class FindCollaboratorBuilder {
+export class FindCollaboratorsBuilder {
     static applyFilters(qb: SelectQueryBuilder<Collaborator>,query: FindCollaboratorsQueryDto) {
         this.applySearch(qb, query.filter);
         this.applyStatus(qb, query.status);

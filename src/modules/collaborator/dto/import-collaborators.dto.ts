@@ -1,5 +1,5 @@
-import { Type } from 'class-transformer';
-import { IsArray, IsDefined, IsIn, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { IsArray, IsBoolean, IsDefined, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
 import { CreateCollaboratorDto } from './create-collaborator.dto';
 import { OmitType } from '@nestjs/mapped-types';
 import { ALLOWED_PREFIX } from '../constants/allowed-prefix.constant';
@@ -11,6 +11,23 @@ export class ValidateImportCollaboratorDto extends OmitType(CreateCollaboratorDt
 	@IsNotEmpty({ message: 'El prefijo es obligatorio.' })
 	@IsIn(ALLOWED_PREFIX, { message: 'El prefijo no es válido.' })
 	prefix?: string;
+
+	@IsOptional()
+	@Type(() => Number)
+	@IsInt({ message: 'El índice debe ser un número entero.' })
+	@Min(1, { message: 'El índice debe ser mayor o igual a 1.' })
+	readonly index?: number;
+
+	@Transform(({ value }) => {
+		if (typeof value !== 'string') return value;
+		const normalizedValue = value.trim().toLowerCase();
+		if (normalizedValue === 'true') return true;
+		if (normalizedValue === 'false') return false;
+		return value;
+	})
+	@IsBoolean({ message: 'El estado debe ser verdadero o falso.' })
+	@IsDefined({ message: 'El estado es obligatorio.' })
+	readonly status: boolean;
 }
 
 export class ImportCollaboratorsDto {

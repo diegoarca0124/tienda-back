@@ -8,7 +8,7 @@ import { CollaboratorValidator } from '../validators/collaborator.validator';
 type RowErrors = Record<string, string[]>;
 type ValidationResult = { field: string; message: any };
 type ImportRowResult = Record<number, RowErrors>;
-type DuplicateField = 'email' | 'phone';
+type DuplicateField = 'email' | 'phone' | 'number_document';
 
 @Injectable()
 export class ImportCollaboratorsInterceptor extends BaseValidationInterceptor<ImportCollaboratorsDto> {
@@ -38,22 +38,27 @@ export class ImportCollaboratorsInterceptor extends BaseValidationInterceptor<Im
 		return result;
 	}
 
-	private async validateRow(raw: unknown, mode: string, internalErrors?: RowErrors): Promise<RowErrors> {
+	private async validateRow(raw: unknown, mode: string, duplicateErrors?: RowErrors): Promise<RowErrors> {
 		if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
 			return { row: ['La fila debe ser un objeto válido.'] };
 		}
 		const dto = plainToInstance(ValidateImportCollaboratorDto, raw);
-		const rowErrors = await this.getDtoErrors(dto);
-		this.mergeErrors(rowErrors, internalErrors);
-		await this.addDatabaseErrors(dto, mode, rowErrors);
+		const [dtoErrors, databaseErrors] = await Promise.all([
+			this.getDtoErrors(dto),
+			this.getDatabaseErrors(dto, mode),
+		]);
+		const rowErrors: RowErrors = {};
+		this.mergeErrors(rowErrors, dtoErrors);
+		this.mergeErrors(rowErrors, duplicateErrors);
+		this.mergeErrors(rowErrors, databaseErrors);
 		return rowErrors;
 	}
 
 	private async getDtoErrors(dto: ValidateImportCollaboratorDto): Promise<RowErrors> {
 		const errors = await validate(dto, {
 			whitelist: true,
-			forbidUnknownValues: false,
-			skipMissingProperties: false,
+			forbidNonWhitelisted: true,
+			forbidUnknownValues: true,
 		});
 		const rowErrors: RowErrors = {};
 		for (const error of errors) {
@@ -63,23 +68,27 @@ export class ImportCollaboratorsInterceptor extends BaseValidationInterceptor<Im
 		return rowErrors;
 	}
 
-	private async addDatabaseErrors(dto: ValidateImportCollaboratorDto, mode: string, rowErrors: RowErrors): Promise<void> {
-		if (mode !== 'news') return;
-		if (dto.email && await this.collaboratorValidator.existsEmailCollaborator(dto.email)) {
-			this.addError(rowErrors, 'email', 'El correo ya se encuentra registrado.');
-		}
-		if (dto.phone && await this.collaboratorValidator.existsPhoneCollaborator(dto.phone)) {
-			this.addError(rowErrors, 'phone', 'El teléfono ya se encuentra registrado.');
-		}
-		if (dto.number_document && await this.collaboratorValidator.existsDocumentNumberCollaborator(dto.number_document)) {
-			this.addError(rowErrors, 'number_document', 'El número de documento ya se encuentra registrado.');
-		}
+	private async getDatabaseErrors(dto: ValidateImportCollaboratorDto, mode: string): Promise<RowErrors> {
+		const errors: RowErrors = {};
+		if (mode !== 'news') return errors;
+		const [emailExists, phoneExists, documentExists] = await Promise.all([
+			dto.email ? this.collaboratorValidator.existsEmailCollaborator(dto.email) : false,
+			dto.phone ? this.collaboratorValidator.existsPhoneCollaborator(dto.phone) : false,
+			dto.number_document ? this.collaboratorValidator.existsDocumentNumberCollaborator(dto.number_document) : false,
+		]);
+		console.log('emailExists',emailExists);
+		
+		if (emailExists) this.addError(errors, 'email', 'El correo ya se encuentra registrado.');
+		if (phoneExists) this.addError(errors, 'phone', 'El teléfono ya se encuentra registrado.');
+		if (documentExists) this.addError(errors, 'number_document', 'El número de documento ya se encuentra registrado.');
+		return errors;
 	}
 
 	private getDuplicateErrors(data: unknown[]): Map<number, RowErrors> {
 		const errors = new Map<number, RowErrors>();
 		this.findDuplicates(data, 'email', 'El correo', errors);
 		this.findDuplicates(data, 'phone', 'El teléfono', errors);
+		this.findDuplicates(data, 'number_document', 'El número de documento', errors);
 		return errors;
 	}
 

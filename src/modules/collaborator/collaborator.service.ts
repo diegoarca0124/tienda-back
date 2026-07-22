@@ -1,5 +1,6 @@
 import {
 	BadRequestException,
+	ConflictException,
 	ForbiddenException,
 	Injectable,
 	InternalServerErrorException,
@@ -10,7 +11,7 @@ import { CreateCollaboratorDto } from './dto/create-collaborator.dto';
 import { hashPassword } from '@/common/utils/hash.util';
 import { InjectRepository } from '@nestjs/typeorm/dist/common/typeorm.decorators';
 import { Collaborator } from '@/entities/collaborator.entity';
-import { In, Repository } from 'typeorm';
+import { In, QueryFailedError, Repository } from 'typeorm';
 import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcryptjs';
 import { EditCollaboratorDto } from './dto/edit-collaborator.dto';
@@ -20,7 +21,7 @@ import { ExportCollaboratorsDto } from './dto/export-colllaborators.dto';
 import { ImportCollaboratorsDto } from './dto/import-collaborators.dto';
 import { AuthService } from '@/auth/auth.service';
 import { KibanaService } from '@/common/services/kibana/kibana.service';
-import { FindCollaboratorBuilder } from './builders/find-collaborators.builder';
+import { FindCollaboratorsBuilder } from './builders/find-collaborators.builder';
 import { FindCollaboratorsQueryDto } from './dto/find-collaborators.dto';
 import { UpdateCollaboratorStatusDto } from './dto/update-collaborator-status.dto';
 import { UpdateCollaboratorsStatusDto } from './dto/update-collaborators-status.dto';
@@ -69,7 +70,10 @@ export class CollaboratorService {
 				message: 'Registro creado correctamente.',
 				data: id,
 			};
-		} catch (err: any) {
+		} catch (err: unknown) {
+			if (err instanceof QueryFailedError && (err.driverError as { code?: string }).code === '23505') {
+				throw new ConflictException('La solicitud fue rechazada por unicidad.');
+			}
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
@@ -153,7 +157,7 @@ export class CollaboratorService {
 				'collaborator.createdAt',
 			]);
 
-			FindCollaboratorBuilder.applyFilters(
+			FindCollaboratorsBuilder.applyFilters(
 				queryBuilder, query
 			);
 

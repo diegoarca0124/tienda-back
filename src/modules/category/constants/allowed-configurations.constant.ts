@@ -1,4 +1,4 @@
-export const allowedConfigurations = [
+export const ALLOWED_CONFIGURATION = [
     'isDimensions',
     'isCharacteristics',
     'isCondition',

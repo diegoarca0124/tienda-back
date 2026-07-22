@@ -21,6 +21,7 @@ import { UpdateCategoryInSubcategoryDto } from './dto/update-category-in-subcate
 import { UpdateCategoryInSubcategoryInterceptor } from './interceptor/update-category-in-subcategory.interceptor';
 import { FindCategoryProductsQueryDto } from './dto/find-category-products.dto';
 import { QueryParamsErrorsPipe } from '@/common/pipes/query-params-errors.pipe';
+import { FindCategoriesQueryDto } from './dto/find-categories.dto';
 
 @Controller('category')
 export class CategoryController {
@@ -32,9 +33,12 @@ export class CategoryController {
 		return this.categoryService.create_category(createCategoryDto, request);
 	}
 
-	@Get('get_categories')
-	get_categories(@Query() query: { filter: string; page: number; limit: number; status: string; sort: string, configuration: string }) {
-		return this.categoryService.get_categories(query);
+	@Get('getCategories')
+	getCategories(
+		@Query(new QueryParamsErrorsPipe(FindCategoriesQueryDto))
+		query: unknown,
+	) {
+		return this.categoryService.getCategories(query as FindCategoriesQueryDto);
 	}
 
 	@Put('update_status_category/:id')

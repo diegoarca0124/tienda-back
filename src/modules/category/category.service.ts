@@ -16,10 +16,11 @@ import { UpdateCategoryInSubcategoryDto } from './dto/update-category-in-subcate
 import { KibanaService } from '@/common/services/kibana/kibana.service';
 import { getPagination } from '@/common/utils/get-pagination.util';
 import { CategoryValidator } from './validators/category.validator';
-import { allowedConfigurations } from './constants/allowed-configurations.constant';
 import { getQualityLabel } from './utils/calculate-total.util';
 import { FindCategoryProductsBuilder } from './builders/find-category-products.builder';
 import { FindCategoryProductsQueryDto } from './dto/find-category-products.dto';
+import { FindCategoriesQueryDto } from './dto/find-categories.dto';
+import { FindCategoriesBuilder } from './builders/find-categories.builder';
 @Injectable()
 export class CategoryService {
 	constructor(
@@ -72,76 +73,31 @@ export class CategoryService {
 		}
 	}
 
-	async get_categories(query: { filter: string; page: number; limit: number; status: string; sort: string, configuration: string }) {
+	async getCategories(query: FindCategoriesQueryDto) {
 		try {
-			const pagination = getPagination(query.page, query.limit);
+			const skip = (query.page - 1) * query.limit;
 
 			const queryBuilder = this.categoryRepository
 				.createQueryBuilder('category')
-				.select(['category.id', 'category.name', 'category.description', 'category.createdAt', 'category.status', 'category.prefix', 'category.icon', 'category.code'])
+				.select([
+					'category.id', 
+					'category.name', 
+					'category.description', 
+					'category.createdAt', 
+					'category.status', 
+					'category.prefix', 
+					'category.icon', 
+					'category.code'
+				])
 				.loadRelationCountAndMap('category.totalProducts', 'category.products');
 
-			if (query.filter?.trim()) {
-				const searchTerms = query.filter
-					.trim()
-					.split(/\s+/)
-					.slice(0, 5)
-					.map((t) => t.toLowerCase());
-
-				const columns = ['category.name', 'category.description'];
-
-				searchTerms.forEach((term, idx) => {
-					const conditions = columns.map((c) => `${c} ILIKE :term${idx}`).join(' OR ');
-					const params = { [`term${idx}`]: `%${term}%` };
-
-					idx === 0 ? queryBuilder.where(`(${conditions})`, params) : queryBuilder.andWhere(`(${conditions})`, params);
-				});
-			}
-
-			if (query.status && query.status !== 'Todos') {
-				const statusBool = query.status === 'Activos';
-				queryBuilder.andWhere('category.status = :status', {
-					status: statusBool,
-				});
-			}
-
-			if (query.configuration?.trim() && query.configuration !== 'Predeterminado') {
-				if (allowedConfigurations.includes(query.configuration)) {
-					queryBuilder.andWhere(
-						`category.${query.configuration} = :configuration`,
-						{ configuration: true },
-					);
-				}
-			}
-
-
-			if (query.sort?.trim() && query.sort !== 'Predeterminado') {
-				const [field, direction] = query.sort.split(':');
-
-				if (!field || !direction) {
-					queryBuilder.orderBy('category.createdAt', 'DESC');
-				}else{
-					const allowedFields = ['name', 'description'];
-					const allowedDirections = ['asc', 'desc'];
-
-					if (allowedFields.includes(field) && allowedDirections.includes(direction?.toLowerCase())) {
-						const fieldMap = {
-							name: 'category.name',
-							description: 'category.description',
-						};
-
-						queryBuilder.orderBy(fieldMap[field], direction.toUpperCase() as 'ASC' | 'DESC');
-					} else {
-						queryBuilder.orderBy('category.createdAt', 'DESC');
-					}
-				}
-			} else {
-				queryBuilder.orderBy('category.createdAt', 'DESC');
-			}
+			FindCategoriesBuilder.applyFilters(
+				queryBuilder, query
+			);
 
 			const [categories, totalCategories] = await queryBuilder
-			.skip(pagination.skip)
-			.take(pagination.limit)
+			.skip(skip)
+			.take(query.limit)
 			.getManyAndCount();
 
 			const categoryIds = categories.map((c) => c.id);
@@ -171,9 +127,16 @@ export class CategoryService {
 				categories: categoriesWithProducts,
 				meta: {
 					totalCategories,
-					totalPages: Math.ceil(totalCategories / pagination.limit),
-					currentPage: pagination.page,
+					totalPages: Math.ceil(totalCategories / query.limit),
+					currentPage: query.page,
+					limit: query.limit,
 				},
+				filters: {
+					filter: query.filter,
+					status: query.status,
+					configuration: query.configuration,
+					sort: query.sort,
+				}
 			};
 		} catch (err: any) {
 			if (err) throw err;

@@ -1,6 +1,9 @@
-import { Entity, Column, PrimaryGeneratedColumn, UpdateDateColumn, CreateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, UpdateDateColumn, CreateDateColumn, Index } from 'typeorm';
 
 @Entity('collaborators')
+@Index('UQ_COLLABORATOR_EMAIL', ['email'], { unique: true })
+@Index('UQ_COLLABORATOR_PHONE', ['phone'], { unique: true })
+@Index('UQ_COLLABORATOR_DOCUMENT', ['number_document'], { unique: true })
 export class Collaborator {
 	@PrimaryGeneratedColumn('uuid')
 	id: string;
