@@ -1,9 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
 import { Transform } from 'class-transformer';
-import { IsIn, IsInt, IsNumber, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min, ValidateIf } from 'class-validator';
+import { ArrayNotEmpty, ArrayUnique, IsArray, IsIn, IsInt, IsNumber, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min, ValidateIf } from 'class-validator';
 import { ALLOWED_STATUS } from '../constants/allowed-status.constant';
 import { ALLOWED_SORT } from '../constants/allowed-sort.constant';
-import { ALLOWED_CONFIGURATION } from '../constants/allowed-configurations.constant';
+import { ALLOWED_CONFIGURATION, AllowedConfiguration } from '../constants/allowed-configurations.constant';
 
 const configuredMaxLimit = Number(process.env.MAX_LIMIT_QUERY);
 const MAX_LIMIT = Number.isSafeInteger(configuredMaxLimit) && configuredMaxLimit > 0 ? configuredMaxLimit : 100;
@@ -63,10 +63,33 @@ export class FindCategoriesQueryDto {
     sort: typeof ALLOWED_SORT[number] = 'Predeterminado';
 
     @Transform(({ value }) => {
-        value = rejectRepeatedParameter(value, 'sort');
-        return value === undefined ? 'Predeterminado' : value;
+        value = rejectRepeatedParameter(value, 'configurations');
+
+        if (value === undefined || value === '') {
+            return ['Predeterminado'];
+        }
+
+        if (typeof value !== 'string') {
+            return value;
+        }
+
+        const configurations = value
+            .split(',')
+            .map((configuration) => configuration.trim())
+            .filter(Boolean);
+
+        if (configurations.includes('Predeterminado') && configurations.length > 1) {
+            throw new BadRequestException('Predeterminado no puede combinarse con otras configuraciones.');
+        }
+
+        return configurations;
     })
-    @IsString()
-    @IsIn(ALLOWED_CONFIGURATION)
-    configuration: typeof ALLOWED_CONFIGURATION[number] = 'Predeterminado';
+    @IsArray({ message: 'Las configuraciones deben enviarse como una lista.' })
+    @ArrayNotEmpty({ message: 'Debe enviar al menos una configuración.' })
+    @ArrayUnique({ message: 'Las configuraciones no deben estar repetidas.' })
+    @IsIn(ALLOWED_CONFIGURATION, {
+        each: true,
+        message: 'Una o más configuraciones no son válidas.',
+    })
+    configurations: AllowedConfiguration[] = ['Predeterminado'];
 }

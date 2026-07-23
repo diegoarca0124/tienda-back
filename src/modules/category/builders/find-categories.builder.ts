@@ -5,6 +5,7 @@ import { Category } from '@/entities/category.entity';
 import { FindCategoriesQueryDto } from '../dto/find-categories.dto';
 import { ALLOWED_CONFIGURATION } from '../constants/allowed-configurations.constant';
 export class FindCategoriesBuilder {
+    
     static applyFilters(qb: SelectQueryBuilder<Category>,query: FindCategoriesQueryDto) {
         this.applySearch(qb, query.filter);
         this.applyStatus(qb, query.status);

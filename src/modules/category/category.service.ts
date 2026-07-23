@@ -21,6 +21,8 @@ import { FindCategoryProductsBuilder } from './builders/find-category-products.b
 import { FindCategoryProductsQueryDto } from './dto/find-category-products.dto';
 import { FindCategoriesQueryDto } from './dto/find-categories.dto';
 import { FindCategoriesBuilder } from './builders/find-categories.builder';
+import { CategoryProductSummary, RawCategoryProduct } from './interfaces/get-categories.interface';
+
 @Injectable()
 export class CategoryService {
 	constructor(
@@ -100,26 +102,17 @@ export class CategoryService {
 			.take(query.limit)
 			.getManyAndCount();
 
-			const categoryIds = categories.map((c) => c.id);
-			const rawProducts = await this.productRepository
-				.createQueryBuilder('product')
-				.select(['product.id', 'product.name', 'product.cover', 'product.categoryId'])
-				.addSelect(`ROW_NUMBER() OVER(PARTITION BY product.categoryId ORDER BY product.createdAt DESC) as rn`)
-				.where('product.categoryId IN (:...ids)', { ids: categoryIds })
-				.getRawMany(); 
+			const productSummary = await this.getCategoryProductSummary(categories.map(({ id }) => id));
+			const categoriesWithProducts = categories.map((category) => {
+				const summary = productSummary.get(category.id);
+				const latestProducts = summary?.products ?? [];
+				const totalProducts = summary?.totalProducts ?? 0;
 
-			const categoriesWithProducts = categories.map((category: any) => {
-				const products = rawProducts
-					.filter(p => p.product_categoryId === category.id && parseInt(p.rn) <= 3)
-					.map(p => ({
-						id: p.product_id,
-						name: p.product_name,
-						cover: p.product_cover
-					}));
 				return {
 					...category,
-					productsPreview: products,
-					moreProducts: Math.max(0, category.totalProducts - products.length),
+					latestProducts,
+					totalProducts,
+					moreProducts: Math.max(0, totalProducts - latestProducts.length),
 				};
 			});
 
@@ -906,4 +899,51 @@ export class CategoryService {
 			await queryRunner.release();
 		}
 	}
+
+	private async getCategoryProductSummary(categoryIds: string[])
+	: Promise<Map<string, CategoryProductSummary>> {
+		if (!categoryIds.length) return new Map();
+
+		const rows = await this.productRepository
+			.createQueryBuilder()
+			.select('ranked.id', 'id')
+			.addSelect('ranked.name', 'name')
+			.addSelect('ranked.cover', 'cover')
+			.addSelect('ranked.category_id', 'categoryId')
+			.addSelect('ranked.total_products', 'totalProducts')
+			.from((subQuery) =>
+				subQuery
+					.select('product.id', 'id')
+					.addSelect('product.name', 'name')
+					.addSelect('product.cover', 'cover')
+					.addSelect('product.categoryId', 'category_id')
+					.addSelect('COUNT(*) OVER (PARTITION BY product.categoryId)', 'total_products')
+					.addSelect('ROW_NUMBER() OVER (PARTITION BY product.categoryId ORDER BY product.createdAt DESC, product.id ASC)', 'row_number')
+					.from(Product, 'product')
+					.where('product.categoryId IN (:...categoryIds)', { categoryIds }),
+				'ranked',
+			)
+			.where('ranked.row_number <= :previewLimit', { previewLimit: 4 })
+			.getRawMany<RawCategoryProduct>();
+
+		const summary = new Map<string, CategoryProductSummary>();
+
+		for (const row of rows) {
+			const current = summary.get(row.categoryId) ?? {
+				totalProducts: Number(row.totalProducts),
+				products: [],
+			};
+
+			current.products.push({
+				id: row.id,
+				name: row.name,
+				cover: row.cover,
+			});
+
+			summary.set(row.categoryId, current);
+		}
+
+		return summary;
+	}
 }
+

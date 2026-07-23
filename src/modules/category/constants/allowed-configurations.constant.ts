@@ -1,9 +1,12 @@
 export const ALLOWED_CONFIGURATION = [
-    'isDimensions',
-    'isCharacteristics',
-    'isCondition',
-    'isWarranty',
-    'isCountryOfOrigin',
-    'isMaterial',
-    'isTemperature',
-];
+	'Predeterminado',
+	'isDimensions',
+	'isCharacteristics',
+	'isCondition',
+	'isWarranty',
+	'isCountryOfOrigin',
+	'isMaterial',
+	'isTemperature',
+] as const;
+
+export type AllowedConfiguration = typeof ALLOWED_CONFIGURATION[number];
