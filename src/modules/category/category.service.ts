@@ -123,12 +123,7 @@ export class CategoryService {
 							name: true,
 							code: true,
 							cover: true,
-							miniature: true,
-							priceRegular: true,
-							priceDiscount: true,
-							status: true,
 							categoryId: true,
-							createdAt: true,
 						},
 						order: {
 							createdAt: 'DESC',
@@ -136,13 +131,17 @@ export class CategoryService {
 					})
 				: [];
 
-			const categoriesWithProducts = categories.map((category) => ({
-				...category,
-				latestProducts: products
+			const categoriesWithProducts = categories.map((category:any) => {
+				const latestProducts = products
 					.filter((product) => product.categoryId === category.id)
-					.slice(0, 4),
-			}));
-			
+					.slice(0, 4);
+
+				return {
+					...category,
+					latestProducts,
+					remainingProducts: Math.max(category.totalProducts - latestProducts.length, 0),
+				};
+			});
 
 			return {
 				categories: categoriesWithProducts,

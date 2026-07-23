@@ -3,7 +3,7 @@ import { SelectQueryBuilder } from 'typeorm';
 import { escapeLikePattern } from '@/common/utils/escape-like-pattern.util';
 import { Category } from '@/entities/category.entity';
 import { FindCategoriesQueryDto } from '../dto/find-categories.dto';
-import { ALLOWED_CONFIGURATION, AllowedConfiguration } from '../constants/allowed-configurations.constant';
+import { AllowedConfiguration } from '../constants/allowed-configurations.constant';
 export class FindCategoriesBuilder {
     
     static applyFilters(qb: SelectQueryBuilder<Category>,query: FindCategoriesQueryDto) {
@@ -33,15 +33,41 @@ export class FindCategoriesBuilder {
         qb: SelectQueryBuilder<Category>,
         configurations: AllowedConfiguration[],
     ): void {
-        console.log('applyConfigurations',configurations);
-        
         if (!configurations?.length || configurations.includes('Predeterminado')) return;
 
-        configurations.forEach((configuration, index) => {
-            qb.andWhere(`category.${configuration} = :configuration${index}`, {
-                [`configuration${index}`]: true,
-            });
-        });
+        const conditions: string[] = [];
+
+        if (configurations.includes('isDimensions')) {
+            conditions.push('"category"."isDimensions" = true');
+        }
+
+        if (configurations.includes('isCharacteristics')) {
+            conditions.push('"category"."isCharacteristics" = true');
+        }
+
+        if (configurations.includes('isCondition')) {
+            conditions.push('"category"."isCondition" = true');
+        }
+
+        if (configurations.includes('isWarranty')) {
+            conditions.push('"category"."isWarranty" = true');
+        }
+
+        if (configurations.includes('isCountryOfOrigin')) {
+            conditions.push('"category"."isCountryOfOrigin" = true');
+        }
+
+        if (configurations.includes('isMaterial')) {
+            conditions.push('"category"."isMaterial" = true');
+        }
+
+        if (configurations.includes('isTemperature')) {
+            conditions.push('"category"."isTemperature" = true');
+        }
+
+        if (conditions.length) {
+            qb.andWhere(`(${conditions.join(' OR ')})`);
+        }
     }
 
 

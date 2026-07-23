@@ -1,5 +1,5 @@
 export const ALLOWED_SORT = [
     'Predeterminado', 
-    'names:asc', 
-    'names:desc',
+    'name:asc', 
+    'name:desc',
 ] as const;

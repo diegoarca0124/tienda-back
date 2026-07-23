@@ -38,7 +38,7 @@ export class Category {
 	isCharacteristics: boolean;
 
 	@Column({ type: 'boolean', default: false })
-	isConditiom: boolean;
+	isCondition: boolean;
 
 	@Column({ type: 'boolean', default: false })
 	isWarranty: boolean;
