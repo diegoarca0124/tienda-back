@@ -3,13 +3,13 @@ import { SelectQueryBuilder } from 'typeorm';
 import { escapeLikePattern } from '@/common/utils/escape-like-pattern.util';
 import { Category } from '@/entities/category.entity';
 import { FindCategoriesQueryDto } from '../dto/find-categories.dto';
-import { ALLOWED_CONFIGURATION } from '../constants/allowed-configurations.constant';
+import { ALLOWED_CONFIGURATION, AllowedConfiguration } from '../constants/allowed-configurations.constant';
 export class FindCategoriesBuilder {
     
     static applyFilters(qb: SelectQueryBuilder<Category>,query: FindCategoriesQueryDto) {
         this.applySearch(qb, query.filter);
         this.applyStatus(qb, query.status);
-        this.applyConfiguration(qb, query.configuration);
+        this.applyConfigurations(qb, query.configurations);
         this.applySort(qb, query.sort);
     }
 
@@ -19,7 +19,7 @@ export class FindCategoriesBuilder {
         const normalizedSearch = search.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         const pattern = `%${escapeLikePattern(normalizedSearch)}%`;
         const normalizeField = (field: string) => `translate(lower(COALESCE(${field}, '')), 'áéíóúüñ', 'aeiouun')`;
-        const fields = ['category.names'];
+        const fields = ['category.name'];
         const conditions = fields.map(field => `${normalizeField(field)} LIKE lower(:pattern) ESCAPE '\\'`).join(' OR ');
         qb.andWhere(`(${conditions})`, { pattern });
     }
@@ -29,11 +29,19 @@ export class FindCategoriesBuilder {
         qb.andWhere('category.status = :status', { status: status === 'Activos' });
     }
 
-    private static applyConfiguration(qb: SelectQueryBuilder<Category>, configuration: string): void {
-        const value = configuration?.trim();
-        if (!value || value === 'Predeterminado') return;
-        if (!ALLOWED_CONFIGURATION.includes(value as typeof ALLOWED_CONFIGURATION[number])) return;
-        qb.andWhere(`category.${value} = :configuration`, { configuration: true });
+    private static applyConfigurations(
+        qb: SelectQueryBuilder<Category>,
+        configurations: AllowedConfiguration[],
+    ): void {
+        console.log('applyConfigurations',configurations);
+        
+        if (!configurations?.length || configurations.includes('Predeterminado')) return;
+
+        configurations.forEach((configuration, index) => {
+            qb.andWhere(`category.${configuration} = :configuration${index}`, {
+                [`configuration${index}`]: true,
+            });
+        });
     }
 
 
@@ -47,8 +55,8 @@ export class FindCategoriesBuilder {
         const order = direction === 'asc' ? 'ASC' : 'DESC';
 
         switch (field) {
-            case 'names':
-                qb.orderBy('category.names', order);
+            case 'name':
+                qb.orderBy('category.name', order);
                 break;
             default:
                 qb.orderBy('category.createdAt', 'DESC');

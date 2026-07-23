@@ -63,25 +63,18 @@ export class FindCategoriesQueryDto {
     sort: typeof ALLOWED_SORT[number] = 'Predeterminado';
 
     @Transform(({ value }) => {
-        value = rejectRepeatedParameter(value, 'configurations');
+        if (value === undefined || value === '') return ['Predeterminado'];
 
-        if (value === undefined || value === '') {
-            return ['Predeterminado'];
-        }
-
-        if (typeof value !== 'string') {
-            return value;
-        }
-
-        const configurations = value
-            .split(',')
-            .map((configuration) => configuration.trim())
+        const configurations = (Array.isArray(value) ? value : [value])
+            .flatMap((item) => typeof item === 'string' ? item.split(',') : [item])
+            .map((item) => typeof item === 'string' ? item.trim() : item)
             .filter(Boolean);
 
         if (configurations.includes('Predeterminado') && configurations.length > 1) {
             throw new BadRequestException('Predeterminado no puede combinarse con otras configuraciones.');
         }
-
+        console.log('configurations', configurations);
+        
         return configurations;
     })
     @IsArray({ message: 'Las configuraciones deben enviarse como una lista.' })

@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { Category } from '@/entities/category.entity';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import slugify from 'slugify';
 import { EditCategoryDto } from './dto/edit-category.dto';
@@ -77,6 +77,8 @@ export class CategoryService {
 
 	async getCategories(query: FindCategoriesQueryDto) {
 		try {
+			console.log('query',query);
+			
 			const skip = (query.page - 1) * query.limit;
 
 			const queryBuilder = this.categoryRepository
@@ -89,7 +91,14 @@ export class CategoryService {
 					'category.status', 
 					'category.prefix', 
 					'category.icon', 
-					'category.code'
+					'category.code',
+					'category.isDimensions',
+					'category.isCharacteristics',
+					'category.isCondition',
+					'category.isWarranty',
+					'category.isCountryOfOrigin',
+					'category.isMaterial',
+					'category.isTemperature',
 				])
 				.loadRelationCountAndMap('category.totalProducts', 'category.products');
 
@@ -102,19 +111,38 @@ export class CategoryService {
 			.take(query.limit)
 			.getManyAndCount();
 
-			const productSummary = await this.getCategoryProductSummary(categories.map(({ id }) => id));
-			const categoriesWithProducts = categories.map((category) => {
-				const summary = productSummary.get(category.id);
-				const latestProducts = summary?.products ?? [];
-				const totalProducts = summary?.totalProducts ?? 0;
+			const categoryIds = categories.map((category) => category.id);
 
-				return {
-					...category,
-					latestProducts,
-					totalProducts,
-					moreProducts: Math.max(0, totalProducts - latestProducts.length),
-				};
-			});
+			const products = categoryIds.length
+				? await this.productRepository.find({
+						where: {
+							categoryId: In(categoryIds),
+						},
+						select: {
+							id: true,
+							name: true,
+							code: true,
+							cover: true,
+							miniature: true,
+							priceRegular: true,
+							priceDiscount: true,
+							status: true,
+							categoryId: true,
+							createdAt: true,
+						},
+						order: {
+							createdAt: 'DESC',
+						},
+					})
+				: [];
+
+			const categoriesWithProducts = categories.map((category) => ({
+				...category,
+				latestProducts: products
+					.filter((product) => product.categoryId === category.id)
+					.slice(0, 4),
+			}));
+			
 
 			return {
 				categories: categoriesWithProducts,
@@ -127,7 +155,7 @@ export class CategoryService {
 				filters: {
 					filter: query.filter,
 					status: query.status,
-					configuration: query.configuration,
+					configurations: query.configurations,
 					sort: query.sort,
 				}
 			};
@@ -900,50 +928,6 @@ export class CategoryService {
 		}
 	}
 
-	private async getCategoryProductSummary(categoryIds: string[])
-	: Promise<Map<string, CategoryProductSummary>> {
-		if (!categoryIds.length) return new Map();
-
-		const rows = await this.productRepository
-			.createQueryBuilder()
-			.select('ranked.id', 'id')
-			.addSelect('ranked.name', 'name')
-			.addSelect('ranked.cover', 'cover')
-			.addSelect('ranked.category_id', 'categoryId')
-			.addSelect('ranked.total_products', 'totalProducts')
-			.from((subQuery) =>
-				subQuery
-					.select('product.id', 'id')
-					.addSelect('product.name', 'name')
-					.addSelect('product.cover', 'cover')
-					.addSelect('product.categoryId', 'category_id')
-					.addSelect('COUNT(*) OVER (PARTITION BY product.categoryId)', 'total_products')
-					.addSelect('ROW_NUMBER() OVER (PARTITION BY product.categoryId ORDER BY product.createdAt DESC, product.id ASC)', 'row_number')
-					.from(Product, 'product')
-					.where('product.categoryId IN (:...categoryIds)', { categoryIds }),
-				'ranked',
-			)
-			.where('ranked.row_number <= :previewLimit', { previewLimit: 4 })
-			.getRawMany<RawCategoryProduct>();
-
-		const summary = new Map<string, CategoryProductSummary>();
-
-		for (const row of rows) {
-			const current = summary.get(row.categoryId) ?? {
-				totalProducts: Number(row.totalProducts),
-				products: [],
-			};
-
-			current.products.push({
-				id: row.id,
-				name: row.name,
-				cover: row.cover,
-			});
-
-			summary.set(row.categoryId, current);
-		}
-
-		return summary;
-	}
+	
 }
 
