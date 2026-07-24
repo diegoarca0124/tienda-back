@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { BaseValidationInterceptor } from '@/common/interceptors/base-validation.interceptor';
-import { UpdateStatusCategoriesDto } from '../dto/update-status-categories.dto';
+import { UpdateStatusCategoriesDto } from '../dto/update-categories-status.dto';
 
 @Injectable()
 export class UpdateStatusCategoriesInterceptor extends BaseValidationInterceptor<UpdateStatusCategoriesDto> {

@@ -11,7 +11,7 @@ import { EditSubcategoryDto } from './dto/edit-subcategory.dto';
 import { EditSubcategoryInterceptor } from './interceptor/edit-subcategory.interceptor';
 import { ValidateUUID } from '@/common/pipes/validate-uuid.pipe';
 import { UpdateStatusCategoriesInterceptor } from './interceptor/update-status-categories.interceptor';
-import { UpdateStatusCategoriesDto } from './dto/update-status-categories.dto';
+import { UpdateCategoriesStatusDto } from './dto/update-categories-status.dto';
 import { UpdateStatusSubcategoriesInterceptor } from './interceptor/update-status-subcategories.interceptor';
 import { UpdateStatusSubcategoriesDto } from './dto/update-status-subcategories.dto';
 import { Category } from '@/entities/category.entity';
@@ -22,6 +22,7 @@ import { UpdateCategoryInSubcategoryInterceptor } from './interceptor/update-cat
 import { FindCategoryProductsQueryDto } from './dto/find-category-products.dto';
 import { QueryParamsErrorsPipe } from '@/common/pipes/query-params-errors.pipe';
 import { FindCategoriesQueryDto } from './dto/find-categories.dto';
+import { UpdateCategoryStatusDto } from './dto/update-category-status.dto';
 
 @Controller('category')
 export class CategoryController {
@@ -29,8 +30,11 @@ export class CategoryController {
 
 	@Post('create_category')
 	@UseInterceptors(CreateCategoryInterceptor)
-	create_category(@Body() createCategoryDto: CreateCategoryDto, @Req() request): Promise<{ data: Category; message: string }> {
-		return this.categoryService.create_category(createCategoryDto, request);
+	create_category(
+		@Body() dto: CreateCategoryDto, 
+		@Req() request
+	): Promise<{ data: Category; message: string }> {
+		return this.categoryService.create_category(dto, request);
 	}
 
 	@Get('getCategories')
@@ -41,9 +45,22 @@ export class CategoryController {
 		return this.categoryService.getCategories(query as FindCategoriesQueryDto);
 	}
 
-	@Put('update_status_category/:id')
-	update_status_category(@Param('id') id: string, @Body() data: { status: boolean }, @Req() request) {
-		return this.categoryService.update_status_category(id, data.status, request);
+	@Put('updateCategoryStatus/:id')
+	updateCategoryStatus(
+		@Param('id') id: string, 
+		@Body() dto: UpdateCategoryStatusDto, 
+		@Req() request
+	) {
+		return this.categoryService.updateCategoryStatus(id, dto, request);
+	}
+
+	@Post('updateCategoriesStatus')
+	@UseInterceptors(UpdateStatusCategoriesInterceptor)
+	updateCategoriesStatus(
+		@Body() dto: UpdateCategoriesStatusDto, 
+		@Req() request
+	) {
+		return this.categoryService.updateCategoriesStatus(dto, request);
 	}
 
 	@Get('get_category/:id')
@@ -106,12 +123,6 @@ export class CategoryController {
 	@Get('get_subcategories_by_select/:id')
 	get_subcategories_by_select(@Param('id', ValidateUUID) id: string) {
 		return this.categoryService.get_subcategories_by_select(id);
-	}
-
-	@Post('update_status_categories')
-	@UseInterceptors(UpdateStatusCategoriesInterceptor)
-	update_status_categories(@Body() updateStatusCategoriesDto: UpdateStatusCategoriesDto, @Req() request) {
-		return this.categoryService.update_status_categories(updateStatusCategoriesDto, request);
 	}
 
 	@Post('update_status_subcategories')

@@ -8,7 +8,6 @@ import { EditCategoryDto } from './dto/edit-category.dto';
 import { Subcategory } from '@/entities/subcategory.entity';
 import { CreateSubcategoryDto } from './dto/create-subcategory.dto';
 import { EditSubcategoryDto } from './dto/edit-subcategory.dto';
-import { UpdateStatusCategoriesDto } from './dto/update-status-categories.dto';
 import { UpdateStatusSubcategoriesDto } from './dto/update-status-subcategories.dto';
 import { Product } from '@/entities/product.entity';
 import { UpdateCatSubcatProductsDto } from './dto/update-catsubcat-products.dto';
@@ -22,6 +21,8 @@ import { FindCategoryProductsQueryDto } from './dto/find-category-products.dto';
 import { FindCategoriesQueryDto } from './dto/find-categories.dto';
 import { FindCategoriesBuilder } from './builders/find-categories.builder';
 import { CategoryProductSummary, RawCategoryProduct } from './interfaces/get-categories.interface';
+import { UpdateCategoryStatusDto } from './dto/update-category-status.dto';
+import { UpdateCategoriesStatusDto } from './dto/update-categories-status.dto';
 
 @Injectable()
 export class CategoryService {
@@ -34,15 +35,15 @@ export class CategoryService {
 		private categoryValidator: CategoryValidator
 	) {}
 
-	async create_category(createCategory: CreateCategoryDto, request: any) {
+	async create_category(dto: CreateCategoryDto, request: any) {
 		try {
 			const result = await this.categoryRepository
 				.createQueryBuilder()
 				.insert()
 				.into(Category)
 				.values({
-					...createCategory,
-					slug: slugify(createCategory.name, {
+					...dto,
+					slug: slugify(dto.name, {
 						lower: true,
 						strict: true,
 						trim: true,
@@ -61,10 +62,11 @@ export class CategoryService {
 				action: 'create_category',
 				performedBy: request.user.id,
 				targetId: '',
-				requestBody: JSON.stringify(createCategory),
+				requestBody: JSON.stringify(dto),
 				response: JSON.stringify({ id }),
 				requestId: request.requestId,
 			});
+			
 			return {
 				message: 'Registro creado correctamente.',
 				data: id,
@@ -164,10 +166,10 @@ export class CategoryService {
 		}
 	}
 
-	async update_status_category(id: string, status: boolean, request: any) {
+	async updateCategoryStatus(id: string, dto: UpdateCategoryStatusDto, request: any) {
 		try {
 			const exists = await this.categoryRepository.exists({ where: { id } });
-
+			
 			if (!exists) {
 				throw new NotFoundException('No se encontró el registro.');
 			}
@@ -176,7 +178,7 @@ export class CategoryService {
 				.createQueryBuilder()
 				.update(Category)
 				.set({
-					status: !status,
+					status: dto.status,
 					statusAt: () => 'CURRENT_TIMESTAMP',
 				})
 				.where('id = :id', { id })
@@ -197,14 +199,65 @@ export class CategoryService {
 				action: 'update_status_category',
 				performedBy: request.user.id,
 				targetId: id,
-				requestBody: JSON.stringify({ status }),
-				response: JSON.stringify(updatedCategory),
+				requestBody: JSON.stringify(dto),
+				response: JSON.stringify(result.raw[0]),
 				requestId: request.requestId,
 			});
 
 			return {
 				message: 'Registro actualizado correctamente.',
 				data: updatedCategory,
+			};
+		} catch (err: any) {
+			if (err) throw err;
+			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
+		}
+	}
+
+	async updateCategoriesStatus(dto: UpdateCategoriesStatusDto, request: any) {
+		try {
+			const ids = [...new Set(dto.ids)];
+
+			if (!ids.length) {
+				throw new BadRequestException('Debe seleccionar al menos un registro.');
+			}
+
+			const result = await this.categoryRepository
+				.createQueryBuilder()
+				.update(Category)
+				.set({
+					status: dto.status,
+					statusAt: () => 'CURRENT_TIMESTAMP',
+				})
+				.where('id IN (:...ids)', { ids })
+				.returning(['id'])
+				.execute();
+
+			if (!result.affected) {
+				throw new NotFoundException('No se encontraron registros para actualizar.');
+			}
+
+			if (!result.raw?.length) {
+				throw new InternalServerErrorException('No se pudo recuperar el registro actualizado.');
+			}
+
+			const updatedIds: string[] = result.raw.map((item: { id: string }) => item.id);
+
+			this.kibanaService.audit({
+				action: 'update_status_categories',
+				performedBy: request.user.id,
+				targetId: dto.ids,
+				requestBody: JSON.stringify(dto),
+				response: JSON.stringify({
+					updatedIds,
+					total: updatedIds.length,
+				}),
+				requestId: request.requestId,
+			});
+
+			return {
+				message: 'Registro actualizado correctamente.',
+				data: updatedIds,
 			};
 		} catch (err: any) {
 			if (err) throw err;
@@ -475,58 +528,7 @@ export class CategoryService {
 		}
 	}
 
-	async update_status_categories(updateStatusCategoriesDto: UpdateStatusCategoriesDto, request: any) {
-		try {
-			const ids = [...new Set(updateStatusCategoriesDto.ids)];
-
-			if (!ids.length) {
-				throw new BadRequestException('Debe seleccionar al menos un registro.');
-			}
-
-			const result = await this.categoryRepository
-				.createQueryBuilder()
-				.update(Category)
-				.set({
-					status: updateStatusCategoriesDto.status,
-					statusAt: () => 'CURRENT_TIMESTAMP',
-				})
-				.where('id IN (:...ids)', { ids })
-				.returning(['id'])
-				.execute();
-
-			if (!result.affected) {
-				throw new NotFoundException('No se encontraron registros para actualizar.');
-			}
-
-			if (!result.raw?.length) {
-				throw new InternalServerErrorException('No se pudo recuperar el registro actualizado.');
-			}
-
-			const updatedIds: string[] = result.raw.map((item: { id: string }) => item.id);
-
-			this.kibanaService.audit({
-				action: 'update_status_categories',
-				performedBy: request.user.id,
-				targetId: updateStatusCategoriesDto.ids,
-				requestBody: JSON.stringify({
-					status: updateStatusCategoriesDto.status,
-				}),
-				response: JSON.stringify({
-					updatedIds,
-					total: updatedIds.length,
-				}),
-				requestId: request.requestId,
-			});
-
-			return {
-				message: 'Registro actualizado correctamente.',
-				data: updatedIds,
-			};
-		} catch (err: any) {
-			if (err) throw err;
-			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
-		}
-	}
+	
 
 	async update_status_subcategories(updateStatusSubcategoriesDto: UpdateStatusSubcategoriesDto, request: any) {
 		try {
