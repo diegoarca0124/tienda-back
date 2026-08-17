@@ -11,7 +11,7 @@ import { EditSubcategoryDto } from './dto/edit-subcategory.dto';
 import { EditSubcategoryInterceptor } from './interceptor/edit-subcategory.interceptor';
 import { ValidateUUID } from '@/common/pipes/validate-uuid.pipe';
 import { UpdateStatusCategoriesInterceptor } from './interceptor/update-status-categories.interceptor';
-import { UpdateCategoriesStatusDto } from './dto/update-categories-status.dto';
+import { UpdateStatusCategoriesDto } from './dto/update-status-categories.dto';
 import { UpdateStatusSubcategoriesInterceptor } from './interceptor/update-status-subcategories.interceptor';
 import { UpdateStatusSubcategoriesDto } from './dto/update-status-subcategories.dto';
 import { Category } from '@/entities/category.entity';
@@ -23,6 +23,7 @@ import { FindCategoryProductsQueryDto } from './dto/find-category-products.dto';
 import { QueryParamsErrorsPipe } from '@/common/pipes/query-params-errors.pipe';
 import { FindCategoriesQueryDto } from './dto/find-categories.dto';
 import { UpdateCategoryStatusDto } from './dto/update-category-status.dto';
+import { GetCategoriesRes } from './interfaces/controller.interface';
 
 @Controller('category')
 export class CategoryController {
@@ -30,36 +31,26 @@ export class CategoryController {
 
 	@Post('create_category')
 	@UseInterceptors(CreateCategoryInterceptor)
-	create_category(
-		@Body() dto: CreateCategoryDto, 
-		@Req() request
-	): Promise<{ data: Category; message: string }> {
-		return this.categoryService.create_category(dto, request);
+	createCategory(@Body() dto: CreateCategoryDto, @Req() request): Promise<{ data: Category; message: string }> {
+		return this.categoryService.createCategory(dto, request);
 	}
 
 	@Get('getCategories')
 	getCategories(
 		@Query(new QueryParamsErrorsPipe(FindCategoriesQueryDto))
-		query: unknown,
-	) {
+		query: unknown
+	): Promise<GetCategoriesRes> {
 		return this.categoryService.getCategories(query as FindCategoriesQueryDto);
 	}
 
 	@Put('updateCategoryStatus/:id')
-	updateCategoryStatus(
-		@Param('id') id: string, 
-		@Body() dto: UpdateCategoryStatusDto, 
-		@Req() request
-	) {
+	updateCategoryStatus(@Param('id') id: string, @Body() dto: UpdateCategoryStatusDto, @Req() request) {
 		return this.categoryService.updateCategoryStatus(id, dto, request);
 	}
 
 	@Post('updateCategoriesStatus')
 	@UseInterceptors(UpdateStatusCategoriesInterceptor)
-	updateCategoriesStatus(
-		@Body() dto: UpdateCategoriesStatusDto, 
-		@Req() request
-	) {
+	updateCategoriesStatus(@Body() dto: UpdateStatusCategoriesDto, @Req() request) {
 		return this.categoryService.updateCategoriesStatus(dto, request);
 	}
 
@@ -98,9 +89,9 @@ export class CategoryController {
 
 	@Get('findCategoryProducts/:id')
 	findCategoryProducts(
-		@Param('id', ValidateUUID) id: string, 
+		@Param('id', ValidateUUID) id: string,
 		@Query(new QueryParamsErrorsPipe(FindCategoryProductsQueryDto))
-		query: unknown,
+		query: unknown
 	) {
 		return this.categoryService.findCategoryProducts(id, query as FindCategoryProductsQueryDto);
 	}

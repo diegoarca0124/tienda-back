@@ -162,33 +162,23 @@ export class ProductService {
 	async update_quality(id: string): Promise<void> {
 		try {
 			const product = await this.productRepository
-			.createQueryBuilder('product')
-			.leftJoinAndSelect('product.productPhotos', 'photo')
-			.leftJoinAndSelect('product.productDescriptions', 'description')
-			.select([
-				'product.id',
-				'product.name',
-				'product.description',
-				'product.extract',
-				'product.tags',
-				'photo.id',
-				'description.id',
-			])
-			.where('product.id = :id', { id })
-			.getOne();
+				.createQueryBuilder('product')
+				.leftJoinAndSelect('product.productPhotos', 'photo')
+				.leftJoinAndSelect('product.productDescriptions', 'description')
+				.select(['product.id', 'product.name', 'product.description', 'product.extract', 'product.tags', 'photo.id', 'description.id'])
+				.where('product.id = :id', { id })
+				.getOne();
 
-			console.log('update_quality',product);
-				
+			console.log('update_quality', product);
 
-			if (!product)
-				return;
+			if (!product) return;
 
 			const quality = calculateQuality(product);
 
 			await this.productRepository.update(id, {
-				quality: quality.score
+				quality: quality.score,
 			});
-		} catch (err:any) {
+		} catch (err: any) {
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
@@ -205,7 +195,7 @@ export class ProductService {
 		countries: string;
 		minPrice: number | string;
 		maxPrice: number | string;
-		quality: string
+		quality: string;
 	}) {
 		try {
 			const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -342,7 +332,7 @@ export class ProductService {
 				.createQueryBuilder()
 				.update(ProductDescription)
 				.set({
-					isFeatured: !isFeatured
+					isFeatured: !isFeatured,
 				})
 				.where('id = :id', { id })
 				.returning(['id', 'isFeatured'])
@@ -377,8 +367,8 @@ export class ProductService {
 	}
 
 	async get_product(id: string) {
-		try { 
-			const product :any= await this.productRepository
+		try {
+			const product: any = await this.productRepository
 				.createQueryBuilder('product')
 				.leftJoinAndSelect('product.category', 'category')
 				.leftJoinAndSelect('product.subcategory', 'subcategory')
@@ -394,11 +384,11 @@ export class ProductService {
 			let physical: any = await this.productPhisycalRepository.createQueryBuilder('productPhysical').where('productPhysical.productId = :id', { id }).getOne();
 
 			let shipping: any = await this.productShippingRepository.createQueryBuilder('productShipping').where('productShipping.productId = :id', { id }).getOne();
-			
+
 			product.quality_label = getQualityLabel(product.quality);
 
 			return { product, physical, shipping };
-		} catch (err:any) {
+		} catch (err: any) {
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
@@ -440,7 +430,7 @@ export class ProductService {
 					isLimitedEdition: data.isLimitedEdition,
 					isPreOrder: data.isPreOrder,
 					isExportable: data.isExportable,
-				},
+				}
 			);
 
 			await queryRunner.manager.update(
@@ -464,7 +454,7 @@ export class ProductService {
 					isRequiresAssembly: data.isRequiresAssembly,
 					isHazardous: data.isHazardous,
 					isFlammable: data.isFlammable,
-				},
+				}
 			);
 
 			await queryRunner.manager.update(
@@ -476,7 +466,7 @@ export class ProductService {
 					freeShipping: data.freeShipping,
 					handlingDays: data.handlingDays,
 					specialInstructions: data.specialInstructions,
-				},
+				}
 			);
 
 			await queryRunner.commitTransaction();
@@ -530,9 +520,9 @@ export class ProductService {
 					groupId: editProductDescriptionsDto.groupId,
 					attributeId: editProductDescriptionsDto.attributeId,
 					attributeValueId: [...new Set(descriptions.map((item) => item.attributeValueId))],
-					attributeValues: savedDescriptions.map((item:any) => ({
+					attributeValues: savedDescriptions.map((item: any) => ({
 						id: item.id,
-						value: item.value
+						value: item.value,
 					})),
 				},
 			};
@@ -544,8 +534,6 @@ export class ProductService {
 			await queryRunner.release();
 		}
 	}
-
-	
 
 	async upload_images_product(uploadImagesProductProductDto: UploadImagesProductProductDto) {
 		const { productId, gallery } = uploadImagesProductProductDto;
@@ -676,34 +664,28 @@ export class ProductService {
 				.filter((group) => group.attributes.length > 0);
 
 			result = result
-			.map((group) => {
-				const attributes = group.attributes.map((attr) => {
-					const description = descriptions.find(
-						(d) => d.attributeId === attr.id,
-					);
+				.map((group) => {
+					const attributes = group.attributes.map((attr) => {
+						const description = descriptions.find((d) => d.attributeId === attr.id);
+
+						return {
+							...attr,
+							isFeatured: description?.isFeatured ?? false,
+							productDescriptionId: description?.id,
+							attributeValueId: descriptions.filter((d) => d.attributeId === attr.id).map((d) => d.attributeValueId),
+						};
+					});
+
+					const groupAttributeValueIds = attributes.flatMap((attr) => attr.attributeValueId);
 
 					return {
-						...attr,
-						isFeatured: description?.isFeatured ?? false,
-						productDescriptionId: description?.id,
-						attributeValueId: descriptions
-							.filter((d) => d.attributeId === attr.id)
-							.map((d) => d.attributeValueId),
+						...group,
+						attributes,
+						groupAttributeValueIds,
+						totalAttributeValueIds: groupAttributeValueIds.length,
 					};
-				});
-
-				const groupAttributeValueIds = attributes.flatMap(
-					(attr) => attr.attributeValueId,
-				);
-
-				return {
-					...group,
-					attributes,
-					groupAttributeValueIds,
-					totalAttributeValueIds: groupAttributeValueIds.length,
-				};
-			})
-			.sort((a, b) => b.totalAttributeValueIds - a.totalAttributeValueIds);
+				})
+				.sort((a, b) => b.totalAttributeValueIds - a.totalAttributeValueIds);
 
 			console.log('groups', result[0].attributes[0]);
 			return result;
@@ -727,7 +709,7 @@ export class ProductService {
 		try {
 			let variations = await this.productVariantRepository.createQueryBuilder('productVariation').where('productVariation.productId = :id', { id }).getMany();
 			return variations;
-		} catch (err:any) {
+		} catch (err: any) {
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
@@ -971,14 +953,7 @@ export class ProductService {
 			const query = this.productRepository
 				.createQueryBuilder('product')
 				.leftJoinAndSelect('product.subcategory', 'subcategory')
-				.select([
-					'product.id',
-					'product.name',
-					'product.miniature',
-					'product.createdAt',
-					'subcategory.id',
-					'subcategory.name',
-				])
+				.select(['product.id', 'product.name', 'product.miniature', 'product.createdAt', 'subcategory.id', 'subcategory.name'])
 				.where('product.categoryId = :categoryId', { categoryId });
 
 			if (name?.trim()) {
@@ -988,9 +963,7 @@ export class ProductService {
 					})
 					.orderBy('product.name', 'ASC');
 			} else {
-				query
-					.orderBy('product.createdAt', 'DESC')
-					.take(10);
+				query.orderBy('product.createdAt', 'DESC').take(10);
 			}
 
 			const products = await query.getMany();
@@ -1004,6 +977,4 @@ export class ProductService {
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
 	}
-
-	
 }

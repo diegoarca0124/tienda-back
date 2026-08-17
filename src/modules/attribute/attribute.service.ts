@@ -149,27 +149,20 @@ export class AttributeService {
 		}
 	}
 
-	async get_attribute_and_categories(id: string){
+	async get_attribute_and_categories(id: string) {
 		try {
-			
 			const attributeGroup = await this.attributeGroupRepository
 				.createQueryBuilder('attributeGroup')
-				.select([
-					'attributeGroup.id',
-					'attributeGroup.name'
-				])
+				.select(['attributeGroup.id', 'attributeGroup.name'])
 				.where('attributeGroup.id = :id', { id })
 				.getOne();
 
 			const categories = await this.attributeCategoryRepository
 				.createQueryBuilder('attributeCategory')
 				.innerJoin('attributeCategory.category', 'category')
-				.select([
-					'category.id AS id',
-					'category.name AS name'
-				])
+				.select(['category.id AS id', 'category.name AS name'])
 				.where('attributeCategory.attributeGroupId = :attributeGroupId', {
-					attributeGroupId: id
+					attributeGroupId: id,
 				})
 				.orderBy('category.name', 'ASC')
 				.getRawMany();
@@ -177,11 +170,10 @@ export class AttributeService {
 			return {
 				data: {
 					attributeGroup,
-					categories
+					categories,
 				},
 				message: 'Registros obtenidos correctamente.',
 			};
-			
 		} catch (err) {
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
@@ -595,7 +587,14 @@ export class AttributeService {
 		try {
 			const attributeGroup = await this.attributeGroupRepository
 				.createQueryBuilder('attributeGroup')
-				.select(['attributeGroup.id', 'attributeGroup.name', 'attributeGroup.description','attributeGroup.createdAt','attributeGroup.updatedAt','attributeGroup.statusAt'])
+				.select([
+					'attributeGroup.id',
+					'attributeGroup.name',
+					'attributeGroup.description',
+					'attributeGroup.createdAt',
+					'attributeGroup.updatedAt',
+					'attributeGroup.statusAt',
+				])
 				.leftJoinAndSelect('attributeGroup.attributeCategories', 'attributeCategory')
 				.leftJoinAndSelect('attributeCategory.category', 'category')
 				.where('attributeGroup.id = :id', { id })

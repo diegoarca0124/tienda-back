@@ -3,7 +3,17 @@ import { Transform } from 'class-transformer';
 import { IsIn, IsInt, IsNumber, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min, ValidateIf } from 'class-validator';
 
 const ALLOWED_STATUS = ['Todos', 'draft', 'published'] as const;
-const ALLOWED_SORT = ['Predeterminado', 'name:asc', 'name:desc', 'priceRegular:asc', 'priceRegular:desc', 'quality:asc', 'quality:desc', 'stockQuantity:asc', 'stockQuantity:desc'] as const;
+const ALLOWED_SORT = [
+	'Predeterminado',
+	'name:asc',
+	'name:desc',
+	'priceRegular:asc',
+	'priceRegular:desc',
+	'quality:asc',
+	'quality:desc',
+	'stockQuantity:asc',
+	'stockQuantity:desc',
+] as const;
 const ALLOWED_QUALITY = ['Todos', 'low', 'medium', 'high'] as const;
 const ALLOWED_VISIBILITY = ['Todos', 'public', 'private'] as const;
 
@@ -62,7 +72,7 @@ export class FindCategoryProductsQueryDto {
 	})
 	@IsString()
 	@IsIn(ALLOWED_STATUS)
-	status: typeof ALLOWED_STATUS[number] = 'Todos';
+	status: (typeof ALLOWED_STATUS)[number] = 'Todos';
 
 	@Transform(({ value }) => {
 		value = rejectRepeatedParameter(value, 'sort');
@@ -70,13 +80,13 @@ export class FindCategoryProductsQueryDto {
 	})
 	@IsString()
 	@IsIn(ALLOWED_SORT)
-	sort: typeof ALLOWED_SORT[number] = 'Predeterminado';
+	sort: (typeof ALLOWED_SORT)[number] = 'Predeterminado';
 
 	@Transform(({ value }) => {
 		value = rejectRepeatedParameter(value, 'subcategoryIds');
 		if (value === undefined || value === 'Todos') return undefined;
 		if (typeof value !== 'string') return value;
-		return [...new Set(value.split(',').map(id => id.trim().toLowerCase()))];
+		return [...new Set(value.split(',').map((id) => id.trim().toLowerCase()))];
 	})
 	@IsOptional()
 	@IsUUID('4', { each: true })
@@ -88,7 +98,7 @@ export class FindCategoryProductsQueryDto {
 	})
 	@IsString()
 	@IsIn(ALLOWED_QUALITY)
-	quality: typeof ALLOWED_QUALITY[number] = 'Todos';
+	quality: (typeof ALLOWED_QUALITY)[number] = 'Todos';
 
 	@Transform(({ value }) => {
 		value = rejectRepeatedParameter(value, 'visibility');
@@ -96,7 +106,7 @@ export class FindCategoryProductsQueryDto {
 	})
 	@IsString()
 	@IsIn(ALLOWED_VISIBILITY)
-	visibility: typeof ALLOWED_VISIBILITY[number] = 'Todos';
+	visibility: (typeof ALLOWED_VISIBILITY)[number] = 'Todos';
 
 	@Transform(({ value }) => transformOptionalPrice(value, 'minPrice'))
 	@IsOptional()

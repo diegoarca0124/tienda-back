@@ -6,7 +6,7 @@ import { escapeLikePattern } from '@/common/utils/escape-like-pattern.util';
 const PRICE_EXPRESSION = `COALESCE(NULLIF(product."priceDiscount", 0), product."priceRegular")`;
 
 export class FindCategoryProductsBuilder {
-	static applyFilters(qb: SelectQueryBuilder<Product>,query: FindCategoryProductsQueryDto) {
+	static applyFilters(qb: SelectQueryBuilder<Product>, query: FindCategoryProductsQueryDto) {
 		this.applySubcategory(qb, query.subcategoryIds);
 		this.applySearch(qb, query.filter);
 		this.applyStatus(qb, query.status);
@@ -28,7 +28,7 @@ export class FindCategoryProductsBuilder {
 		const pattern = `%${escapeLikePattern(normalizedSearch)}%`;
 		const normalizeField = (field: string) => `translate(lower(COALESCE(${field}, '')), 'áéíóúüñ', 'aeiouun')`;
 		const fields = ['product.name', 'product.extract', 'brand.name', 'subcategory.name'];
-		const conditions = fields.map(field => `${normalizeField(field)} LIKE lower(:pattern) ESCAPE '\\'`).join(' OR ');
+		const conditions = fields.map((field) => `${normalizeField(field)} LIKE lower(:pattern) ESCAPE '\\'`).join(' OR ');
 		qb.andWhere(`(${conditions})`, { pattern });
 	}
 
@@ -42,16 +42,16 @@ export class FindCategoryProductsBuilder {
 		qb.andWhere('product.visibility = :visibility', { visibility });
 	}
 
-	private static applyPrice(qb: SelectQueryBuilder<Product>,minPrice?: number,maxPrice?: number,) {
+	private static applyPrice(qb: SelectQueryBuilder<Product>, minPrice?: number, maxPrice?: number) {
 		if (minPrice !== undefined) {
 			qb.andWhere(`${PRICE_EXPRESSION} >= :minPrice`, {
-			minPrice,
+				minPrice,
 			});
 		}
 
 		if (maxPrice !== undefined) {
 			qb.andWhere(`${PRICE_EXPRESSION} <= :maxPrice`, {
-			maxPrice,
+				maxPrice,
 			});
 		}
 	}

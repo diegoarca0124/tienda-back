@@ -9,4 +9,4 @@ export const ALLOWED_CONFIGURATION = [
 	'isTemperature',
 ] as const;
 
-export type AllowedConfiguration = typeof ALLOWED_CONFIGURATION[number];
+export type AllowedConfiguration = (typeof ALLOWED_CONFIGURATION)[number];

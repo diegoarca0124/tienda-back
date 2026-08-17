@@ -36,7 +36,7 @@ export class BrandController {
 	}
 
 	@Get('get_brands')
-	get_brands(@Query() query: { filter: string; page: number; limit: number; status: string, countries: string; sort: string }) {
+	get_brands(@Query() query: { filter: string; page: number; limit: number; status: string; countries: string; sort: string }) {
 		return this.brandService.get_brands(query);
 	}
 
@@ -74,7 +74,10 @@ export class BrandController {
 	}
 
 	@Get('get_product_by_brand/:id')
-	get_product_by_brand(@Param('id', ValidateUUID) id: string, @Query() query: { filter: string; page: number; limit: number; status: string; sort: string; subcategoryIds: string }) {
+	get_product_by_brand(
+		@Param('id', ValidateUUID) id: string,
+		@Query() query: { filter: string; page: number; limit: number; status: string; sort: string; subcategoryIds: string }
+	) {
 		return this.brandService.get_product_by_brand(id, query);
 	}
 

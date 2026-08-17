@@ -22,6 +22,16 @@ import { FindCollaboratorsQueryDto } from './dto/find-collaborators.dto';
 import { QueryParamsErrorsPipe } from '@/common/pipes/query-params-errors.pipe';
 import { UpdateCollaboratorStatusDto } from './dto/update-collaborator-status.dto';
 import { UpdateCollaboratorsStatusDto } from './dto/update-collaborators-status.dto';
+import {
+	CreateCollaboratorRes,
+	ExportCollaboratorsRes,
+	GetCollaboratorRes,
+	GetCollaboratorsRes,
+	ImportCollaboratorsRes,
+	UpdateCollaboratorRes,
+	UpdateCollaboratorsStatusRes,
+	UpdateCollaboratorStatusRes,
+} from './interface/controller.interface';
 dotenv.config({ path: path.resolve(process.cwd(), `.env.${process.env.NODE_ENV || 'dev'}`) });
 
 @Controller('collaborator')
@@ -33,10 +43,7 @@ export class CollaboratorController {
 
 	@Post('createCollaborator')
 	@UseInterceptors(CreateCollaboratorInterceptor)
-	createCollaborator(
-		@Body() dto: CreateCollaboratorDto, 
-		@Req() request
-	): Promise<any> {
+	createCollaborator(@Body() dto: CreateCollaboratorDto, @Req() request): Promise<CreateCollaboratorRes> {
 		return this.collaboratorService.createCollaborator(dto, request);
 	}
 
@@ -77,63 +84,44 @@ export class CollaboratorController {
 	@Get('getCollaborators')
 	getCollaborators(
 		@Query(new QueryParamsErrorsPipe(FindCollaboratorsQueryDto))
-		query: unknown,
-	) {
+		query: unknown
+	): Promise<GetCollaboratorsRes> {
 		return this.collaboratorService.getCollaborators(query as FindCollaboratorsQueryDto);
 	}
 
 	@Get('getCollaborator/:id')
-	getCollaborator(
-		@Param('id', ValidateUUID) id
-	) {
+	getCollaborator(@Param('id', ValidateUUID) id): Promise<GetCollaboratorRes> {
 		return this.collaboratorService.getCollaborator(id);
 	}
 
 	@Put('updateCollaborator/:id')
 	@UseInterceptors(EditCollaboratorInterceptor)
-	updateCollaborator(
-		@Param('id', ValidateUUID) id: string,
-		@Body() dto: EditCollaboratorDto,
-		@Req() request
-	): Promise<{ data: Collaborator; message: string }> {
+	updateCollaborator(@Param('id', ValidateUUID) id: string, @Body() dto: EditCollaboratorDto, @Req() request): Promise<UpdateCollaboratorRes> {
 		return this.collaboratorService.updateCollaborator(id, dto, request);
 	}
 
 	@Put('updateCollaboratorStatus/:id')
-	updateCollaboratorStatus(
-		@Param('id', ValidateUUID) id: string, 
-		@Body() dto: UpdateCollaboratorStatusDto, 
-		@Req() request
-	): Promise<{ data: Collaborator; message: string }> {
+	updateCollaboratorStatus(@Param('id', ValidateUUID) id: string, @Body() dto: UpdateCollaboratorStatusDto, @Req() request): Promise<UpdateCollaboratorStatusRes> {
 		return this.collaboratorService.updateCollaboratorStatus(id, dto, request);
 	}
 
 	@Post('updateCollaboratorsStatus')
 	@UseInterceptors(UpdateStatusCollaboratorsInterceptor)
-	updateCollaboratorsStatus(
-		@Body() dto: UpdateCollaboratorsStatusDto, 
-		@Req() request
-	): Promise<{ data: any; message: string }> {
+	updateCollaboratorsStatus(@Body() dto: UpdateCollaboratorsStatusDto, @Req() request): Promise<UpdateCollaboratorsStatusRes> {
 		return this.collaboratorService.updateCollaboratorsStatus(dto, request);
 	}
 
 	@Post('exportCollaborators')
 	@HttpCode(HttpStatus.OK)
 	@UseInterceptors(ExportCollaboratorsInterceptor)
-	async exportCollaborators(
-		@Body() exportCollaboratorsDto: ExportCollaboratorsDto, 
-		@Req() request
-	): Promise<any> {
+	async exportCollaborators(@Body() exportCollaboratorsDto: ExportCollaboratorsDto, @Req() request): Promise<ExportCollaboratorsRes> {
 		const result = await this.collaboratorService.exportCollaborators(exportCollaboratorsDto, request);
 		return result;
 	}
 
 	@Post('importCollaborators')
 	@UseInterceptors(ImportCollaboratorsInterceptor)
-	async importCollaborators(
-		@Body() dto: ImportCollaboratorsDto, 
-		@Req() request
-	): Promise<any> {
+	async importCollaborators(@Body() dto: ImportCollaboratorsDto, @Req() request): Promise<ImportCollaboratorsRes> {
 		const result = await this.collaboratorService.importCollaborators(dto, request);
 		return result;
 	}

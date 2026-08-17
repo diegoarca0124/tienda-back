@@ -43,10 +43,7 @@ export class ImportCollaboratorsInterceptor extends BaseValidationInterceptor<Im
 			return { row: ['La fila debe ser un objeto válido.'] };
 		}
 		const dto = plainToInstance(ValidateImportCollaboratorDto, raw);
-		const [dtoErrors, databaseErrors] = await Promise.all([
-			this.getDtoErrors(dto),
-			this.getDatabaseErrors(dto, mode),
-		]);
+		const [dtoErrors, databaseErrors] = await Promise.all([this.getDtoErrors(dto), this.getDatabaseErrors(dto, mode)]);
 		const rowErrors: RowErrors = {};
 		this.mergeErrors(rowErrors, dtoErrors);
 		this.mergeErrors(rowErrors, duplicateErrors);
@@ -76,8 +73,8 @@ export class ImportCollaboratorsInterceptor extends BaseValidationInterceptor<Im
 			dto.phone ? this.collaboratorValidator.existsPhoneCollaborator(dto.phone) : false,
 			dto.number_document ? this.collaboratorValidator.existsDocumentNumberCollaborator(dto.number_document) : false,
 		]);
-		console.log('emailExists',emailExists);
-		
+		console.log('emailExists', emailExists);
+
 		if (emailExists) this.addError(errors, 'email', 'El correo ya se encuentra registrado.');
 		if (phoneExists) this.addError(errors, 'phone', 'El teléfono ya se encuentra registrado.');
 		if (documentExists) this.addError(errors, 'number_document', 'El número de documento ya se encuentra registrado.');
@@ -130,7 +127,9 @@ export class ImportCollaboratorsInterceptor extends BaseValidationInterceptor<Im
 	}
 
 	private normalizeValue(value: unknown): string {
-		return String(value ?? '').trim().toLowerCase();
+		return String(value ?? '')
+			.trim()
+			.toLowerCase();
 	}
 
 	private mergeErrors(target: RowErrors, source?: RowErrors): void {

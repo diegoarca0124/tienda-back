@@ -70,7 +70,7 @@ export class BrandService {
 
 			const queryBuilder = this.brandRepository
 				.createQueryBuilder('brand')
-				.select(['brand.id', 'brand.name', 'brand.description', 'brand.createdAt', 'brand.status', 'brand.logoUrl', 'brand.prefix', 'brand.code','brand.websiteUrl'])
+				.select(['brand.id', 'brand.name', 'brand.description', 'brand.createdAt', 'brand.status', 'brand.logoUrl', 'brand.prefix', 'brand.code', 'brand.websiteUrl'])
 				.loadRelationCountAndMap('brand.totalProducts', 'brand.products');
 
 			if (query.filter?.trim()) {
@@ -101,13 +101,10 @@ export class BrandService {
 			if (query.countries && query.countries !== 'Todos') {
 				const countries = query.countries
 					.split(',')
-					.map(country => country.trim())
+					.map((country) => country.trim())
 					.filter(Boolean);
 				if (countries.length > 0) {
-					queryBuilder.andWhere(
-						`brand.country->>'code' IN (:...countries)`,
-						{ countries }
-					);
+					queryBuilder.andWhere(`brand.country->>'code' IN (:...countries)`, { countries });
 				}
 			}
 
@@ -135,10 +132,7 @@ export class BrandService {
 				queryBuilder.orderBy('brand.createdAt', 'DESC');
 			}
 
-			let [brands, totalBrands] = await queryBuilder
-			.skip(pagination.skip)
-			.take(pagination.limit)
-			.getManyAndCount();
+			let [brands, totalBrands] = await queryBuilder.skip(pagination.skip).take(pagination.limit).getManyAndCount();
 
 			const brandIds = brands.map((c) => c.id);
 			const rawProducts = await this.productRepository
@@ -146,15 +140,15 @@ export class BrandService {
 				.select(['product.id', 'product.name', 'product.cover', 'product.brandId'])
 				.addSelect(`ROW_NUMBER() OVER(PARTITION BY product.brandId ORDER BY product.createdAt DESC) as rn`)
 				.where('product.brandId IN (:...ids)', { ids: brandIds })
-				.getRawMany(); 
+				.getRawMany();
 
 			const brandsWithProducts = brands.map((brand: any) => {
 				const products = rawProducts
-					.filter(p => p.product_brandId === brand.id && parseInt(p.rn) <= 3)
-					.map(p => ({
+					.filter((p) => p.product_brandId === brand.id && parseInt(p.rn) <= 3)
+					.map((p) => ({
 						id: p.product_id,
 						name: p.product_name,
-						cover: p.product_cover
+						cover: p.product_cover,
 					}));
 				return {
 					...brand,
@@ -364,12 +358,8 @@ export class BrandService {
 		}
 	}
 
-	async get_product_by_brand(
-		brandId: string, 
-		query: { filter: string; page: number; limit: number; status: string; sort: string; subcategoryIds?: string  }
-	) {
+	async get_product_by_brand(brandId: string, query: { filter: string; page: number; limit: number; status: string; sort: string; subcategoryIds?: string }) {
 		try {
-			
 			const pagination = getPagination(query.page, query.limit);
 
 			const exists = await this.brandRepository.exists({ where: { id: brandId } });
@@ -388,13 +378,13 @@ export class BrandService {
 			});
 
 			if (query.subcategoryIds != 'Todos') {
-				const subcategoryIds = query.subcategoryIds?.split(',').map(id => id.trim()).filter(Boolean);
+				const subcategoryIds = query.subcategoryIds
+					?.split(',')
+					.map((id) => id.trim())
+					.filter(Boolean);
 
 				if (subcategoryIds?.length) {
-					queryBuilder.andWhere(
-						'product.subcategoryId IN (:...subcategoryIds)',
-						{ subcategoryIds },
-					);
+					queryBuilder.andWhere('product.subcategoryId IN (:...subcategoryIds)', { subcategoryIds });
 				}
 			}
 
@@ -418,13 +408,13 @@ export class BrandService {
 				});
 			}
 
-			if ( query.status && query.status !== 'todos' && ['draft', 'published'].includes(query.status)) {
+			if (query.status && query.status !== 'todos' && ['draft', 'published'].includes(query.status)) {
 				queryBuilder.andWhere('product.status = :status', {
 					status: query.status,
 				});
 			}
 
-			console.log('query.sort',query.sort);
+			console.log('query.sort', query.sort);
 
 			if (query.sort?.trim() && query.sort !== 'Predeterminado') {
 				const [field, direction] = query.sort.split(':');
@@ -490,23 +480,15 @@ export class BrandService {
 				const [, direction] = query.sort.split(':');
 
 				products.sort((a, b) => {
-					const priceA =
-						a.priceDiscount && Number(a.priceDiscount) > 0
-							? Number(a.priceDiscount)
-							: Number(a.priceRegular);
+					const priceA = a.priceDiscount && Number(a.priceDiscount) > 0 ? Number(a.priceDiscount) : Number(a.priceRegular);
 
-					const priceB =
-						b.priceDiscount && Number(b.priceDiscount) > 0
-							? Number(b.priceDiscount)
-							: Number(b.priceRegular);
+					const priceB = b.priceDiscount && Number(b.priceDiscount) > 0 ? Number(b.priceDiscount) : Number(b.priceRegular);
 
-					return direction === 'asc'
-						? priceA - priceB
-						: priceB - priceA;
+					return direction === 'asc' ? priceA - priceB : priceB - priceA;
 				});
 			}
 
-			products = products.map(product => ({
+			products = products.map((product) => ({
 				...product,
 				quality_label: getQualityLabel(product.quality),
 			}));
@@ -528,7 +510,7 @@ export class BrandService {
 	async get_brand_logo_filename_by_id(id: string) {
 		try {
 			let brand: any = await this.brandRepository.createQueryBuilder('brand').select(['brand.id', 'brand.logoUrl']).where('brand.id = :id', { id }).getOne();
-			
+
 			return brand.logoUrl;
 		} catch (err: any) {
 			if (err) throw err;

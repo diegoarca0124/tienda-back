@@ -20,9 +20,9 @@ import { FindCategoryProductsBuilder } from './builders/find-category-products.b
 import { FindCategoryProductsQueryDto } from './dto/find-category-products.dto';
 import { FindCategoriesQueryDto } from './dto/find-categories.dto';
 import { FindCategoriesBuilder } from './builders/find-categories.builder';
-import { CategoryProductSummary, RawCategoryProduct } from './interfaces/get-categories.interface';
 import { UpdateCategoryStatusDto } from './dto/update-category-status.dto';
-import { UpdateCategoriesStatusDto } from './dto/update-categories-status.dto';
+import { UpdateStatusCategoriesDto } from './dto/update-status-categories.dto';
+import { GetCategoriesRes } from './interfaces/controller.interface';
 
 @Injectable()
 export class CategoryService {
@@ -35,7 +35,7 @@ export class CategoryService {
 		private categoryValidator: CategoryValidator
 	) {}
 
-	async create_category(dto: CreateCategoryDto, request: any) {
+	async createCategory(dto: CreateCategoryDto, request: any) {
 		try {
 			const result = await this.categoryRepository
 				.createQueryBuilder()
@@ -66,7 +66,7 @@ export class CategoryService {
 				response: JSON.stringify({ id }),
 				requestId: request.requestId,
 			});
-			
+
 			return {
 				message: 'Registro creado correctamente.',
 				data: id,
@@ -77,22 +77,19 @@ export class CategoryService {
 		}
 	}
 
-	async getCategories(query: FindCategoriesQueryDto) {
+	async getCategories(query: FindCategoriesQueryDto): Promise<GetCategoriesRes> {
 		try {
-			console.log('query',query);
-			
 			const skip = (query.page - 1) * query.limit;
-
 			const queryBuilder = this.categoryRepository
 				.createQueryBuilder('category')
 				.select([
-					'category.id', 
-					'category.name', 
-					'category.description', 
-					'category.createdAt', 
-					'category.status', 
-					'category.prefix', 
-					'category.icon', 
+					'category.id',
+					'category.name',
+					'category.description',
+					'category.createdAt',
+					'category.status',
+					'category.prefix',
+					'category.icon',
 					'category.code',
 					'category.isDimensions',
 					'category.isCharacteristics',
@@ -103,15 +100,8 @@ export class CategoryService {
 					'category.isTemperature',
 				])
 				.loadRelationCountAndMap('category.totalProducts', 'category.products');
-
-			FindCategoriesBuilder.applyFilters(
-				queryBuilder, query
-			);
-
-			const [categories, totalCategories] = await queryBuilder
-			.skip(skip)
-			.take(query.limit)
-			.getManyAndCount();
+			FindCategoriesBuilder.applyFilters(queryBuilder, query);
+			const [categories, totalCategories] = await queryBuilder.skip(skip).take(query.limit).getManyAndCount();
 
 			const categoryIds = categories.map((category) => category.id);
 
@@ -133,10 +123,8 @@ export class CategoryService {
 					})
 				: [];
 
-			const categoriesWithProducts = categories.map((category:any) => {
-				const latestProducts = products
-					.filter((product) => product.categoryId === category.id)
-					.slice(0, 4);
+			const categoriesWithProducts = categories.map((category: any) => {
+				const latestProducts = products.filter((product) => product.categoryId === category.id).slice(0, 4);
 
 				return {
 					...category,
@@ -158,7 +146,7 @@ export class CategoryService {
 					status: query.status,
 					configurations: query.configurations,
 					sort: query.sort,
-				}
+				},
 			};
 		} catch (err: any) {
 			if (err) throw err;
@@ -169,7 +157,7 @@ export class CategoryService {
 	async updateCategoryStatus(id: string, dto: UpdateCategoryStatusDto, request: any) {
 		try {
 			const exists = await this.categoryRepository.exists({ where: { id } });
-			
+
 			if (!exists) {
 				throw new NotFoundException('No se encontró el registro.');
 			}
@@ -214,7 +202,7 @@ export class CategoryService {
 		}
 	}
 
-	async updateCategoriesStatus(dto: UpdateCategoriesStatusDto, request: any) {
+	async updateCategoriesStatus(dto: UpdateStatusCategoriesDto, request: any) {
 		try {
 			const ids = [...new Set(dto.ids)];
 
@@ -528,8 +516,6 @@ export class CategoryService {
 		}
 	}
 
-	
-
 	async update_status_subcategories(updateStatusSubcategoriesDto: UpdateStatusSubcategoriesDto, request: any) {
 		try {
 			const ids = [...new Set(updateStatusSubcategoriesDto.ids)];
@@ -582,11 +568,11 @@ export class CategoryService {
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
 	}
-	
-	async findCategoryProducts(categoryId: string, query: FindCategoryProductsQueryDto){
+
+	async findCategoryProducts(categoryId: string, query: FindCategoryProductsQueryDto) {
 		try {
 			const skip = (query.page - 1) * query.limit;
-			
+
 			if (query.minPrice !== undefined && query.maxPrice !== undefined && query.minPrice > query.maxPrice) {
 				throw new BadRequestException({
 					code: 'INVALID_QUERY_PARAMS',
@@ -600,45 +586,40 @@ export class CategoryService {
 			}
 
 			const queryBuilder = this.productRepository
-			.createQueryBuilder('product')
-			.leftJoinAndSelect('product.category', 'category')
-			.leftJoinAndSelect('product.subcategory', 'subcategory')
-			.leftJoinAndSelect('product.brand', 'brand')
-			.select([
-				'product.id',
-				'product.name',
-				'product.cover',
-				'product.status',
-				'product.visibility',
-				'product.createdAt',
-				'product.priceRegular',
-				'product.quality',
-				'product.stockQuantity',
-				'product.priceDiscount',
-				'category.id',
-				'category.name',
-				'subcategory.id',
-				'subcategory.name',
-				'subcategory.prefix',
-				'subcategory.code',
-				'brand.id',
-				'brand.name',
-				'brand.logoUrl',
-			])
-			.where('product.categoryId = :categoryId', {
-				categoryId,
-			});
+				.createQueryBuilder('product')
+				.leftJoinAndSelect('product.category', 'category')
+				.leftJoinAndSelect('product.subcategory', 'subcategory')
+				.leftJoinAndSelect('product.brand', 'brand')
+				.select([
+					'product.id',
+					'product.name',
+					'product.cover',
+					'product.status',
+					'product.visibility',
+					'product.createdAt',
+					'product.priceRegular',
+					'product.quality',
+					'product.stockQuantity',
+					'product.priceDiscount',
+					'category.id',
+					'category.name',
+					'subcategory.id',
+					'subcategory.name',
+					'subcategory.prefix',
+					'subcategory.code',
+					'brand.id',
+					'brand.name',
+					'brand.logoUrl',
+				])
+				.where('product.categoryId = :categoryId', {
+					categoryId,
+				});
 
-			FindCategoryProductsBuilder.applyFilters(
-				queryBuilder, query
-			);
+			FindCategoryProductsBuilder.applyFilters(queryBuilder, query);
 
-			let [products, totalProducts] = await queryBuilder
-			.skip(skip)
-			.take(query.limit)
-			.getManyAndCount();
+			let [products, totalProducts] = await queryBuilder.skip(skip).take(query.limit).getManyAndCount();
 
-			products = products.map(product => ({
+			products = products.map((product) => ({
 				...product,
 				quality_label: getQualityLabel(product.quality),
 			}));
@@ -660,7 +641,7 @@ export class CategoryService {
 					visibility: query.visibility,
 					minPrice: query.minPrice,
 					maxPrice: query.maxPrice,
-				}
+				},
 			};
 		} catch (err) {
 			if (err) throw err;
@@ -733,7 +714,7 @@ export class CategoryService {
 			const subcategories = await this.subcategoryRepository
 				.createQueryBuilder('subcategory')
 				.loadRelationCountAndMap('subcategory.totalProducts', 'subcategory.products')
-				.select(['subcategory.id', 'subcategory.name', 'subcategory.icon', 'subcategory.status','subcategory.prefix', 'subcategory.code'])
+				.select(['subcategory.id', 'subcategory.name', 'subcategory.icon', 'subcategory.status', 'subcategory.prefix', 'subcategory.code'])
 				.andWhere('subcategory.categoryId = :id', {
 					id,
 				})
@@ -754,24 +735,15 @@ export class CategoryService {
 			const categories = await this.categoryRepository
 				.createQueryBuilder('category')
 				.leftJoinAndSelect('category.subcategories', 'subcategory')
-				.select([
-					'category.id',
-					'category.name',
-					'category.status',
-					'category.prefix',
-					'subcategory.id',
-					'subcategory.name',
-					'subcategory.status',
-					'subcategory.prefix',
-				])
+				.select(['category.id', 'category.name', 'category.status', 'category.prefix', 'subcategory.id', 'subcategory.name', 'subcategory.status', 'subcategory.prefix'])
 				.orderBy('category.name', 'ASC')
 				.addOrderBy('subcategory.name', 'ASC')
 				.getMany();
 
 			return {
-				data: categories.map(category => ({
+				data: categories.map((category) => ({
 					...category,
-					subcategories: category.subcategories.map(subcategory => ({
+					subcategories: category.subcategories.map((subcategory) => ({
 						...subcategory,
 						checked: false,
 					})),
@@ -807,10 +779,10 @@ export class CategoryService {
 				throw new NotFoundException('La subcategoría seleccionada no existe.');
 			}
 
-			if (!updateCatSubcatProductsDto.products?.length) { 
+			if (!updateCatSubcatProductsDto.products?.length) {
 				throw new BadRequestException('Debe seleccionar al menos un producto.');
 			}
-			
+
 			const { affected } = await this.productRepository
 				.createQueryBuilder()
 				.update(Product)
@@ -928,7 +900,4 @@ export class CategoryService {
 			await queryRunner.release();
 		}
 	}
-
-	
 }
-

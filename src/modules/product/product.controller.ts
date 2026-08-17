@@ -83,14 +83,8 @@ export class ProductController {
 
 	@Put('update_product/:id')
 	@UseInterceptors(UpdateProductInterceptor)
-	update_product(
-		@Param('id', ValidateUUID) id: string,
-		@Body() UpdateProductDto: UpdateProductDto,
-	) {
-		return this.productService.update_product(
-			id,
-			UpdateProductDto
-		);
+	update_product(@Param('id', ValidateUUID) id: string, @Body() UpdateProductDto: UpdateProductDto) {
+		return this.productService.update_product(id, UpdateProductDto);
 	}
 
 	@Post('update_product_description')
@@ -155,11 +149,7 @@ export class ProductController {
 	}
 
 	@Put('update_feature_attribute/:id')
-	update_feature_attribute(
-		@Param('id', ValidateUUID) id: string, 
-		@Body() data: { isFeatured: boolean },
-		@Req() request
-	) {
+	update_feature_attribute(@Param('id', ValidateUUID) id: string, @Body() data: { isFeatured: boolean }, @Req() request) {
 		return this.productService.update_feature_attribute(id, data.isFeatured, request);
 	}
 
@@ -176,7 +166,7 @@ export class ProductController {
 	}
 
 	@Get('find_products_to_copy/:id')
-	find_products_to_copy(@Param('id', ValidateUUID) id, @Query() query: {name: string;}) {
+	find_products_to_copy(@Param('id', ValidateUUID) id, @Query() query: { name: string }) {
 		return this.productService.find_products_to_copy(id, query.name);
 	}
 }

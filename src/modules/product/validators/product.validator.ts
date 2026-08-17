@@ -27,41 +27,22 @@ export class ProductValidator {
 	) {}
 
 	async existsNameProduct(name: string): Promise<any> {
-		return this.productRepository.createQueryBuilder('product')
-		.select(['product.id'])
-		.where('LOWER(TRIM(product.name)) = LOWER(TRIM(:name))', { name })
-		.getOne();
+		return this.productRepository.createQueryBuilder('product').select(['product.id']).where('LOWER(TRIM(product.name)) = LOWER(TRIM(:name))', { name }).getOne();
 	}
 
 	async existsBrand(brandId: string): Promise<any> {
-		return this.brandRepository
-			.createQueryBuilder('brand')
-			.select(['brand.id'])
-			.where('brand.id = :brandId', { brandId })
-			.getOne();
+		return this.brandRepository.createQueryBuilder('brand').select(['brand.id']).where('brand.id = :brandId', { brandId }).getOne();
 	}
 
 	async existsCategory(categoryId: string): Promise<any> {
-		return this.categoryRepository
-			.createQueryBuilder('category')
-			.select(['category.id'])
-			.where('category.id = :categoryId', { categoryId })
-			.getOne();
+		return this.categoryRepository.createQueryBuilder('category').select(['category.id']).where('category.id = :categoryId', { categoryId }).getOne();
 	}
 
 	async existsSubcategory(subcategoryId: string): Promise<any> {
-		return this.subcategoryRepository
-			.createQueryBuilder('subcategory')
-			.select(['subcategory.id'])
-			.where('subcategory.id = :subcategoryId', { subcategoryId })
-			.getOne();
+		return this.subcategoryRepository.createQueryBuilder('subcategory').select(['subcategory.id']).where('subcategory.id = :subcategoryId', { subcategoryId }).getOne();
 	}
 
 	async existsProductGroup(productGroupId: string): Promise<any> {
-		return this.productGroupRepository
-			.createQueryBuilder('productGroup')
-			.select(['productGroup.id'])
-			.where('productGroup.id = :productGroupId', { productGroupId })
-			.getOne();
+		return this.productGroupRepository.createQueryBuilder('productGroup').select(['productGroup.id']).where('productGroup.id = :productGroupId', { productGroupId }).getOne();
 	}
 }

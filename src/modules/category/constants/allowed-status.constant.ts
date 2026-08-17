@@ -1,1 +1,1 @@
-export const ALLOWED_STATUS = ['Todos', 'Activos','Inactivos'] as const;
+export const ALLOWED_STATUS = ['Todos', 'Activos', 'Inactivos'] as const;

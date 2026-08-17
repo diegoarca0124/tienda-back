@@ -41,19 +41,10 @@ export async function awsProcessImage(
 			const newWidth = Math.round(metadata.width! * element.scale);
 			const newHeight = Math.round(metadata.height! * element.scale);
 
-			const buffer = await image
-			.clone()
-			.resize(newWidth, newHeight)
-			.webp({ quality: element.quality })
-			.toBuffer();
+			const buffer = await image.clone().resize(newWidth, newHeight).webp({ quality: element.quality }).toBuffer();
 
-			await uploadToS3(
-				buffer,
-				filename,
-				'image/webp',
-				`${folder}/${element.dir}`,
-			);
-		}),
+			await uploadToS3(buffer, filename, 'image/webp', `${folder}/${element.dir}`);
+		})
 	);
 
 	return filename;
