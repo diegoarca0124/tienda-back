@@ -11,3 +11,13 @@ export interface GetCategoriesRes {
 	};
 	filters: Pick<FindCategoriesQueryDto, 'filter' | 'status' | 'sort' | 'configurations'>;
 }
+
+export interface UpdateCategoriesStatusRes {
+	data: string[];
+	message: string;
+}
+
+export interface UpdateCategoryStatusRes {
+	data: Category;
+	message: string;
+}
