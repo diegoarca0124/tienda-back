@@ -77,7 +77,6 @@ export class FindCategoriesQueryDto {
 
 		return configurations;
 	})
-	
 	@IsArray({ message: 'Las configuraciones deben enviarse como una lista.' })
 	@ArrayNotEmpty({ message: 'Debe enviar al menos una configuración.' })
 	@ArrayUnique({ message: 'Las configuraciones no deben estar repetidas.' })

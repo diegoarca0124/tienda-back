@@ -135,61 +135,55 @@ export class CollaboratorService {
 		};
 	}
 
-	async getCollaborators(
-		query: FindCollaboratorsQueryDto
-	): Promise<GetCollaboratorsRes> {
-		const queryBuilder = this.collaboratorRepository
-			.createQueryBuilder('collaborator')
-			.select([
-				'collaborator.id',
-				'collaborator.names',
-				'collaborator.surname',
-				'collaborator.email',
-				'collaborator.fullnames',
-				'collaborator.status',
-				'collaborator.number_document',
-				'collaborator.type_document',
-				'collaborator.prefix',
-				'collaborator.phone',
-				'collaborator.role',
-				'collaborator.createdAt',
-			]);
+	async getCollaborators(query: FindCollaboratorsQueryDto): Promise<GetCollaboratorsRes> {
+		try {
+			const queryBuilder = this.collaboratorRepository
+				.createQueryBuilder('collaborator')
+				.select([
+					'collaborator.id',
+					'collaborator.names',
+					'collaborator.surname',
+					'collaborator.email',
+					'collaborator.fullnames',
+					'collaborator.status',
+					'collaborator.number_document',
+					'collaborator.type_document',
+					'collaborator.prefix',
+					'collaborator.phone',
+					'collaborator.role',
+					'collaborator.createdAt',
+				]);
 
-		FindCollaboratorsBuilder.applyFilters(queryBuilder, query);
+			FindCollaboratorsBuilder.applyFilters(queryBuilder, query);
 
-		const totalCollaborators =
-			await queryBuilder.clone().getCount();
+			const totalCollaborators = await queryBuilder.clone().getCount();
 
-		const totalPages = Math.ceil(
-			totalCollaborators / query.limit
-		);
+			const totalPages = Math.ceil(totalCollaborators / query.limit);
 
-		const currentPage =
-			totalPages === 0
-				? 1
-				: Math.min(query.page, totalPages);
+			const currentPage = totalPages === 0 ? 1 : Math.min(query.page, totalPages);
 
-		const skip = (currentPage - 1) * query.limit;
+			const skip = (currentPage - 1) * query.limit;
 
-		const collaborators = await queryBuilder
-			.skip(skip)
-			.take(query.limit)
-			.getMany();
+			const collaborators = await queryBuilder.skip(skip).take(query.limit).getMany();
 
-		return {
-			collaborators,
-			meta: {
-				totalCollaborators,
-				totalPages,
-				currentPage,
-				limit: query.limit,
-			},
-			filters: {
-				filter: query.filter,
-				status: query.status,
-				sort: query.sort,
-			},
-		};
+			return {
+				collaborators,
+				meta: {
+					totalCollaborators,
+					totalPages,
+					currentPage,
+					limit: query.limit,
+				},
+				filters: {
+					filter: query.filter,
+					status: query.status,
+					sort: query.sort,
+				},
+			};
+		} catch (err: unknown) {
+			if (err) throw err;
+			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
+		}
 	}
 
 	async getCollaborator(id: string): Promise<GetCollaboratorRes> {
@@ -309,22 +303,15 @@ export class CollaboratorService {
 				.execute();
 
 			if (!result.affected) {
-				const collaboratorExists =
-					await this.collaboratorRepository.exists({
-						where: { id },
-					});
+				const collaboratorExists = await this.collaboratorRepository.exists({
+					where: { id },
+				});
 
 				if (!collaboratorExists) {
-					throw new NotFoundException(
-						'No se encontró el colaborador.'
-					);
+					throw new NotFoundException('No se encontró el colaborador.');
 				}
 
-				throw new BadRequestException(
-					dto.status
-						? 'El colaborador ya se encuentra activo.'
-						: 'El colaborador ya se encuentra inactivo.'
-				);
+				throw new BadRequestException(dto.status ? 'El colaborador ya se encuentra activo.' : 'El colaborador ya se encuentra inactivo.');
 			}
 
 			if (!result.raw?.length) {
@@ -374,23 +361,18 @@ export class CollaboratorService {
 				.execute();
 
 			if (!result.affected) {
-				const existingCollaborators =
-					await this.collaboratorRepository.count({
-						where: {
-							id: In(ids),
-						},
-					});
+				const existingCollaborators = await this.collaboratorRepository.count({
+					where: {
+						id: In(ids),
+					},
+				});
 
 				if (existingCollaborators === 0) {
-					throw new NotFoundException(
-						'No se encontraron colaboradores.'
-					);
+					throw new NotFoundException('No se encontraron colaboradores.');
 				}
 
 				throw new BadRequestException(
-					dto.status
-						? 'Los colaboradores seleccionados ya se encuentran activos.'
-						: 'Los colaboradores seleccionados ya se encuentran inactivos.'
+					dto.status ? 'Los colaboradores seleccionados ya se encuentran activos.' : 'Los colaboradores seleccionados ya se encuentran inactivos.'
 				);
 			}
 

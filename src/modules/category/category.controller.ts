@@ -44,7 +44,7 @@ export class CategoryController {
 	}
 
 	@Put('updateCategoryStatus/:id')
-	updateCategoryStatus(@Param('id') id: string, @Body() dto: UpdateCategoryStatusDto, @Req() request) {
+	updateCategoryStatus(@Param('id', ValidateUUID) id: string, @Body() dto: UpdateCategoryStatusDto, @Req() request) {
 		return this.categoryService.updateCategoryStatus(id, dto, request);
 	}
 

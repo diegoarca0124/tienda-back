@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { Category } from '@/entities/category.entity';
 import { DataSource, In, Repository } from 'typeorm';
@@ -23,6 +23,14 @@ import { FindCategoriesBuilder } from './builders/find-categories.builder';
 import { UpdateCategoryStatusDto } from './dto/update-category-status.dto';
 import { UpdateStatusCategoriesDto } from './dto/update-status-categories.dto';
 import { GetCategoriesRes } from './interfaces/controller.interface';
+
+interface ProductPreview {
+	id: string;
+	name: string;
+	code: string;
+	cover: string;
+	categoryId: string;
+}
 
 @Injectable()
 export class CategoryService {
@@ -98,47 +106,56 @@ export class CategoryService {
 					'category.isMaterial',
 					'category.isTemperature',
 				])
-			.loadRelationCountAndMap('category.totalProducts', 'category.products');
+				.loadRelationCountAndMap('category.totalProducts', 'category.products');
 
 			FindCategoriesBuilder.applyFilters(queryBuilder, query);
 
-			const totalCollaborators =
-			await queryBuilder.clone().getCount();
+			const totalCategories = await queryBuilder.getCount();
 
-			const totalPages = Math.ceil(
-				totalCollaborators / query.limit
-			);
+			const totalPages = Math.ceil(totalCategories / query.limit);
 
-			const currentPage =
-				totalPages === 0
-					? 1
-					: Math.min(query.page, totalPages);
+			const currentPage = totalPages === 0 ? 1 : Math.min(query.page, totalPages);
 
 			const skip = (currentPage - 1) * query.limit;
 
-			const [categories, totalCategories] = await queryBuilder
-			.skip(skip)
-			.take(query.limit)
-			.getManyAndCount();
+			const categories = await queryBuilder.skip(skip).take(query.limit).getMany();
 
 			const categoryIds = categories.map((category) => category.id);
 
-			const products = categoryIds.length
-				? await this.productRepository.find({
-						where: {
-							categoryId: In(categoryIds),
-						},
-						select: {
-							id: true,
-							name: true,
-							code: true,
-							cover: true,
-							categoryId: true,
-						},
-						order: {
-							createdAt: 'DESC',
-						},
-					})
+			const products: ProductPreview[] =
+			categoryIds.length > 0
+				? await this.productRepository.query(
+						`
+						SELECT
+							ranked.id,
+							ranked.name,
+							ranked.code,
+							ranked.cover,
+							ranked."categoryId"
+						FROM (
+							SELECT
+								product.id,
+								product.name,
+								product.code,
+								product.cover,
+								product."categoryId",
+								ROW_NUMBER() OVER (
+									PARTITION BY product."categoryId"
+									ORDER BY
+										product."createdAt" DESC,
+										product.id ASC
+								) AS row_number
+							FROM products product
+							WHERE product."categoryId" =
+								ANY($1::uuid[])
+						) ranked
+						WHERE ranked.row_number <= 4
+						ORDER BY
+							ranked."categoryId",
+							ranked.row_number
+						`,
+						[categoryIds],
+					)
 				: [];
 
 			const categoriesWithProducts = categories.map((category: any) => {
@@ -147,7 +164,7 @@ export class CategoryService {
 				return {
 					...category,
 					latestProducts,
-					remainingProducts: Math.max(category.totalProducts - latestProducts.length, 0),
+					moreProducts: Math.max((category.totalProducts ?? 0) - latestProducts.length, 0),
 				};
 			});
 
@@ -155,18 +172,18 @@ export class CategoryService {
 				categories: categoriesWithProducts,
 				meta: {
 					totalCategories,
-					totalPages: Math.ceil(totalCategories / query.limit),
-					currentPage: query.page,
+					totalPages,
+					currentPage,
 					limit: query.limit,
 				},
 				filters: {
 					filter: query.filter,
 					status: query.status,
-					configurations: query.configurations,
 					sort: query.sort,
+					configurations: query.configurations,
 				},
 			};
-		} catch (err: any) {
+		} catch (err: unknown) {
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
@@ -284,7 +301,7 @@ export class CategoryService {
 					'category.description',
 					'category.isDimensions',
 					'category.isCharacteristics',
-					'category.isConditiom',
+					'category.isCondition',
 					'category.isWarranty',
 					'category.isCountryOfOrigin',
 					'category.isMaterial',
@@ -340,7 +357,7 @@ export class CategoryService {
 					'description',
 					'isDimensions',
 					'isCharacteristics',
-					'isConditiom',
+					'isCondition',
 					'isWarranty',
 					'isCountryOfOrigin',
 					'isMaterial',
@@ -701,7 +718,7 @@ export class CategoryService {
 					'category.status',
 					'category.isDimensions',
 					'category.isCharacteristics',
-					'category.isConditiom',
+					'category.isCondition',
 					'category.isWarranty',
 					'category.isCountryOfOrigin',
 					'category.isMaterial',

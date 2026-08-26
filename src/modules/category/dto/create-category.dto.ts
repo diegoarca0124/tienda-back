@@ -52,7 +52,7 @@ export class CreateCategoryDto {
 	@IsNotEmpty({ message: 'El campo “Condición” es requerido.' })
 	@IsNotEmpty({ message: 'El campo “Condición” no debe estar vacía.' })
 	@IsDefined({ message: 'El campo “Condición” es obligatoria.' })
-	isConditiom: boolean;
+	isCondition: boolean;
 
 	@IsBoolean({ message: 'El campo “Garantía” debe ser verdadero o falso.' })
 	@IsNotEmpty({ message: 'El campo “Garantía” es requerido.' })

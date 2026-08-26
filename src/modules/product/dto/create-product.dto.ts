@@ -124,7 +124,7 @@ export class CreateProductDto {
 	@IsDefined({ message: 'La unidad es obligatoria.' })
 	unitOfMeasure: { group: string; name: string; abbr: string };
 
-	@ValidateIf((o) => o.isConditiom === 'true')
+	@ValidateIf((o) => o.isCondition === 'true')
 	@MaxLength(50, { message: 'La condición debe tener máximo 50 caracteres.' })
 	@MinLength(3, { message: 'La condición debe tener minimo 3 caracteres.' })
 	@IsString({ message: 'La condición debe ser una cadena de caracteres.' })

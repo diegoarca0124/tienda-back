@@ -10,10 +10,7 @@ export class FindCollaboratorsBuilder {
 		this.applySort(qb, query.sort);
 	}
 
-	private static applySearch(
-		qb: SelectQueryBuilder<Collaborator>,
-		filter: string
-	): void {
+	private static applySearch(qb: SelectQueryBuilder<Collaborator>, filter: string): void {
 		const search = filter?.trim();
 
 		if (!search) return;
@@ -23,9 +20,7 @@ export class FindCollaboratorsBuilder {
 			.replace(/[\u0300-\u036f]/g, '')
 			.toLowerCase();
 
-		const terms = normalizedSearch
-			.split(/\s+/)
-			.filter(Boolean);
+		const terms = normalizedSearch.split(/\s+/).filter(Boolean);
 
 		const normalizeField = (field: string): string => `
 			translate(
@@ -35,13 +30,7 @@ export class FindCollaboratorsBuilder {
 			)
 		`;
 
-		const searchableFields = [
-			'collaborator.names',
-			'collaborator.surname',
-			'collaborator.email',
-			'collaborator.number_document',
-			'collaborator.phone',
-		];
+		const searchableFields = ['collaborator.names', 'collaborator.surname', 'collaborator.email', 'collaborator.number_document', 'collaborator.phone'];
 
 		const normalizedFullName = `
 			translate(
@@ -61,23 +50,16 @@ export class FindCollaboratorsBuilder {
 			const parameterName = `searchTerm${index}`;
 			const pattern = `%${escapeLikePattern(term)}%`;
 
-			const fieldConditions = searchableFields.map(
-				(field) =>
-					`${normalizeField(field)} LIKE :${parameterName} ESCAPE '\\'`
-			);
+			const fieldConditions = searchableFields.map((field) => `${normalizeField(field)} LIKE :${parameterName} ESCAPE '\\'`);
 
-			const fullNameCondition =
-				`${normalizedFullName} LIKE :${parameterName} ESCAPE '\\'`;
+			const fullNameCondition = `${normalizedFullName} LIKE :${parameterName} ESCAPE '\\'`;
 
-			qb.andWhere(
-				`(${[...fieldConditions, fullNameCondition].join(' OR ')})`,
-				{
-					[parameterName]: pattern,
-				}
-			);
+			qb.andWhere(`(${[...fieldConditions, fullNameCondition].join(' OR ')})`, {
+				[parameterName]: pattern,
+			});
 		});
 	}
-	
+
 	private static applyStatus(qb: SelectQueryBuilder<Collaborator>, status: string): void {
 		if (status === 'Todos') return;
 		qb.andWhere('collaborator.status = :status', { status: status === 'Activos' });
