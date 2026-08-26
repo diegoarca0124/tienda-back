@@ -79,7 +79,6 @@ export class CategoryService {
 
 	async getCategories(query: FindCategoriesQueryDto): Promise<GetCategoriesRes> {
 		try {
-			const skip = (query.page - 1) * query.limit;
 			const queryBuilder = this.categoryRepository
 				.createQueryBuilder('category')
 				.select([
@@ -99,9 +98,28 @@ export class CategoryService {
 					'category.isMaterial',
 					'category.isTemperature',
 				])
-				.loadRelationCountAndMap('category.totalProducts', 'category.products');
+			.loadRelationCountAndMap('category.totalProducts', 'category.products');
+
 			FindCategoriesBuilder.applyFilters(queryBuilder, query);
-			const [categories, totalCategories] = await queryBuilder.skip(skip).take(query.limit).getManyAndCount();
+
+			const totalCollaborators =
+			await queryBuilder.clone().getCount();
+
+			const totalPages = Math.ceil(
+				totalCollaborators / query.limit
+			);
+
+			const currentPage =
+				totalPages === 0
+					? 1
+					: Math.min(query.page, totalPages);
+
+			const skip = (currentPage - 1) * query.limit;
+
+			const [categories, totalCategories] = await queryBuilder
+			.skip(skip)
+			.take(query.limit)
+			.getManyAndCount();
 
 			const categoryIds = categories.map((category) => category.id);
 

@@ -73,9 +73,6 @@ export class CollaboratorService {
 				data: id,
 			};
 		} catch (err: unknown) {
-			if (err instanceof QueryFailedError && (err.driverError as { code?: string }).code === '23505') {
-				throw new ConflictException('La solicitud fue rechazada por unicidad.');
-			}
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
@@ -138,49 +135,61 @@ export class CollaboratorService {
 		};
 	}
 
-	async getCollaborators(query: FindCollaboratorsQueryDto): Promise<GetCollaboratorsRes> {
-		try {
-			const skip = (query.page - 1) * query.limit;
+	async getCollaborators(
+		query: FindCollaboratorsQueryDto
+	): Promise<GetCollaboratorsRes> {
+		const queryBuilder = this.collaboratorRepository
+			.createQueryBuilder('collaborator')
+			.select([
+				'collaborator.id',
+				'collaborator.names',
+				'collaborator.surname',
+				'collaborator.email',
+				'collaborator.fullnames',
+				'collaborator.status',
+				'collaborator.number_document',
+				'collaborator.type_document',
+				'collaborator.prefix',
+				'collaborator.phone',
+				'collaborator.role',
+				'collaborator.createdAt',
+			]);
 
-			const queryBuilder = this.collaboratorRepository
-				.createQueryBuilder('collaborator')
-				.select([
-					'collaborator.id',
-					'collaborator.names',
-					'collaborator.surname',
-					'collaborator.email',
-					'collaborator.fullnames',
-					'collaborator.status',
-					'collaborator.number_document',
-					'collaborator.type_document',
-					'collaborator.prefix',
-					'collaborator.phone',
-					'collaborator.role',
-					'collaborator.createdAt',
-				]);
+		FindCollaboratorsBuilder.applyFilters(queryBuilder, query);
 
-			FindCollaboratorsBuilder.applyFilters(queryBuilder, query);
+		const totalCollaborators =
+			await queryBuilder.clone().getCount();
 
-			const [collaborators, totalCollaborators] = await queryBuilder.skip(skip).take(query.limit).getManyAndCount();
+		const totalPages = Math.ceil(
+			totalCollaborators / query.limit
+		);
 
-			return {
-				collaborators,
-				meta: {
-					totalCollaborators,
-					totalPages: Math.ceil(totalCollaborators / query.limit),
-					currentPage: query.page,
-					limit: query.limit,
-				},
-				filters: {
-					filter: query.filter,
-					status: query.status,
-					sort: query.sort,
-				},
-			};
-		} catch (err: any) {
-			if (err) throw err;
-			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
-		}
+		const currentPage =
+			totalPages === 0
+				? 1
+				: Math.min(query.page, totalPages);
+
+		const skip = (currentPage - 1) * query.limit;
+
+		const collaborators = await queryBuilder
+			.skip(skip)
+			.take(query.limit)
+			.getMany();
+
+		return {
+			collaborators,
+			meta: {
+				totalCollaborators,
+				totalPages,
+				currentPage,
+				limit: query.limit,
+			},
+			filters: {
+				filter: query.filter,
+				status: query.status,
+				sort: query.sort,
+			},
+		};
 	}
 
 	async getCollaborator(id: string): Promise<GetCollaboratorRes> {
@@ -232,10 +241,10 @@ export class CollaboratorService {
 			updatedAt: () => 'CURRENT_TIMESTAMP',
 		};
 
-		if (updateData.password) {
-			updateData.password = await hashPassword(updateData.password);
+		if (dto.password) {
+			updateData.password = await hashPassword(dto.password);
 		} else {
-			updateData.password = await hashPassword('123456');
+			delete updateData.password;
 		}
 
 		let result;
@@ -293,11 +302,29 @@ export class CollaboratorService {
 					statusAt: () => 'CURRENT_TIMESTAMP',
 				})
 				.where('id = :id', { id })
+				.andWhere('status IS DISTINCT FROM :status', {
+					status: dto.status,
+				})
 				.returning(['id', 'status', 'names'])
 				.execute();
 
 			if (!result.affected) {
-				throw new InternalServerErrorException('No se pudo actualizar el registro.');
+				const collaboratorExists =
+					await this.collaboratorRepository.exists({
+						where: { id },
+					});
+
+				if (!collaboratorExists) {
+					throw new NotFoundException(
+						'No se encontró el colaborador.'
+					);
+				}
+
+				throw new BadRequestException(
+					dto.status
+						? 'El colaborador ya se encuentra activo.'
+						: 'El colaborador ya se encuentra inactivo.'
+				);
 			}
 
 			if (!result.raw?.length) {
@@ -340,11 +367,31 @@ export class CollaboratorService {
 					statusAt: () => 'CURRENT_TIMESTAMP',
 				})
 				.where('id IN (:...ids)', { ids })
+				.andWhere('status IS DISTINCT FROM :status', {
+					status: dto.status,
+				})
 				.returning(['id'])
 				.execute();
 
 			if (!result.affected) {
-				throw new NotFoundException('No se encontraron registros para actualizar.');
+				const existingCollaborators =
+					await this.collaboratorRepository.count({
+						where: {
+							id: In(ids),
+						},
+					});
+
+				if (existingCollaborators === 0) {
+					throw new NotFoundException(
+						'No se encontraron colaboradores.'
+					);
+				}
+
+				throw new BadRequestException(
+					dto.status
+						? 'Los colaboradores seleccionados ya se encuentran activos.'
+						: 'Los colaboradores seleccionados ya se encuentran inactivos.'
+				);
 			}
 
 			if (!result.raw?.length) {

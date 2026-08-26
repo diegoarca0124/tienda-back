@@ -18,7 +18,7 @@ import {
 export class ExportFieldDto {
 	@IsString({ message: 'El campo debe ser una cadena de texto.' })
 	@IsNotEmpty({ message: 'El campo es obligatorio.' })
-	@IsIn(['names', 'surname', 'type_document', 'number_document', 'email', 'phone', 'role', 'createdAt', 'updatedAt', 'statusAt', 'lastDateLogin', 'status', 'prefix'], {
+	@IsIn(['names', 'surname', 'type_document', 'number_document', 'email', 'phone', 'role', 'createdAt', 'updatedAt', 'statusAt', 'lastDatelogin', 'status', 'prefix'], {
 		message: 'El campo no es válido para exportación.',
 	})
 	field: string;

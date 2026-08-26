@@ -5,7 +5,7 @@ import { IsValidDocumentNumber } from '../validators/valid-document-number.valid
 import { ALLOWED_DOCUMENT } from '../constants/allowed-document.constant';
 
 export class EditCollaboratorDto {
-	@Transform(({ value }) => capitalizeWords(value))
+	@Transform(({ value }) => (typeof value === 'string' ? capitalizeWords(value) : value))
 	@MaxLength(50, { message: 'El nombre debe tener máximo 50 caracteres.' })
 	@MinLength(3, { message: 'El nombre debe tener minimo 3 caracteres.' })
 	@IsString({ message: 'El nombre debe ser una cadena de caracteres.' })
@@ -13,7 +13,7 @@ export class EditCollaboratorDto {
 	@IsDefined({ message: 'El nombre es obligatorio.' })
 	readonly names: string;
 
-	@Transform(({ value }) => capitalizeWords(value))
+	@Transform(({ value }) => (typeof value === 'string' ? capitalizeWords(value) : value))
 	@MaxLength(50, { message: 'El apellido debe tener máximo 50 caracteres.' })
 	@MinLength(3, { message: 'El apellido debe tener minimo 3 caracteres.' })
 	@IsString({ message: 'El apellido debe ser una cadena de caracteres.' })
@@ -60,9 +60,9 @@ export class EditCollaboratorDto {
 	readonly number_document: string;
 
 	@MaxLength(20, { message: 'La contraseña debe tener máximo 20 caracteres.' })
-	@MinLength(6, { message: 'La contraseña debe tener minimo 6 caracteres.' })
+	@MinLength(8, { message: 'La contraseña debe tener minimo 8 caracteres.' })
 	@IsOptional()
-	password: string;
+	password?: string;
 
 	updatedAt?: Date;
 }

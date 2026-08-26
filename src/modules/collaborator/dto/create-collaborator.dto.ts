@@ -60,7 +60,7 @@ export class CreateCollaboratorDto {
 	readonly number_document: string;
 
 	@MaxLength(20, { message: 'La contraseña debe tener máximo 20 caracteres.' })
-	@MinLength(6, { message: 'La contraseña debe tener minimo 6 caracteres.' })
+	@MinLength(8, { message: 'La contraseña debe tener minimo 8 caracteres.' })
 	@IsString({ message: 'La contraseña debe ser una cadena de caracteres.' })
 	@IsNotEmpty({ message: 'La contraseña no debe estar vacio.' })
 	@IsDefined({ message: 'La contraseña es obligatoria.' })
