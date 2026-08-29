@@ -22,7 +22,7 @@ import { FindCategoriesQueryDto } from './dto/find-categories.dto';
 import { FindCategoriesBuilder } from './builders/find-categories.builder';
 import { UpdateCategoryStatusDto } from './dto/update-category-status.dto';
 import { UpdateStatusCategoriesDto } from './dto/update-status-categories.dto';
-import { CreateCategoryRes, GetCategoriesRes, MoveSubcategoryRes, UpdateCategoriesStatusRes, UpdateCategoryStatusRes } from './interfaces/controller.interface';
+import { CreateCategoryRes, GetCategoriesRes, GetCategoriesWithSubcategoriesRes, MoveSubcategoryRes, UpdateCategoriesStatusRes, UpdateCategoryStatusRes } from './interfaces/controller.interface';
 
 interface ProductPreview {
 	id: string;
@@ -676,26 +676,29 @@ export class CategoryService {
 		}
 	}
 
-	async get_categories_with_subcategories() {
-		try {
-			const categories = await this.categoryRepository
-				.createQueryBuilder('category')
-				.leftJoinAndSelect('category.subcategories', 'subcategory')
-				.loadRelationCountAndMap('category.totalProducts', 'category.products')
-				.loadRelationCountAndMap('subcategory.totalProducts', 'subcategory.products')
-				.select(['category.id', 'category.name', 'category.icon', 'subcategory.id', 'subcategory.name', 'subcategory.icon', 'subcategory.categoryId'])
-				.orderBy('category.name', 'ASC')
-				.addOrderBy('subcategory.name', 'ASC')
-				.getMany();
+	async getCategoriesWithSubcategories(): Promise<GetCategoriesWithSubcategoriesRes> {
+		const categories = await this.categoryRepository
+			.createQueryBuilder('category')
+			.leftJoinAndSelect(
+				'category.subcategories',
+				'subcategory',
+			)
+			.select([
+				'category.id',
+				'category.name',
+				'category.icon',
+				'subcategory.id',
+				'subcategory.name',
+				'subcategory.categoryId',
+			])
+			.orderBy('category.name', 'ASC')
+			.addOrderBy('subcategory.name', 'ASC')
+			.getMany();
 
-			return {
-				categories: categories,
-				message: 'Registro obtenido correctamente.',
-			};
-		} catch (err: any) {
-			if (err) throw err;
-			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
-		}
+		return {
+			data: categories,
+			message: 'Registros obtenidos correctamente.',
+		};
 	}
 
 	async get_categories_by_select() {

@@ -23,13 +23,13 @@ import { FindCategoryProductsQueryDto } from './dto/find-category-products.dto';
 import { QueryParamsErrorsPipe } from '@/common/pipes/query-params-errors.pipe';
 import { FindCategoriesQueryDto } from './dto/find-categories.dto';
 import { UpdateCategoryStatusDto } from './dto/update-category-status.dto';
-import { CreateCategoryRes, GetCategoriesRes, MoveSubcategoryRes } from './interfaces/controller.interface';
+import { CreateCategoryRes, GetCategoriesRes, GetCategoriesWithSubcategoriesRes, MoveSubcategoryRes } from './interfaces/controller.interface';
 
 @Controller('category')
 export class CategoryController {
 	constructor(private categoryService: CategoryService) {}
 
-	@Post('create_category')
+	@Post('createCategory')
 	@UseInterceptors(CreateCategoryInterceptor)
 	createCategory(@Body() dto: CreateCategoryDto, @Req() request): Promise<CreateCategoryRes> {
 		return this.categoryService.createCategory(dto, request);
@@ -96,9 +96,9 @@ export class CategoryController {
 		return this.categoryService.findCategoryProducts(id, query as FindCategoryProductsQueryDto);
 	}
 
-	@Get('get_categories_with_subcategories')
-	get_categories_with_subcategories() {
-		return this.categoryService.get_categories_with_subcategories();
+	@Get('getCategoriesWithSubcategories')
+	getCategoriesWithSubcategories(): Promise<GetCategoriesWithSubcategoriesRes> {
+		return this.categoryService.getCategoriesWithSubcategories();
 	}
 
 	@Get('get_categories_by_select')

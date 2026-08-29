@@ -37,3 +37,17 @@ export interface MoveSubcategoryRes {
 		affectedProducts: number;
 	};
 }
+
+export interface GetCategoriesWithSubcategoriesRes {
+	data: {
+		id: string;
+		name: string;
+		icon: string;
+		subcategories: {
+			id: string;
+			name: string;
+			categoryId: string;
+		}[];
+	}[];
+	message: string;
+}
