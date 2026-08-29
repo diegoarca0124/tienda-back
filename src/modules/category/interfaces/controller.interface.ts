@@ -12,6 +12,12 @@ export interface GetCategoriesRes {
 	filters: Pick<FindCategoriesQueryDto, 'filter' | 'status' | 'sort' | 'configurations'>;
 }
 
+export interface CreateCategoryRes{
+	data: string;
+	message: string;
+}
+
+
 export interface UpdateCategoriesStatusRes {
 	data: string[];
 	message: string;
@@ -20,4 +26,14 @@ export interface UpdateCategoriesStatusRes {
 export interface UpdateCategoryStatusRes {
 	data: Category;
 	message: string;
+}
+
+export interface MoveSubcategoryRes {
+	message: string;
+	data: {
+		id: string;
+		name: string;
+		categoryId: string;
+		affectedProducts: number;
+	};
 }
