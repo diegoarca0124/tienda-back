@@ -1,5 +1,6 @@
 import { Category } from '@/entities/category.entity';
 import { FindCategoriesQueryDto } from '../dto/find-categories.dto';
+import { Subcategory } from '@/entities/subcategory.entity';
 
 export interface GetCategoriesRes {
 	categories: Category[];
@@ -17,8 +18,47 @@ export interface CreateCategoryRes{
 	message: string;
 }
 
+export interface UpdateCategoryRes{
+	data: Category;
+	message: string;
+}
+
+export interface UpdateSubcategoryRes{
+	data: Subcategory;
+	message: string;
+}
+
+export interface CreateSubcategoryRes{
+	data: Subcategory;
+	message: string;
+}
+
+export interface GetCategoryRes {
+	data: Category;
+	message: string;
+}
+
+export interface GetSubcategoriesRes {
+	data: Subcategory[];
+	message: string;
+}
 
 export interface UpdateCategoriesStatusRes {
+	data: string[];
+	message: string;
+}
+
+export interface UpdateSubcategoryRes{
+	data: Subcategory;
+	message: string;
+}
+
+export interface UpdateSubcategoryStatusRes{
+	data: Subcategory;
+	message: string;
+}
+
+export interface UpdateSubcategoriesStatusRes{
 	data: string[];
 	message: string;
 }
@@ -43,9 +83,13 @@ export interface GetCategoriesWithSubcategoriesRes {
 		id: string;
 		name: string;
 		icon: string;
+		prefix: string;
+		color: string;
 		subcategories: {
 			id: string;
 			name: string;
+			icon: string;
+			prefix: string;
 			categoryId: string;
 		}[];
 	}[];

@@ -23,7 +23,7 @@ import { FindCategoryProductsQueryDto } from './dto/find-category-products.dto';
 import { QueryParamsErrorsPipe } from '@/common/pipes/query-params-errors.pipe';
 import { FindCategoriesQueryDto } from './dto/find-categories.dto';
 import { UpdateCategoryStatusDto } from './dto/update-category-status.dto';
-import { CreateCategoryRes, GetCategoriesRes, GetCategoriesWithSubcategoriesRes, MoveSubcategoryRes } from './interfaces/controller.interface';
+import { CreateCategoryRes, CreateSubcategoryRes, GetCategoriesRes, GetCategoriesWithSubcategoriesRes, GetCategoryRes, GetSubcategoriesRes, MoveSubcategoryRes, UpdateCategoryRes, UpdateSubcategoriesStatusRes, UpdateSubcategoryRes, UpdateSubcategoryStatusRes } from './interfaces/controller.interface';
 
 @Controller('category')
 export class CategoryController {
@@ -54,37 +54,37 @@ export class CategoryController {
 		return this.categoryService.updateCategoriesStatus(dto, request);
 	}
 
-	@Get('get_category/:id')
-	get_category(@Param('id') id) {
-		return this.categoryService.get_category(id);
+	@Get('getCategory/:id')
+	getCategory(@Param('id') id): Promise<GetCategoryRes> {
+		return this.categoryService.getCategory(id);
 	}
 
-	@Put('update_category/:id')
+	@Put('updateCategory/:id')
 	@UseInterceptors(EditCategoryInterceptor)
-	update_category(@Param('id', ValidateUUID) id: string, @Body() editCategoryDto: EditCategoryDto, @Req() request) {
-		return this.categoryService.update_category(id, editCategoryDto, request);
+	updateCategory(@Param('id', ValidateUUID) id: string, @Body() dto: EditCategoryDto, @Req() request):Promise<UpdateCategoryRes> {
+		return this.categoryService.updateCategory(id, dto, request);
 	}
 
-	@Post('create_subcategory')
+	@Post('createSubcategory')
 	@UseInterceptors(CreateSubcategoryInterceptor)
-	create_subcategory(@Body() createSubcategoryDto: CreateSubcategoryDto, @Req() request): Promise<{ data: Subcategory; message: string }> {
-		return this.categoryService.create_subcategory(createSubcategoryDto, request);
+	createSubcategory(@Body() dto: CreateSubcategoryDto, @Req() request): Promise<CreateSubcategoryRes> {
+		return this.categoryService.createSubcategory(dto, request);
 	}
 
-	@Get('get_subcategories/:id')
-	get_subcategories(@Param('id', ValidateUUID) id: string) {
-		return this.categoryService.get_subcategories(id);
+	@Get('getSubcategories/:id')
+	getSubcategories(@Param('id', ValidateUUID) id: string): Promise<GetSubcategoriesRes> {
+		return this.categoryService.getSubcategories(id);
 	}
 
-	@Put('update_status_subcategory/:id')
-	update_status_subcategory(@Param('id', ValidateUUID) id: string, @Body() data: { status: boolean }, @Req() request) {
-		return this.categoryService.update_status_subcategory(id, data.status, request);
+	@Put('updateSubcategoryStatus/:id')
+	updateSubcategoryStatus(@Param('id', ValidateUUID) id: string, @Body() data: { status: boolean }, @Req() request): Promise<UpdateSubcategoryStatusRes> {
+		return this.categoryService.updateSubcategoryStatus(id, data.status, request);
 	}
 
-	@Put('update_subcategory/:id')
+	@Put('updateSubcategory/:id')
 	@UseInterceptors(EditSubcategoryInterceptor)
-	update_subcategory(@Param('id', ValidateUUID) id: string, @Body() editSubcategoryDto: EditSubcategoryDto, @Req() request) {
-		return this.categoryService.update_subcategory(id, editSubcategoryDto, request);
+	updateSubcategory(@Param('id', ValidateUUID) id: string, @Body() dto: EditSubcategoryDto, @Req() request): Promise<UpdateSubcategoryRes> {
+		return this.categoryService.updateSubcategory(id, dto, request);
 	}
 
 	@Get('findCategoryProducts/:id')
@@ -116,10 +116,10 @@ export class CategoryController {
 		return this.categoryService.get_subcategories_by_select(id);
 	}
 
-	@Post('update_status_subcategories')
+	@Post('updateSubcategoriesStatus')
 	@UseInterceptors(UpdateStatusSubcategoriesInterceptor)
-	update_status_subcategories(@Body() updateStatusSubcategoriesDto: UpdateStatusSubcategoriesDto, @Req() request) {
-		return this.categoryService.update_status_subcategories(updateStatusSubcategoriesDto, request);
+	updateSubcategoriesStatus(@Body() dto: UpdateStatusSubcategoriesDto, @Req() request) : Promise<UpdateSubcategoriesStatusRes>{
+		return this.categoryService.updateSubcategoriesStatus(dto, request);
 	}
 
 	@Post('update_catsubcat_products')
