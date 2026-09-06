@@ -13,22 +13,22 @@ export interface GetCategoriesRes {
 	filters: Pick<FindCategoriesQueryDto, 'filter' | 'status' | 'sort' | 'configurations'>;
 }
 
-export interface CreateCategoryRes{
+export interface CreateCategoryRes {
 	data: string;
 	message: string;
 }
 
-export interface UpdateCategoryRes{
+export interface UpdateCategoryRes {
 	data: Category;
 	message: string;
 }
 
-export interface UpdateSubcategoryRes{
+export interface UpdateSubcategoryRes {
 	data: Subcategory;
 	message: string;
 }
 
-export interface CreateSubcategoryRes{
+export interface CreateSubcategoryRes {
 	data: Subcategory;
 	message: string;
 }
@@ -48,17 +48,12 @@ export interface UpdateCategoriesStatusRes {
 	message: string;
 }
 
-export interface UpdateSubcategoryRes{
+export interface UpdateSubcategoryStatusRes {
 	data: Subcategory;
 	message: string;
 }
 
-export interface UpdateSubcategoryStatusRes{
-	data: Subcategory;
-	message: string;
-}
-
-export interface UpdateSubcategoriesStatusRes{
+export interface UpdateSubcategoriesStatusRes {
 	data: string[];
 	message: string;
 }
@@ -93,5 +88,10 @@ export interface GetCategoriesWithSubcategoriesRes {
 			categoryId: string;
 		}[];
 	}[];
+	message: string;
+}
+
+export interface MoveProductsToSubcategoryRes {
+	data: number;
 	message: string;
 }

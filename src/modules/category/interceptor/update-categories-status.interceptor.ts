@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { BaseValidationInterceptor } from '@/common/interceptors/base-validation.interceptor';
-import { UpdateStatusSubcategoriesDto } from '../dto/update-status-subcategories.dto';
+import { UpdatCategoriesStatusDto } from '../dto/update-categories-status.dto';
 
 @Injectable()
-export class UpdateStatusSubcategoriesInterceptor extends BaseValidationInterceptor<UpdateStatusSubcategoriesDto> {
+export class UpdateStatusCategoriesInterceptor extends BaseValidationInterceptor<UpdateStatusCategoriesInterceptor> {
 	constructor() {
 		super();
 	}
 
 	protected getDtoClass() {
-		return UpdateStatusSubcategoriesDto;
+		return UpdateStatusCategoriesInterceptor;
 	}
 
 	protected async validateBody(body: any): Promise<{ field: string; message: string }[]> {

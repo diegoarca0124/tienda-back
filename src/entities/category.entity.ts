@@ -22,7 +22,7 @@ export class Category {
 	@Column({ type: 'varchar', length: 100 })
 	name: string;
 
-	@Column({type: 'varchar',length: 7, nullable: true, default: '#abacad',})
+	@Column({ type: 'varchar', length: 7, nullable: true, default: '#abacad' })
 	color: string;
 
 	@Column({ type: 'varchar', length: 500 })

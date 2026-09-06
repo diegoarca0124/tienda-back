@@ -12,11 +12,11 @@ export class EditCategoryDto {
 	@Transform(({ value }) => capitalizeWords(value))
 	name: string;
 
-	@Transform(({ value }) => typeof value === 'string'? value.toLowerCase(): value )
-	@Matches(/^#[0-9A-Fa-f]{6}$/, {message: 'El color debe tener un formato hexadecimal válido.',})
-	@IsString({message: 'El color debe ser una cadena de caracteres.',})
+	@Transform(({ value }) => (typeof value === 'string' ? value.toLowerCase() : value))
+	@Matches(/^#[0-9A-Fa-f]{6}$/, { message: 'El color debe tener un formato hexadecimal válido.' })
+	@IsString({ message: 'El color debe ser una cadena de caracteres.' })
 	@IsNotEmpty({ message: 'El color no debe estar vacio.' })
-	@IsDefined({message: 'El color es obligatorio.',})
+	@IsDefined({ message: 'El color es obligatorio.' })
 	color: string;
 
 	@IsString({ message: 'El prefijo debe ser texto' })

@@ -8,7 +8,7 @@ import { EditCategoryDto } from './dto/edit-category.dto';
 import { Subcategory } from '@/entities/subcategory.entity';
 import { CreateSubcategoryDto } from './dto/create-subcategory.dto';
 import { EditSubcategoryDto } from './dto/edit-subcategory.dto';
-import { UpdateStatusSubcategoriesDto } from './dto/update-status-subcategories.dto';
+import { UpdateSubcategoriesStatusDto } from './dto/update-subcategories-status.dto';
 import { Product } from '@/entities/product.entity';
 import { UpdateCatSubcatProductsDto } from './dto/update-catsubcat-products.dto';
 import { MoveSubcategoryDto } from './dto/move-subcategory.dto';
@@ -21,8 +21,24 @@ import { FindCategoryProductsQueryDto } from './dto/find-category-products.dto';
 import { FindCategoriesQueryDto } from './dto/find-categories.dto';
 import { FindCategoriesBuilder } from './builders/find-categories.builder';
 import { UpdateCategoryStatusDto } from './dto/update-category-status.dto';
-import { UpdateStatusCategoriesDto } from './dto/update-status-categories.dto';
-import { CreateCategoryRes, CreateSubcategoryRes, GetCategoriesRes, GetCategoriesWithSubcategoriesRes, GetCategoryRes, GetSubcategoriesRes, MoveSubcategoryRes, UpdateCategoriesStatusRes, UpdateCategoryRes, UpdateCategoryStatusRes, UpdateSubcategoriesStatusRes, UpdateSubcategoryRes, UpdateSubcategoryStatusRes } from './interfaces/controller.interface';
+import { UpdatCategoriesStatusDto } from './dto/update-categories-status.dto';
+import {
+	CreateCategoryRes,
+	CreateSubcategoryRes,
+	GetCategoriesRes,
+	GetCategoriesWithSubcategoriesRes,
+	GetCategoryRes,
+	GetSubcategoriesRes,
+	MoveProductsToSubcategoryRes,
+	MoveSubcategoryRes,
+	UpdateCategoriesStatusRes,
+	UpdateCategoryRes,
+	UpdateCategoryStatusRes,
+	UpdateSubcategoriesStatusRes,
+	UpdateSubcategoryRes,
+	UpdateSubcategoryStatusRes,
+} from './interfaces/controller.interface';
+import { UpdateSubcategoryStatusDto } from './dto/update-subcategory-status.dto';
 
 interface ProductPreview {
 	id: string;
@@ -43,7 +59,7 @@ export class CategoryService {
 		private categoryValidator: CategoryValidator
 	) {}
 
-	async createCategory(dto: CreateCategoryDto, request: any):Promise<CreateCategoryRes> {
+	async createCategory(dto: CreateCategoryDto, request: any): Promise<CreateCategoryRes> {
 		try {
 			const result = await this.categoryRepository
 				.createQueryBuilder()
@@ -232,7 +248,7 @@ export class CategoryService {
 		};
 	}
 
-	async updateCategoriesStatus(dto: UpdateStatusCategoriesDto, request: any): Promise<UpdateCategoriesStatusRes> {
+	async updateCategoriesStatus(dto: UpdatCategoriesStatusDto, request: any): Promise<UpdateCategoriesStatusRes> {
 		const ids = [...new Set(dto.ids)];
 
 		const result = await this.categoryRepository
@@ -321,7 +337,7 @@ export class CategoryService {
 		}
 	}
 
-	async updateCategory(id: string, dto: EditCategoryDto, request: any):Promise<UpdateCategoryRes> {
+	async updateCategory(id: string, dto: EditCategoryDto, request: any): Promise<UpdateCategoryRes> {
 		const exists = await this.categoryRepository.exists({
 			where: { id },
 		});
@@ -382,7 +398,7 @@ export class CategoryService {
 		};
 	}
 
-	async createSubcategory(dto: CreateSubcategoryDto, request: any):Promise<CreateSubcategoryRes> {
+	async createSubcategory(dto: CreateSubcategoryDto, request: any): Promise<CreateSubcategoryRes> {
 		try {
 			const exist = await this.categoryValidator.existsIdCategory(dto.categoryId!);
 
@@ -456,8 +472,10 @@ export class CategoryService {
 		}
 	}
 
-	async updateSubcategoryStatus(id: string, status: boolean, request: any): Promise<UpdateSubcategoryStatusRes> {
+	async updateSubcategoryStatus(id: string, dto: UpdateSubcategoryStatusDto, request: any): Promise<UpdateSubcategoryStatusRes> {
 		try {
+			console.log('UpdateSubcategoryStatusDto', dto);
+
 			const exists = await this.subcategoryRepository.exists({ where: { id } });
 
 			if (!exists) {
@@ -468,15 +486,26 @@ export class CategoryService {
 				.createQueryBuilder()
 				.update(Subcategory)
 				.set({
-					status: !status,
+					status: dto.status,
 					statusAt: () => 'CURRENT_TIMESTAMP',
 				})
 				.where('id = :id', { id })
+				.andWhere('status IS DISTINCT FROM :status', {
+					status: dto.status,
+				})
 				.returning(['id', 'status', 'name'])
 				.execute();
 
 			if (!result.affected) {
-				throw new InternalServerErrorException('No se pudo actualizar el registro.');
+				const subcategoryExists = await this.subcategoryRepository.exists({
+					where: { id },
+				});
+
+				if (!subcategoryExists) {
+					throw new NotFoundException('No se encontró la subcategoría.');
+				}
+
+				throw new BadRequestException(dto.status ? 'La subcategoría ya se encuentra activa.' : 'La subcategoría ya se encuentra inactiva.');
 			}
 
 			if (!result.raw?.length) {
@@ -489,7 +518,7 @@ export class CategoryService {
 				action: 'update_status_subcategory',
 				performedBy: request.user.id,
 				targetId: id,
-				requestBody: JSON.stringify({ status }),
+				requestBody: JSON.stringify({ status: dto.status }),
 				response: JSON.stringify(updatedSubcategory),
 				requestId: request.requestId,
 			});
@@ -499,6 +528,8 @@ export class CategoryService {
 				data: updatedSubcategory,
 			};
 		} catch (err: any) {
+			console.log(err);
+
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
@@ -546,7 +577,7 @@ export class CategoryService {
 		}
 	}
 
-	async updateSubcategoriesStatus(dto: UpdateStatusSubcategoriesDto, request: any): Promise<UpdateSubcategoriesStatusRes> {
+	async updateSubcategoriesStatus(dto: UpdateSubcategoriesStatusDto, request: any): Promise<UpdateSubcategoriesStatusRes> {
 		try {
 			const ids = [...new Set(dto.ids)];
 
@@ -562,11 +593,26 @@ export class CategoryService {
 					statusAt: () => 'CURRENT_TIMESTAMP',
 				})
 				.where('id IN (:...ids)', { ids })
+				.andWhere('status IS DISTINCT FROM :status', {
+					status: dto.status,
+				})
 				.returning(['id'])
 				.execute();
 
 			if (!result.affected) {
-				throw new NotFoundException('No se encontraron registros para actualizar.');
+				const existingCategories = await this.categoryRepository.count({
+					where: {
+						id: In(ids),
+					},
+				});
+
+				if (existingCategories === 0) {
+					throw new NotFoundException('No se encontraron subcategorías.');
+				}
+
+				throw new BadRequestException(
+					dto.status ? 'Los subcategorías seleccionados ya se encuentran activos.' : 'Los subcategorías seleccionados ya se encuentran inactivos.'
+				);
 			}
 
 			if (!result.raw?.length) {
@@ -682,19 +728,8 @@ export class CategoryService {
 	async getCategoriesWithSubcategories(): Promise<GetCategoriesWithSubcategoriesRes> {
 		const categories = await this.categoryRepository
 			.createQueryBuilder('category')
-			.leftJoinAndSelect(
-				'category.subcategories',
-				'subcategory',
-			)
-			.select([
-				'category.id',
-				'category.name',
-				'category.color',
-				'category.icon',
-				'subcategory.id',
-				'subcategory.name',
-				'subcategory.categoryId',
-			])
+			.leftJoinAndSelect('category.subcategories', 'subcategory')
+			.select(['category.id', 'category.name', 'category.color', 'category.icon', 'subcategory.id', 'subcategory.name', 'subcategory.categoryId'])
 			.orderBy('category.name', 'ASC')
 			.addOrderBy('subcategory.name', 'ASC')
 			.getMany();
@@ -790,60 +825,84 @@ export class CategoryService {
 		}
 	}
 
-	async update_catsubcat_products(updateCatSubcatProductsDto: UpdateCatSubcatProductsDto, request: any) {
+	async moveProductsToSubcategory(dto: UpdateCatSubcatProductsDto, request: any): Promise<MoveProductsToSubcategoryRes> {
 		try {
-			const [categoryExists, subcategoryExists] = await Promise.all([
+			if (!dto.products?.length) {
+				throw new BadRequestException('Debe seleccionar al menos un producto.');
+			}
+
+			const [categoryExists, subcategory] = await Promise.all([
 				this.categoryRepository.exists({
 					where: {
-						id: updateCatSubcatProductsDto.categoryId,
+						id: dto.categoryId,
 					},
 				}),
-				this.subcategoryRepository.exists({
+
+				this.subcategoryRepository.findOne({
 					where: {
-						id: updateCatSubcatProductsDto.subcategoryId,
+						id: dto.subcategoryId,
+					},
+					select: {
+						id: true,
+						categoryId: true,
 					},
 				}),
 			]);
 
+			// Validar que la categoría exista
 			if (!categoryExists) {
 				throw new NotFoundException('La categoría seleccionada no existe.');
 			}
 
-			if (!subcategoryExists) {
+			// Validar que la subcategoría exista
+			if (!subcategory) {
 				throw new NotFoundException('La subcategoría seleccionada no existe.');
 			}
 
-			if (!updateCatSubcatProductsDto.products?.length) {
-				throw new BadRequestException('Debe seleccionar al menos un producto.');
+			// Validar que la subcategoría pertenezca a la categoría
+			if (subcategory.categoryId !== dto.categoryId) {
+				throw new BadRequestException('La subcategoría seleccionada no pertenece a la categoría indicada.');
 			}
 
-			const { affected } = await this.productRepository
+			const productIds = [...new Set(dto.products)];
+
+			const result = await this.productRepository
 				.createQueryBuilder()
 				.update(Product)
 				.set({
-					categoryId: updateCatSubcatProductsDto.categoryId,
-					subcategoryId: updateCatSubcatProductsDto.subcategoryId,
+					categoryId: dto.categoryId,
+					subcategoryId: dto.subcategoryId,
 					status: 'draft',
+					statusAt: () => 'CURRENT_TIMESTAMP',
 				})
 				.where('id IN (:...productIds)', {
-					productIds: updateCatSubcatProductsDto.products,
+					productIds,
 				})
 				.execute();
 
+			if (!result.affected) {
+				throw new NotFoundException('No se encontraron los productos seleccionados.');
+			}
+
 			await this.kibanaService.audit({
-				action: 'update_catsubcat_products',
+				action: 'move_products_to_subcategory',
 				performedBy: request.user.id,
-				targetId: updateCatSubcatProductsDto.categoryId,
-				requestBody: JSON.stringify(updateCatSubcatProductsDto),
-				response: JSON.stringify({ affected }),
+				targetId: dto.subcategoryId,
+				requestBody: JSON.stringify({
+					...dto,
+					products: productIds,
+				}),
+				response: JSON.stringify({
+					affected: result.affected,
+				}),
 				requestId: request.requestId,
 			});
 
 			return {
-				message: 'Productos actualizados correctamente.',
-				data: affected,
+				message: result.affected === 1 ? 'El producto se movió correctamente.' : `${result.affected} productos se movieron correctamente.`,
+				data: result.affected,
 			};
-		} catch (err: any) {
+		} catch (err: unknown) {
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}

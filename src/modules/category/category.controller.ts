@@ -10,10 +10,10 @@ import { Subcategory } from '@/entities/subcategory.entity';
 import { EditSubcategoryDto } from './dto/edit-subcategory.dto';
 import { EditSubcategoryInterceptor } from './interceptor/edit-subcategory.interceptor';
 import { ValidateUUID } from '@/common/pipes/validate-uuid.pipe';
-import { UpdateStatusCategoriesInterceptor } from './interceptor/update-status-categories.interceptor';
-import { UpdateStatusCategoriesDto } from './dto/update-status-categories.dto';
-import { UpdateStatusSubcategoriesInterceptor } from './interceptor/update-status-subcategories.interceptor';
-import { UpdateStatusSubcategoriesDto } from './dto/update-status-subcategories.dto';
+import { UpdateStatusCategoriesInterceptor } from './interceptor/update-categories-status.interceptor';
+import { UpdatCategoriesStatusDto } from './dto/update-categories-status.dto';
+import { UpdateSubcategoriesStatusInterceptor } from './interceptor/update-subcategories-status.interceptor';
+import { UpdateSubcategoriesStatusDto } from './dto/update-subcategories-status.dto';
 import { Category } from '@/entities/category.entity';
 import { UpdateCatSubcatProductsInterceptor } from './interceptor/update-catsubcat-produtcs.interceptor';
 import { UpdateCatSubcatProductsDto } from './dto/update-catsubcat-products.dto';
@@ -23,7 +23,23 @@ import { FindCategoryProductsQueryDto } from './dto/find-category-products.dto';
 import { QueryParamsErrorsPipe } from '@/common/pipes/query-params-errors.pipe';
 import { FindCategoriesQueryDto } from './dto/find-categories.dto';
 import { UpdateCategoryStatusDto } from './dto/update-category-status.dto';
-import { CreateCategoryRes, CreateSubcategoryRes, GetCategoriesRes, GetCategoriesWithSubcategoriesRes, GetCategoryRes, GetSubcategoriesRes, MoveSubcategoryRes, UpdateCategoryRes, UpdateSubcategoriesStatusRes, UpdateSubcategoryRes, UpdateSubcategoryStatusRes } from './interfaces/controller.interface';
+import {
+	CreateCategoryRes,
+	CreateSubcategoryRes,
+	GetCategoriesRes,
+	GetCategoriesWithSubcategoriesRes,
+	GetCategoryRes,
+	GetSubcategoriesRes,
+	MoveProductsToSubcategoryRes,
+	MoveSubcategoryRes,
+	UpdateCategoriesStatusRes,
+	UpdateCategoryRes,
+	UpdateCategoryStatusRes,
+	UpdateSubcategoriesStatusRes,
+	UpdateSubcategoryRes,
+	UpdateSubcategoryStatusRes,
+} from './interfaces/controller.interface';
+import { UpdateSubcategoryStatusDto } from './dto/update-subcategory-status.dto';
 
 @Controller('category')
 export class CategoryController {
@@ -44,24 +60,24 @@ export class CategoryController {
 	}
 
 	@Put('updateCategoryStatus/:id')
-	updateCategoryStatus(@Param('id', ValidateUUID) id: string, @Body() dto: UpdateCategoryStatusDto, @Req() request) {
+	updateCategoryStatus(@Param('id', ValidateUUID) id: string, @Body() dto: UpdateCategoryStatusDto, @Req() request): Promise<UpdateCategoryStatusRes> {
 		return this.categoryService.updateCategoryStatus(id, dto, request);
 	}
 
 	@Post('updateCategoriesStatus')
 	@UseInterceptors(UpdateStatusCategoriesInterceptor)
-	updateCategoriesStatus(@Body() dto: UpdateStatusCategoriesDto, @Req() request) {
+	updateCategoriesStatus(@Body() dto: UpdatCategoriesStatusDto, @Req() request): Promise<UpdateCategoriesStatusRes> {
 		return this.categoryService.updateCategoriesStatus(dto, request);
 	}
 
 	@Get('getCategory/:id')
-	getCategory(@Param('id') id): Promise<GetCategoryRes> {
+	getCategory(@Param('id', ValidateUUID) id): Promise<GetCategoryRes> {
 		return this.categoryService.getCategory(id);
 	}
 
 	@Put('updateCategory/:id')
 	@UseInterceptors(EditCategoryInterceptor)
-	updateCategory(@Param('id', ValidateUUID) id: string, @Body() dto: EditCategoryDto, @Req() request):Promise<UpdateCategoryRes> {
+	updateCategory(@Param('id', ValidateUUID) id: string, @Body() dto: EditCategoryDto, @Req() request): Promise<UpdateCategoryRes> {
 		return this.categoryService.updateCategory(id, dto, request);
 	}
 
@@ -77,14 +93,26 @@ export class CategoryController {
 	}
 
 	@Put('updateSubcategoryStatus/:id')
-	updateSubcategoryStatus(@Param('id', ValidateUUID) id: string, @Body() data: { status: boolean }, @Req() request): Promise<UpdateSubcategoryStatusRes> {
-		return this.categoryService.updateSubcategoryStatus(id, data.status, request);
+	updateSubcategoryStatus(@Param('id', ValidateUUID) id: string, @Body() dto: UpdateSubcategoryStatusDto, @Req() request): Promise<UpdateSubcategoryStatusRes> {
+		return this.categoryService.updateSubcategoryStatus(id, dto, request);
+	}
+
+	@Post('updateSubcategoriesStatus')
+	@UseInterceptors(UpdateSubcategoriesStatusInterceptor)
+	updateSubcategoriesStatus(@Body() dto: UpdateSubcategoriesStatusDto, @Req() request): Promise<UpdateSubcategoriesStatusRes> {
+		return this.categoryService.updateSubcategoriesStatus(dto, request);
 	}
 
 	@Put('updateSubcategory/:id')
 	@UseInterceptors(EditSubcategoryInterceptor)
 	updateSubcategory(@Param('id', ValidateUUID) id: string, @Body() dto: EditSubcategoryDto, @Req() request): Promise<UpdateSubcategoryRes> {
 		return this.categoryService.updateSubcategory(id, dto, request);
+	}
+
+	@Put('moveSubcategory/:id')
+	@UseInterceptors(MoveSubcategoryInterceptor)
+	moveSubcategory(@Param('id', ValidateUUID) id: string, @Body() dto: MoveSubcategoryDto, @Req() request): Promise<MoveSubcategoryRes> {
+		return this.categoryService.moveSubcategory(id, dto, request);
 	}
 
 	@Get('findCategoryProducts/:id')
@@ -116,21 +144,9 @@ export class CategoryController {
 		return this.categoryService.get_subcategories_by_select(id);
 	}
 
-	@Post('updateSubcategoriesStatus')
-	@UseInterceptors(UpdateStatusSubcategoriesInterceptor)
-	updateSubcategoriesStatus(@Body() dto: UpdateStatusSubcategoriesDto, @Req() request) : Promise<UpdateSubcategoriesStatusRes>{
-		return this.categoryService.updateSubcategoriesStatus(dto, request);
-	}
-
-	@Post('update_catsubcat_products')
+	@Post('moveProductsToSubcategory')
 	@UseInterceptors(UpdateCatSubcatProductsInterceptor)
-	update_catsubcat_products(@Body() updateCatSubcatProductsDto: UpdateCatSubcatProductsDto, @Req() request): Promise<{ data: any; message: string }> {
-		return this.categoryService.update_catsubcat_products(updateCatSubcatProductsDto, request);
-	}
-
-	@Put('moveSubcategory/:id')
-	@UseInterceptors(MoveSubcategoryInterceptor)
-	moveSubcategory(@Param('id', ValidateUUID) id: string, @Body() dto: MoveSubcategoryDto, @Req() request): Promise<MoveSubcategoryRes> {
-		return this.categoryService.moveSubcategory(id, dto, request);
+	moveProductsToSubcategory(@Body() dto: UpdateCatSubcatProductsDto, @Req() request): Promise<MoveProductsToSubcategoryRes> {
+		return this.categoryService.moveProductsToSubcategory(dto, request);
 	}
 }

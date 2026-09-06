@@ -1,7 +1,7 @@
 import { TransformBoolean } from '@/common/decorators/transform-boolean.decorator';
 import { ArrayMaxSize, ArrayNotEmpty, IsArray, IsBoolean, IsNotEmpty, IsUUID } from 'class-validator';
 
-export class UpdateStatusCategoriesDto {
+export class UpdatCategoriesStatusDto {
 	@IsArray({ message: 'Las categorias deben ser un arreglo.' })
 	@ArrayNotEmpty({ message: 'Debe seleccionar al menos una categoria.' })
 	@IsUUID('4', { each: true, message: 'Cada ID de categoria debe ser un UUID válido.' })
