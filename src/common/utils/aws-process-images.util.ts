@@ -2,31 +2,27 @@ import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
 import { uploadToS3 } from './upload-to-s3.util';
 
-const dimensions = [
+const variants = [
 	{
-		type: 'small',
 		dir: 'small',
 		quality: 70,
 		scale: 0.2,
 	},
 	{
-		type: 'medium',
 		dir: 'medium',
 		scale: 0.5,
 		quality: 70,
 	},
 	{
-		type: 'large',
 		dir: 'large',
 		scale: 0.7,
 		quality: 70,
 	},
-];
+] as const;
 
 export async function awsProcessImages(
 	files: Express.Multer.File[],
 	folder: string,
-	scaleFactor: number,
 	fileNames?: string[]
 ): Promise<
 	Array<{
@@ -34,27 +30,38 @@ export async function awsProcessImages(
 		newName: string;
 	}>
 > {
-	let results: Array<{
+	const results: Array<{
 		originalName: string;
 		newName: string;
 	}> = [];
 
 	for (let i = 0; i < files.length; i++) {
 		const file = files[i];
+		if (!file?.buffer?.length) {
+			throw new Error(`El archivo ${file?.originalname || i + 1} está vacío.`);
+		}
 
 		const filename = fileNames?.[i] ? fileNames[i] : `${uuidv4()}.webp`;
 
-		const image = sharp(file.buffer);
+		const normalizedBuffer = await sharp(file.buffer, { failOn: 'error' }).rotate().toBuffer();
+		const image = sharp(normalizedBuffer);
 		const metadata = await image.metadata();
+		const originalWidth = metadata.width;
+		const originalHeight = metadata.height;
+		if (!originalWidth || !originalHeight) {
+			throw new Error(`No fue posible determinar las dimensiones de ${file.originalname}.`);
+		}
 
 		await Promise.all(
-			dimensions.map(async (element) => {
-				const newWidth = Math.round(metadata.width! * element.scale);
-				const newHeight = Math.round(metadata.height! * element.scale);
+			variants.map(async (variant) => {
+				const width = Math.max(1, Math.round(originalWidth * variant.scale));
+				const buffer = await image
+					.clone()
+					.resize({ width, withoutEnlargement: true })
+					.webp({ quality: variant.quality })
+					.toBuffer();
 
-				const buffer = await image.resize(newWidth, newHeight).webp({ quality: element.quality }).toBuffer();
-
-				return uploadToS3(buffer, filename, 'image/webp', `${folder}/${element.dir}`);
+				return uploadToS3(buffer, filename, 'image/webp', `${folder}/${variant.dir}`);
 			})
 		);
 

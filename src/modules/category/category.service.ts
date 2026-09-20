@@ -83,7 +83,7 @@ export class CategoryService {
 			}
 
 			this.kibanaService.audit({
-				action: 'create_category',
+				action: 'createCategory',
 				performedBy: request.user.id,
 				targetId: '',
 				requestBody: JSON.stringify(dto),
@@ -126,19 +126,13 @@ export class CategoryService {
 				.loadRelationCountAndMap('category.totalProducts', 'category.products');
 
 			FindCategoriesBuilder.applyFilters(queryBuilder, query);
-
 			const totalCategories = await queryBuilder.getCount();
-
 			const totalPages = Math.ceil(totalCategories / query.limit);
-
 			const currentPage = totalPages === 0 ? 1 : Math.min(query.page, totalPages);
-
 			const skip = (currentPage - 1) * query.limit;
-
+			
 			const categories = await queryBuilder.skip(skip).take(query.limit).getMany();
-
 			const categoryIds = categories.map((category) => category.id);
-
 			const products: ProductPreview[] =
 				categoryIds.length > 0
 					? await this.productRepository.query(
@@ -299,6 +293,7 @@ export class CategoryService {
 
 	async getCategory(id: string): Promise<GetCategoryRes> {
 		try {
+			
 			const category = await this.categoryRepository
 				.createQueryBuilder('category')
 				.select([
@@ -448,6 +443,7 @@ export class CategoryService {
 
 	async getSubcategories(id: string): Promise<GetSubcategoriesRes> {
 		try {
+			
 			const category = await this.categoryRepository.exist({
 				where: { id },
 			});
@@ -647,8 +643,6 @@ export class CategoryService {
 
 	async findCategoryProducts(categoryId: string, query: FindCategoryProductsQueryDto) {
 		try {
-			const skip = (query.page - 1) * query.limit;
-
 			if (query.minPrice !== undefined && query.maxPrice !== undefined && query.minPrice > query.maxPrice) {
 				throw new BadRequestException({
 					code: 'INVALID_QUERY_PARAMS',
@@ -693,7 +687,12 @@ export class CategoryService {
 
 			FindCategoryProductsBuilder.applyFilters(queryBuilder, query);
 
-			let [products, totalProducts] = await queryBuilder.skip(skip).take(query.limit).getManyAndCount();
+			const totalProducts = await queryBuilder.clone().getCount();
+			const totalPages = Math.ceil(totalProducts / query.limit);
+			const currentPage = totalPages === 0 ? 1 : Math.min(query.page, totalPages);
+			const skip = (currentPage - 1) * query.limit;
+			let products = await queryBuilder.skip(skip).take(query.limit).getMany();
+
 
 			products = products.map((product) => ({
 				...product,
@@ -704,8 +703,8 @@ export class CategoryService {
 				products,
 				meta: {
 					totalProducts,
-					totalPages: Math.ceil(totalProducts / query.limit),
-					currentPage: query.page,
+					totalPages,
+					currentPage,
 					limit: query.limit,
 				},
 				filters: {

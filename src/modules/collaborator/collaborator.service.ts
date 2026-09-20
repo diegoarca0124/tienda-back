@@ -157,13 +157,9 @@ export class CollaboratorService {
 			FindCollaboratorsBuilder.applyFilters(queryBuilder, query);
 
 			const totalCollaborators = await queryBuilder.clone().getCount();
-
 			const totalPages = Math.ceil(totalCollaborators / query.limit);
-
 			const currentPage = totalPages === 0 ? 1 : Math.min(query.page, totalPages);
-
 			const skip = (currentPage - 1) * query.limit;
-
 			const collaborators = await queryBuilder.skip(skip).take(query.limit).getMany();
 
 			return {

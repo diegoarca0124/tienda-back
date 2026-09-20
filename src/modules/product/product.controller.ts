@@ -35,7 +35,7 @@ export class ProductController {
 	async create_product(@UploadedFiles() files: { gallery?: Express.Multer.File[] }, @Body() createProductDto: CreateProductDto) {
 		if (files) {
 			if (files.gallery) {
-				const processedGallery = await awsProcessImages(files.gallery, 'products', 0.7);
+				const processedGallery = await awsProcessImages(files.gallery, 'products');
 				console.log(processedGallery);
 
 				createProductDto.cover = processedGallery.find((item) => item.originalName == createProductDto.cover)!.newName;
@@ -103,7 +103,7 @@ export class ProductController {
 	async upload_images_product(@UploadedFiles() files: { gallery?: Express.Multer.File[] }, @Body() uploadImagesProductProductDto: UploadImagesProductProductDto) {
 		if (files) {
 			if (files.gallery) {
-				const processedGallery = await awsProcessImages(files.gallery, 'products', 0.7);
+				const processedGallery = await awsProcessImages(files.gallery, 'products');
 				uploadImagesProductProductDto.gallery = processedGallery.map((prev) => prev.newName);
 			}
 		}

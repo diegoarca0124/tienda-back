@@ -7,70 +7,72 @@ import { ParseCountryPipe } from './pipes/parse-country.pipe';
 import { BrandService } from './brand.service';
 import { EditBrandInterceptor } from './interceptor/edit-brand.interceptor';
 import { EditBrandDto } from './dto/edit-brand-dto';
-import { extractFileNameImage } from '@/common/utils/extract-filename-image.util';
 import { ValidateUUID } from '@/common/pipes/validate-uuid.pipe';
 import { UpdateStatusBrandsDto } from './dto/update-status-brands.dto';
 import { UpdateStatusBrandsInterceptor } from './interceptor/update-status-brands.interceptor';
+import { FindBrandsQueryDto } from './dto/find-brands.dto';
+import { QueryParamsErrorsPipe } from '@/common/pipes/query-params-errors.pipe';
+import type { CreateBrandRes, FilesCreateBrand, GetBrandRes, GetBrandsRes, UpdateBrandRes } from './interfaces/controller.interface';
 
 @Controller('brand')
 export class BrandController {
 	constructor(private brandService: BrandService) {}
 
-	@Post('create_brand')
+	@Post('createBrand')
 	@UseInterceptors(FileUploadInterceptor.fileInterceptor(), CreateBrandInterceptor)
-	async create_brand(@UploadedFiles() files: { logoUrl?: Express.Multer.File[]; bannerUrl?: Express.Multer.File[] }, @Body() createBrandDto: CreateBrandDto, @Req() request) {
+	async createBrand(
+		@UploadedFiles() files: FilesCreateBrand,
+		@Body() dto: CreateBrandDto,
+		@Req() request
+	): Promise<CreateBrandRes> {
 		if (files) {
 			if (files.logoUrl) {
-				const processedLogo = await awsProcessImage(files.logoUrl[0], 'brands', 0.7);
-				console.log('processedLogo', processedLogo);
-				createBrandDto.logoUrl = processedLogo;
+				const processedLogo = await awsProcessImage(files.logoUrl[0], 'brands');
+				dto.logoUrl = processedLogo;
 			}
 
 			if (files.bannerUrl) {
-				const processedBanner = await awsProcessImage(files.bannerUrl[0], 'brands', 0.7);
-				console.log('processedBanner', processedBanner);
-				createBrandDto.bannerUrl = processedBanner;
+				const processedBanner = await awsProcessImage(files.bannerUrl[0], 'brands');
+				dto.bannerUrl = processedBanner;
 			}
 		}
-		return this.brandService.create_brand(createBrandDto, request);
+		return this.brandService.createBrand(dto, request);
 	}
 
-	@Get('get_brands')
-	get_brands(@Query() query: { filter: string; page: number; limit: number; status: string; countries: string; sort: string }) {
-		return this.brandService.get_brands(query);
+	@Get('getBrands')
+	getBrands(
+		@Query(new QueryParamsErrorsPipe(FindBrandsQueryDto))
+		query: unknown
+	): Promise<GetBrandsRes> {
+		return this.brandService.getBrands(query as FindBrandsQueryDto);
+	}
+
+	@Get('getBrand/:id')
+	getBrand(@Param('id', ValidateUUID) id): Promise<GetBrandRes> {
+		return this.brandService.getBrand(id);
+	}
+
+	@Put('updateBrand/:id')
+	@UseInterceptors(FileUploadInterceptor.fileInterceptor(), EditBrandInterceptor)
+	async updateBrand(
+		@UploadedFiles() files: FilesCreateBrand,
+		@Body() editBrandDto: EditBrandDto,
+		@Param('id', ValidateUUID) id,
+		@Req() request: any
+	): Promise<UpdateBrandRes> {
+		const [processedLogo, processedBanner] = await Promise.all([
+			files?.logoUrl?.[0] ? awsProcessImage(files.logoUrl[0], 'brands') : Promise.resolve(undefined),
+			files?.bannerUrl?.[0] ? awsProcessImage(files.bannerUrl[0], 'brands') : Promise.resolve(undefined),
+		]);
+
+		if (processedLogo) editBrandDto.logoUrl = processedLogo;
+		if (processedBanner) editBrandDto.bannerUrl = processedBanner;
+		return this.brandService.updateBrand(id, editBrandDto, request);
 	}
 
 	@Put('update_status_brand/:id')
 	update_status_brand(@Param('id', ValidateUUID) id: string, @Body() data: { status: boolean }, @Req() request: any) {
 		return this.brandService.update_status_brand(id, data.status, request);
-	}
-
-	@Get('get_brand/:id')
-	get_brand(@Param('id', ValidateUUID) id) {
-		return this.brandService.get_brand(id);
-	}
-
-	@Put('update_brand/:id')
-	@UseInterceptors(FileUploadInterceptor.fileInterceptor(), EditBrandInterceptor)
-	async update_brand(
-		@UploadedFiles() files: { logoUrl?: Express.Multer.File[]; bannerUrl?: Express.Multer.File[] },
-		@Body() editBrandDto: EditBrandDto,
-		@Param('id', ValidateUUID) id,
-		@Req() request: any
-	) {
-		const [fileNameLogo, fileNameBanner] = await Promise.all([
-			files?.logoUrl?.[0] ? this.brandService.get_brand_logo_filename_by_id(id) : Promise.resolve(null),
-			files?.bannerUrl?.[0] ? this.brandService.get_brand_banner_filename_by_id(id) : Promise.resolve(null),
-		]);
-
-		const [processedLogo, processedBanner] = await Promise.all([
-			files?.logoUrl?.[0] ? awsProcessImage(files.logoUrl[0], 'brands', 0.7, fileNameLogo && extractFileNameImage(fileNameLogo)) : Promise.resolve(undefined),
-			files?.bannerUrl?.[0] ? awsProcessImage(files.bannerUrl[0], 'brands', 0.7, fileNameBanner && extractFileNameImage(fileNameBanner)) : Promise.resolve(undefined),
-		]);
-
-		if (processedLogo) editBrandDto.logoUrl = processedLogo;
-		if (processedBanner) editBrandDto.bannerUrl = processedBanner;
-		return this.brandService.update_brand(id, editBrandDto, request);
 	}
 
 	@Get('get_product_by_brand/:id')

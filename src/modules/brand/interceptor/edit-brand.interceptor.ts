@@ -83,7 +83,7 @@ export class EditBrandInterceptor extends BaseValidationInterceptor<EditBrandDto
 			if (isPrefixExist && isPrefixExist.id != body.id) {
 				messages.push({
 					msm: 'Ya existe una marca con ese prefijo.',
-					field: 'name',
+					field: 'prefix',
 				});
 			}
 		}

@@ -5,8 +5,6 @@ import path from 'path';
 dotenv.config({ path: path.resolve(process.cwd(), `.env.${process.env.NODE_ENV || 'dev'}`) });
 
 export async function deleteToS3(key: string) {
-	console.log('process.env.AWS_S3_BUCKET', process.env.AWS_S3_BUCKET);
-
 	await s3.send(
 		new DeleteObjectCommand({
 			Bucket: process.env.AWS_S3_BUCKET,

@@ -3,13 +3,13 @@ import { BaseValidationInterceptor } from '@/common/interceptors/base-validation
 import { UpdatCategoriesStatusDto } from '../dto/update-categories-status.dto';
 
 @Injectable()
-export class UpdateStatusCategoriesInterceptor extends BaseValidationInterceptor<UpdateStatusCategoriesInterceptor> {
+export class UpdateStatusCategoriesInterceptor extends BaseValidationInterceptor<UpdatCategoriesStatusDto> {
 	constructor() {
 		super();
 	}
 
 	protected getDtoClass() {
-		return UpdateStatusCategoriesInterceptor;
+		return UpdatCategoriesStatusDto;
 	}
 
 	protected async validateBody(body: any): Promise<{ field: string; message: string }[]> {

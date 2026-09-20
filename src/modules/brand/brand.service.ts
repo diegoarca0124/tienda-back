@@ -3,7 +3,6 @@ import { BadRequestException, Injectable, InternalServerErrorException, Logger, 
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateBrandDto } from './dto/create-brand.dto';
-import { capitalizeStr } from '@/common/utils/capitalize-str.util';
 import slugify from 'slugify';
 import { EditBrandDto } from './dto/edit-brand-dto';
 import { UpdateStatusBrandsDto } from './dto/update-status-brands.dto';
@@ -11,10 +10,20 @@ import { Product } from '@/entities/product.entity';
 import { KibanaService } from '@/common/services/kibana/kibana.service';
 import { getPagination } from '@/common/utils/get-pagination.util';
 import { getQualityLabel } from './utils/calculate-total.util';
+import { CreateBrandRes, GetBrandRes, GetBrandsRes } from './interfaces/controller.interface';
+import { FindBrandsQueryDto } from './dto/find-brands.dto';
+import { FindBrandsBuilder } from './builders/find-brands.builder';
+
+interface ProductPreview {
+	id: string;
+	name: string;
+	code: string;
+	cover: string;
+	brandId: string;
+}
 
 @Injectable()
-export class BrandService {
-	private readonly logger = new Logger('AuthService');
+export class BrandService {W
 
 	constructor(
 		@InjectRepository(Brand) private brandRepository: Repository<Brand>,
@@ -22,15 +31,15 @@ export class BrandService {
 		private kibanaService: KibanaService
 	) {}
 
-	async create_brand(createBrandDto: CreateBrandDto, request: any) {
+	async createBrand(dto: CreateBrandDto, request: any): Promise<CreateBrandRes> {
 		try {
 			const result = await this.brandRepository
 				.createQueryBuilder()
 				.insert()
 				.into(Brand)
 				.values({
-					...createBrandDto,
-					slug: slugify(createBrandDto.name, {
+					...dto,
+					slug: slugify(dto.name, {
 						lower: true,
 						strict: true,
 						trim: true,
@@ -46,10 +55,10 @@ export class BrandService {
 			}
 
 			this.kibanaService.audit({
-				action: 'create_brand',
+				action: 'createBrand',
 				performedBy: request.user.id,
 				targetId: id,
-				requestBody: JSON.stringify(createBrandDto),
+				requestBody: JSON.stringify(dto),
 				response: JSON.stringify({ id }),
 				requestId: request.requestId,
 			});
@@ -64,108 +73,93 @@ export class BrandService {
 		}
 	}
 
-	async get_brands(query: { filter: string; page: number; limit: number; status: string; countries: string; sort: any }) {
+	async getBrands(query: FindBrandsQueryDto): Promise<GetBrandsRes> {
 		try {
-			const pagination = getPagination(query.page, query.limit);
-
 			const queryBuilder = this.brandRepository
 				.createQueryBuilder('brand')
-				.select(['brand.id', 'brand.name', 'brand.description', 'brand.createdAt', 'brand.status', 'brand.logoUrl', 'brand.prefix', 'brand.code', 'brand.websiteUrl'])
+				.select([
+					'brand.id',
+					'brand.name',
+					'brand.slug',
+					'brand.createdAt',
+					'brand.status',
+					'brand.prefix',
+					'brand.code',
+					'brand.websiteUrl',
+					'brand.logoUrl',
+					'brand.prefix',
+				])
 				.loadRelationCountAndMap('brand.totalProducts', 'brand.products');
 
-			if (query.filter?.trim()) {
-				const searchTerms = query.filter
-					.trim()
-					.split(/\s+/)
-					.slice(0, 5)
-					.map((t) => t.toLowerCase());
+			FindBrandsBuilder.applyFilters(queryBuilder, query);
+			const totalBrands = await queryBuilder.getCount();
+			const totalPages = Math.ceil(totalBrands / query.limit);
+			const currentPage = totalPages === 0 ? 1 : Math.min(query.page, totalPages);
+			const skip = (currentPage - 1) * query.limit;
 
-				const columns = ['brand.name', 'brand.description'];
+			const brands = await queryBuilder.skip(skip).take(query.limit).getMany();
+			const brandsIds = brands.map((brand) => brand.id);
+			const products: ProductPreview[] =
+				brandsIds.length > 0
+					? await this.productRepository.query(
+							`
+						SELECT
+							ranked.id,
+							ranked.name,
+							ranked.code,
+							ranked.cover,
+							ranked."brandId"
+						FROM (
+							SELECT
+								product.id,
+								product.name,
+								product.code,
+								product.cover,
+								product."brandId",
+								ROW_NUMBER() OVER (
+									PARTITION BY product."brandId"
+									ORDER BY
+										product."createdAt" DESC,
+										product.id ASC
+								) AS row_number
+							FROM products product
+							WHERE product."brandId" =
+								ANY($1::uuid[])
+						) ranked
+						WHERE ranked.row_number <= 4
+						ORDER BY
+							ranked."brandId",
+							ranked.row_number
+						`,
+							[brandsIds]
+						)
+					: [];
 
-				searchTerms.forEach((term, idx) => {
-					const conditions = columns.map((c) => `${c} ILIKE :term${idx}`).join(' OR ');
-					const params = { [`term${idx}`]: `%${term}%` };
+				const brandsWithProducts = brands.map((brand: any) => {
+					const latestProducts = products.filter((product) => product.brandId === brand.id).slice(0, 4);
 
-					idx === 0 ? queryBuilder.where(`(${conditions})`, params) : queryBuilder.andWhere(`(${conditions})`, params);
+					return {
+						...brand,
+						latestProducts,
+						moreProducts: Math.max((brand.totalProducts ?? 0) - latestProducts.length, 0),
+					};
 				});
-			}
 
-			if (query.status && query.status !== 'Todos') {
-				const statusBool = query.status === 'Activos';
-
-				queryBuilder.andWhere('brand.status = :status', {
-					status: statusBool,
-				});
-			}
-
-			if (query.countries && query.countries !== 'Todos') {
-				const countries = query.countries
-					.split(',')
-					.map((country) => country.trim())
-					.filter(Boolean);
-				if (countries.length > 0) {
-					queryBuilder.andWhere(`brand.country->>'code' IN (:...countries)`, { countries });
-				}
-			}
-
-			if (query.sort?.trim()) {
-				const [field, direction] = query.sort.split(':');
-
-				if (!field || !direction) {
-					queryBuilder.orderBy('brand.createdAt', 'DESC');
-				} else {
-					const allowedFields = ['name', 'description'];
-					const allowedDirections = ['asc', 'desc'];
-
-					if (allowedFields.includes(field) && allowedDirections.includes(direction?.toLowerCase())) {
-						const fieldMap = {
-							name: 'brand.name',
-							description: 'brand.description',
-						};
-
-						queryBuilder.orderBy(fieldMap[field], direction.toUpperCase() as 'ASC' | 'DESC');
-					} else {
-						queryBuilder.orderBy('brand.createdAt', 'DESC');
-					}
-				}
-			} else {
-				queryBuilder.orderBy('brand.createdAt', 'DESC');
-			}
-
-			let [brands, totalBrands] = await queryBuilder.skip(pagination.skip).take(pagination.limit).getManyAndCount();
-
-			const brandIds = brands.map((c) => c.id);
-			const rawProducts = await this.productRepository
-				.createQueryBuilder('product')
-				.select(['product.id', 'product.name', 'product.cover', 'product.brandId'])
-				.addSelect(`ROW_NUMBER() OVER(PARTITION BY product.brandId ORDER BY product.createdAt DESC) as rn`)
-				.where('product.brandId IN (:...ids)', { ids: brandIds })
-				.getRawMany();
-
-			const brandsWithProducts = brands.map((brand: any) => {
-				const products = rawProducts
-					.filter((p) => p.product_brandId === brand.id && parseInt(p.rn) <= 3)
-					.map((p) => ({
-						id: p.product_id,
-						name: p.product_name,
-						cover: p.product_cover,
-					}));
 				return {
-					...brand,
-					productsPreview: products,
-					moreProducts: Math.max(0, brand.totalProducts - products.length),
+					brands: brandsWithProducts,
+					meta: {
+						totalBrands,
+						totalPages,
+						currentPage,
+						limit: query.limit,
+					},
+					filters: {
+						filter: query.filter,
+						status: query.status,
+						sort: query.sort,
+						countries: query.countries,
+					},
 				};
-			});
-
-			return {
-				brands: brandsWithProducts,
-				meta: {
-					total: totalBrands,
-					currentPage: pagination.page,
-					limit: pagination.limit,
-					totalPages: Math.ceil(totalBrands / pagination.limit),
-				},
-			};
 		} catch (err: any) {
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
@@ -219,7 +213,7 @@ export class BrandService {
 		}
 	}
 
-	async get_brand(id: string) {
+	async getBrand(id: string): Promise<GetBrandRes> {
 		try {
 			let brand: any = await this.brandRepository
 				.createQueryBuilder('brand')
@@ -229,6 +223,7 @@ export class BrandService {
 					'brand.logoUrl',
 					'brand.bannerUrl',
 					'brand.prefix',
+					'brand.code',
 					'brand.country',
 					'brand.websiteUrl',
 					'brand.description',
@@ -253,7 +248,7 @@ export class BrandService {
 		}
 	}
 
-	async update_brand(id: string, editBrandDto: EditBrandDto, request: any) {
+	async updateBrand(id: string, editBrandDto: EditBrandDto, request: any) {
 		try {
 			const exists = await this.brandRepository.exists({
 				where: { id },
