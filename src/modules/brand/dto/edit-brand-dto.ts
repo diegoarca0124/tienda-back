@@ -37,7 +37,9 @@ export class EditBrandDto {
 	@MinLength(3, { message: 'La descripción debe tener minimo 3 caracteres.' })
 	@MaxLength(2000, { message: 'La descripción debe tener máximo 2000 caracteres.' })
 	@IsString({ message: 'La descripción debe ser una cadena de caracteres.' })
-	readonly description?: string;
+	@IsDefined({ message: 'La descripción es obligatoria.' })
+	@Transform(({ value }) => normalizeText(value))
+	readonly description: string;
 
 	slug?: string;
 
