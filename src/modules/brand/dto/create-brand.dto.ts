@@ -33,10 +33,9 @@ export class CreateBrandDto {
 	@IsDefined({ message: 'El prefijo es obligatorio.' })
 	prefix: string;
 
-	@Transform(({ value }) => (value === '' ? undefined : value))
 	@IsOptional()
-	@MaxLength(2000, { message: 'La descripción debe tener máximo 2000 caracteres.' })
 	@MinLength(3, { message: 'La descripción debe tener minimo 3 caracteres.' })
+	@MaxLength(2000, { message: 'La descripción debe tener máximo 2000 caracteres.' })
 	@IsString({ message: 'La descripción debe ser una cadena de caracteres.' })
 	@Transform(({ value }) => normalizeText(value))
 	readonly description?: string;
@@ -49,7 +48,6 @@ export class CreateBrandDto {
 	@IsNotEmptyObject({}, { message: 'El país no debe estar vacio.' })
 	country: CountryDto;
 
-	@Transform(({ value }) => (value === '' ? undefined : value))
 	@IsOptional()
 	@MaxLength(255, { message: 'La url debe tener máximo 255 caracteres.' })
 	@MinLength(3, { message: 'La url debe tener minimo 3 caracteres.' })

@@ -20,11 +20,7 @@ export class BrandController {
 
 	@Post('createBrand')
 	@UseInterceptors(FileUploadInterceptor.fileInterceptor(), CreateBrandInterceptor)
-	async createBrand(
-		@UploadedFiles() files: FilesCreateBrand,
-		@Body() dto: CreateBrandDto,
-		@Req() request
-	): Promise<CreateBrandRes> {
+	async createBrand(@UploadedFiles() files: FilesCreateBrand, @Body() dto: CreateBrandDto, @Req() request): Promise<CreateBrandRes> {
 		if (files) {
 			if (files.logoUrl) {
 				const processedLogo = await awsProcessImage(files.logoUrl[0], 'brands');
@@ -55,19 +51,12 @@ export class BrandController {
 	@Put('updateBrand/:id')
 	@UseInterceptors(FileUploadInterceptor.fileInterceptor(), EditBrandInterceptor)
 	async updateBrand(
-		@UploadedFiles() files: FilesCreateBrand,
-		@Body() editBrandDto: EditBrandDto,
-		@Param('id', ValidateUUID) id,
+		@UploadedFiles() files: FilesCreateBrand, 
+		@Body() dto: EditBrandDto, 
+		@Param('id', ValidateUUID) id: string, 
 		@Req() request: any
 	): Promise<UpdateBrandRes> {
-		const [processedLogo, processedBanner] = await Promise.all([
-			files?.logoUrl?.[0] ? awsProcessImage(files.logoUrl[0], 'brands') : Promise.resolve(undefined),
-			files?.bannerUrl?.[0] ? awsProcessImage(files.bannerUrl[0], 'brands') : Promise.resolve(undefined),
-		]);
-
-		if (processedLogo) editBrandDto.logoUrl = processedLogo;
-		if (processedBanner) editBrandDto.bannerUrl = processedBanner;
-		return this.brandService.updateBrand(id, editBrandDto, request);
+		return this.brandService.updateBrand(id, dto, files, request);
 	}
 
 	@Put('update_status_brand/:id')

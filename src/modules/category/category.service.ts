@@ -130,7 +130,7 @@ export class CategoryService {
 			const totalPages = Math.ceil(totalCategories / query.limit);
 			const currentPage = totalPages === 0 ? 1 : Math.min(query.page, totalPages);
 			const skip = (currentPage - 1) * query.limit;
-			
+
 			const categories = await queryBuilder.skip(skip).take(query.limit).getMany();
 			const categoryIds = categories.map((category) => category.id);
 			const products: ProductPreview[] =
@@ -293,7 +293,6 @@ export class CategoryService {
 
 	async getCategory(id: string): Promise<GetCategoryRes> {
 		try {
-			
 			const category = await this.categoryRepository
 				.createQueryBuilder('category')
 				.select([
@@ -443,7 +442,6 @@ export class CategoryService {
 
 	async getSubcategories(id: string): Promise<GetSubcategoriesRes> {
 		try {
-			
 			const category = await this.categoryRepository.exist({
 				where: { id },
 			});
@@ -692,7 +690,6 @@ export class CategoryService {
 			const currentPage = totalPages === 0 ? 1 : Math.min(query.page, totalPages);
 			const skip = (currentPage - 1) * query.limit;
 			let products = await queryBuilder.skip(skip).take(query.limit).getMany();
-
 
 			products = products.map((product) => ({
 				...product,

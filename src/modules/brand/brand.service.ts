@@ -10,9 +10,11 @@ import { Product } from '@/entities/product.entity';
 import { KibanaService } from '@/common/services/kibana/kibana.service';
 import { getPagination } from '@/common/utils/get-pagination.util';
 import { getQualityLabel } from './utils/calculate-total.util';
-import { CreateBrandRes, GetBrandRes, GetBrandsRes } from './interfaces/controller.interface';
+import type { CreateBrandRes, FilesCreateBrand, GetBrandRes, GetBrandsRes, UpdateBrandRes } from './interfaces/controller.interface';
 import { FindBrandsQueryDto } from './dto/find-brands.dto';
 import { FindBrandsBuilder } from './builders/find-brands.builder';
+import { awsProcessImage } from '@/common/utils/aws-process-image.util';
+import { deleteImageVariants } from '@/common/utils/delete-image-variants.util';
 
 interface ProductPreview {
 	id: string;
@@ -23,7 +25,8 @@ interface ProductPreview {
 }
 
 @Injectable()
-export class BrandService {W
+export class BrandService {
+	private readonly logger = new Logger(BrandService.name);
 
 	constructor(
 		@InjectRepository(Brand) private brandRepository: Repository<Brand>,
@@ -135,31 +138,31 @@ export class BrandService {W
 						)
 					: [];
 
-				const brandsWithProducts = brands.map((brand: any) => {
-					const latestProducts = products.filter((product) => product.brandId === brand.id).slice(0, 4);
-
-					return {
-						...brand,
-						latestProducts,
-						moreProducts: Math.max((brand.totalProducts ?? 0) - latestProducts.length, 0),
-					};
-				});
+			const brandsWithProducts = brands.map((brand: any) => {
+				const latestProducts = products.filter((product) => product.brandId === brand.id).slice(0, 4);
 
 				return {
-					brands: brandsWithProducts,
-					meta: {
-						totalBrands,
-						totalPages,
-						currentPage,
-						limit: query.limit,
-					},
-					filters: {
-						filter: query.filter,
-						status: query.status,
-						sort: query.sort,
-						countries: query.countries,
-					},
+					...brand,
+					latestProducts,
+					moreProducts: Math.max((brand.totalProducts ?? 0) - latestProducts.length, 0),
 				};
+			});
+
+			return {
+				brands: brandsWithProducts,
+				meta: {
+					totalBrands,
+					totalPages,
+					currentPage,
+					limit: query.limit,
+				},
+				filters: {
+					filter: query.filter,
+					status: query.status,
+					sort: query.sort,
+					countries: query.countries,
+				},
+			};
 		} catch (err: any) {
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
@@ -248,27 +251,52 @@ export class BrandService {W
 		}
 	}
 
-	async updateBrand(id: string, editBrandDto: EditBrandDto, request: any) {
-		try {
-			const exists = await this.brandRepository.exists({
-				where: { id },
-			});
+	async updateBrand(id: string, dto: EditBrandDto, files: FilesCreateBrand, request: any): Promise<UpdateBrandRes> {
+		const currentBrand = await this.brandRepository.findOne({
+			select: {
+				id: true,
+				logoUrl: true,
+				bannerUrl: true,
+			},
+			where: { id },
+		});
 
-			if (!exists) {
-				throw new NotFoundException('No se encontró el registro.');
+		if (!currentBrand) {
+			throw new NotFoundException('No se encontró el registro.');
+		}
+
+		const logoFile = files?.logoUrl?.[0];
+		const bannerFile = files?.bannerUrl?.[0];
+		const newImages: string[] = [];
+		const updateData = { ...dto };
+
+		if (updateData.description === undefined) {
+			delete updateData.description;
+		}
+
+		let result;
+
+		try {
+			if (logoFile) {
+				dto.logoUrl = await awsProcessImage(logoFile, 'brands');
+				newImages.push(dto.logoUrl);
 			}
 
-			const updateData = {
-				...editBrandDto,
-				updatedAt: () => 'CURRENT_TIMESTAMP',
-			};
+			if (bannerFile) {
+				dto.bannerUrl = await awsProcessImage(bannerFile, 'brands');
+				newImages.push(dto.bannerUrl);
+			}
 
-			let result;
+			console.log('dto',dto);
+			
 
 			result = await this.brandRepository
 				.createQueryBuilder()
 				.update(Brand)
-				.set(updateData)
+				.set({
+					...updateData,
+					updatedAt: () => 'CURRENT_TIMESTAMP',
+				})
 				.where('id = :id', { id })
 				.returning(['id', 'status', 'name', 'prefix', 'description', 'country', 'websiteUrl', 'logoUrl', 'bannerUrl', 'createdAt', 'updatedAt', 'statusAt'])
 				.execute();
@@ -280,24 +308,36 @@ export class BrandService {W
 			if (!result.raw?.length) {
 				throw new InternalServerErrorException('No se pudo recuperar el registro actualizado.');
 			}
-
-			this.kibanaService.audit({
-				action: 'update_brand',
-				performedBy: request.user.id,
-				targetId: id,
-				requestBody: JSON.stringify(editBrandDto),
-				response: JSON.stringify(result.raw[0]),
-				requestId: request.requestId,
-			});
-
-			return {
-				message: 'Registro actualizado correctamente.',
-				data: result.raw[0],
-			};
-		} catch (err: any) {
-			if (err) throw err;
-			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
+		} catch (error) {
+			await Promise.allSettled(newImages.map((filename) => deleteImageVariants('brands', filename)));
+			throw error;
 		}
+
+		this.kibanaService.audit({
+			action: 'update_brand',
+			performedBy: request.user.id,
+			targetId: id,
+			requestBody: JSON.stringify(dto),
+			response: JSON.stringify(result.raw[0]),
+			requestId: request.requestId,
+		});
+
+		const deletionResults = await Promise.allSettled([
+			logoFile && currentBrand.logoUrl ? deleteImageVariants('brands', currentBrand.logoUrl) : Promise.resolve(),
+			bannerFile && currentBrand.bannerUrl ? deleteImageVariants('brands', currentBrand.bannerUrl) : Promise.resolve(),
+		]);
+
+		deletionResults.forEach((deletionResult, index) => {
+			if (deletionResult.status === 'rejected') {
+				const imageType = index === 0 ? 'logo' : 'banner';
+				this.logger.error(`No fue posible eliminar el ${imageType} anterior de la marca ${id}.`, deletionResult.reason);
+			}
+		});
+
+		return {
+			message: 'Registro actualizado correctamente.',
+			data: result.raw[0],
+		};
 	}
 
 	async update_status_brands(updateStatusBrandsDto: UpdateStatusBrandsDto, request: any) {

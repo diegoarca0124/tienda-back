@@ -55,11 +55,7 @@ export async function awsProcessImages(
 		await Promise.all(
 			variants.map(async (variant) => {
 				const width = Math.max(1, Math.round(originalWidth * variant.scale));
-				const buffer = await image
-					.clone()
-					.resize({ width, withoutEnlargement: true })
-					.webp({ quality: variant.quality })
-					.toBuffer();
+				const buffer = await image.clone().resize({ width, withoutEnlargement: true }).webp({ quality: variant.quality }).toBuffer();
 
 				return uploadToS3(buffer, filename, 'image/webp', `${folder}/${variant.dir}`);
 			})

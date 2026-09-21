@@ -1,5 +1,5 @@
-import { Brand } from "@/entities/brand.entity";
-import { FindBrandsQueryDto } from "../dto/find-brands.dto";
+import { Brand } from '@/entities/brand.entity';
+import { FindBrandsQueryDto } from '../dto/find-brands.dto';
 
 export interface GetBrandsRes {
 	brands: Brand[];
@@ -23,8 +23,8 @@ export interface GetBrandRes {
 }
 
 export interface FilesCreateBrand {
-	logoUrl?: Express.Multer.File[]; 
-	bannerUrl?: Express.Multer.File[] 
+	logoUrl?: Express.Multer.File[];
+	bannerUrl?: Express.Multer.File[];
 }
 
 export interface UpdateBrandRes {

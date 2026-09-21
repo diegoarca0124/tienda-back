@@ -20,4 +20,3 @@ export const ALLOWED_COUNTRIES = [
 	{ code: 'AE', name: 'Emiratos Árabes Unidos', flag: 'media/flags/united-arab-emirates.svg' }, // Emirates, Etihad
 	{ code: 'PE', name: 'Perú', flag: 'media/flags/peru.svg' }, // Inca Kola, Alicorp
 ] as const;
-
