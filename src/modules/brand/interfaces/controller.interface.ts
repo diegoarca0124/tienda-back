@@ -27,7 +27,23 @@ export interface FilesCreateBrand {
 	bannerUrl?: Express.Multer.File[];
 }
 
+export interface FilesUpdateBrand {
+	logoUrl?: Express.Multer.File[];
+	bannerUrl?: Express.Multer.File[];
+}
+
 export interface UpdateBrandRes {
 	data: Brand;
 	message: string;
 }
+
+export interface UpdateBrandStatusRes {
+	data: Brand;
+	message: string;
+}
+
+export interface UpdateBrandsStatusRes {
+	data: string[];
+	message: string;
+}
+

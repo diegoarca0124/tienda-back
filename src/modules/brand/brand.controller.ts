@@ -1,18 +1,19 @@
 import { Body, Controller, Get, Param, Post, Put, Query, Req, UploadedFiles, UseGuards, UseInterceptors, UsePipes } from '@nestjs/common';
-import { FileUploadInterceptor } from './interceptor/files-create-brand.interceptor';
+import { FileUploadInterceptor } from './interceptor/files-upload.interceptor';
 import { CreateBrandInterceptor } from './interceptor/create-brand.interceptor';
 import { CreateBrandDto } from './dto/create-brand.dto';
-import { awsProcessImage } from '@/common/utils/aws-process-image.util';
 import { ParseCountryPipe } from './pipes/parse-country.pipe';
 import { BrandService } from './brand.service';
 import { EditBrandInterceptor } from './interceptor/edit-brand.interceptor';
 import { EditBrandDto } from './dto/edit-brand-dto';
 import { ValidateUUID } from '@/common/pipes/validate-uuid.pipe';
-import { UpdateStatusBrandsDto } from './dto/update-status-brands.dto';
+import { UpdateBrandsStatusDto } from './dto/update-brands-status.dto';
 import { UpdateStatusBrandsInterceptor } from './interceptor/update-status-brands.interceptor';
 import { FindBrandsQueryDto } from './dto/find-brands.dto';
 import { QueryParamsErrorsPipe } from '@/common/pipes/query-params-errors.pipe';
-import type { CreateBrandRes, FilesCreateBrand, GetBrandRes, GetBrandsRes, UpdateBrandRes } from './interfaces/controller.interface';
+import type { CreateBrandRes, FilesCreateBrand, GetBrandRes, GetBrandsRes, UpdateBrandRes, UpdateBrandsStatusRes, UpdateBrandStatusRes } from './interfaces/controller.interface';
+import { UpdateBrandStatusDto } from './dto/update-brand-status.dto';
+import { FindBrandProductsQueryDto } from './dto/find-brand-products.dto';
 
 @Controller('brand')
 export class BrandController {
@@ -20,19 +21,12 @@ export class BrandController {
 
 	@Post('createBrand')
 	@UseInterceptors(FileUploadInterceptor.fileInterceptor(), CreateBrandInterceptor)
-	async createBrand(@UploadedFiles() files: FilesCreateBrand, @Body() dto: CreateBrandDto, @Req() request): Promise<CreateBrandRes> {
-		if (files) {
-			if (files.logoUrl) {
-				const processedLogo = await awsProcessImage(files.logoUrl[0], 'brands');
-				dto.logoUrl = processedLogo;
-			}
-
-			if (files.bannerUrl) {
-				const processedBanner = await awsProcessImage(files.bannerUrl[0], 'brands');
-				dto.bannerUrl = processedBanner;
-			}
-		}
-		return this.brandService.createBrand(dto, request);
+	async createBrand(
+		@UploadedFiles() files: FilesCreateBrand, 
+		@Body() dto: CreateBrandDto, 
+		@Req() request
+	): Promise<CreateBrandRes> {
+		return this.brandService.createBrand(dto, files, request);
 	}
 
 	@Get('getBrands')
@@ -59,23 +53,31 @@ export class BrandController {
 		return this.brandService.updateBrand(id, dto, files, request);
 	}
 
-	@Put('update_status_brand/:id')
-	update_status_brand(@Param('id', ValidateUUID) id: string, @Body() data: { status: boolean }, @Req() request: any) {
-		return this.brandService.update_status_brand(id, data.status, request);
+	@Put('updateBrandStatus/:id')
+	updateBrandStatus(
+		@Param('id', ValidateUUID) id: string, 
+		@Body() dto: UpdateBrandStatusDto, 
+		@Req() request: any
+	): Promise<UpdateBrandStatusRes> {
+		return this.brandService.updateBrandStatus(id, dto, request);
 	}
 
-	@Get('get_product_by_brand/:id')
-	get_product_by_brand(
-		@Param('id', ValidateUUID) id: string,
-		@Query() query: { filter: string; page: number; limit: number; status: string; sort: string; subcategoryIds: string }
-	) {
-		return this.brandService.get_product_by_brand(id, query);
-	}
-
-	@Post('update_status_brands')
+	@Post('updateBrandsStatus')
 	@UseInterceptors(UpdateStatusBrandsInterceptor)
-	update_status_brands(@Body() updateStatusBrandsDto: UpdateStatusBrandsDto, @Req() request: any) {
-		return this.brandService.update_status_brands(updateStatusBrandsDto, request);
+	updateBrandsStatus(
+		@Body() dto: UpdateBrandsStatusDto, 
+		@Req() request: any
+	): Promise<UpdateBrandsStatusRes>{
+		return this.brandService.updateBrandsStatus(dto, request);
+	}
+
+	@Get('findBrandProducts/:id')
+	findBrandProducts(
+		@Param('id', ValidateUUID) id: string,
+		@Query(new QueryParamsErrorsPipe(FindBrandProductsQueryDto))
+		query: unknown
+	) {
+		return this.brandService.findBrandProducts(id, query as FindBrandProductsQueryDto);
 	}
 
 	@Get('get_brands_by_select')

@@ -17,8 +17,6 @@ export class EditBrandInterceptor extends BaseValidationInterceptor<EditBrandDto
 	}
 
 	protected async validateBody(body: any): Promise<{ field: string; message: string }[]> {
-		console.log('EditBrandInterceptor',body);
-		
 		const customErrors: { field: string; message: string }[] = [];
 
 		const fieldsErrors = await this.validateFieldsExist(body);

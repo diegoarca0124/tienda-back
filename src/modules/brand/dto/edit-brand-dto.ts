@@ -1,6 +1,6 @@
 import { capitalizeWords, normalizeText } from '@/common/utils/string.util';
 import { Transform, Type } from 'class-transformer';
-import { IsDefined, IsNotEmpty, IsNotEmptyObject, IsObject, IsOptional, IsString, IsUrl, Length, Matches, MaxLength, MinLength, ValidateNested } from 'class-validator';
+import { IsDefined, IsNotEmpty, IsNotEmptyObject, IsObject, IsOptional, IsString, IsUrl, Length, Matches, MaxLength, MinLength, ValidateIf, ValidateNested } from 'class-validator';
 
 export class CountryDto {
 	@IsString({ message: 'El código de país es requerido' })
@@ -33,12 +33,14 @@ export class EditBrandDto {
 	@IsDefined({ message: 'El prefijo es obligatorio.' })
 	prefix: string;
 
-	@IsOptional()
+	@ValidateIf((_object, value) => value !== '')
 	@MinLength(3, { message: 'La descripción debe tener minimo 3 caracteres.' })
 	@MaxLength(2000, { message: 'La descripción debe tener máximo 2000 caracteres.' })
 	@IsString({ message: 'La descripción debe ser una cadena de caracteres.' })
 	@IsDefined({ message: 'La descripción es obligatoria.' })
-	@Transform(({ value }) => normalizeText(value))
+	@Transform(({ value }) =>
+		typeof value === 'string' ? normalizeText(value) : value
+	)
 	readonly description: string;
 
 	slug?: string;

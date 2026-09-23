@@ -60,13 +60,20 @@ export class CategoryController {
 	}
 
 	@Put('updateCategoryStatus/:id')
-	updateCategoryStatus(@Param('id', ValidateUUID) id: string, @Body() dto: UpdateCategoryStatusDto, @Req() request): Promise<UpdateCategoryStatusRes> {
+	updateCategoryStatus(
+		@Param('id', ValidateUUID) id: string, 
+		@Body() dto: UpdateCategoryStatusDto, 
+		@Req() request
+	): Promise<UpdateCategoryStatusRes> {
 		return this.categoryService.updateCategoryStatus(id, dto, request);
 	}
 
 	@Post('updateCategoriesStatus')
 	@UseInterceptors(UpdateStatusCategoriesInterceptor)
-	updateCategoriesStatus(@Body() dto: UpdatCategoriesStatusDto, @Req() request): Promise<UpdateCategoriesStatusRes> {
+	updateCategoriesStatus(
+		@Body() dto: UpdatCategoriesStatusDto, 
+		@Req() request
+	): Promise<UpdateCategoriesStatusRes> {
 		return this.categoryService.updateCategoriesStatus(dto, request);
 	}
 

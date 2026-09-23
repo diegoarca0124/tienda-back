@@ -1,20 +1,23 @@
 import { Brand } from '@/entities/brand.entity';
 import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { CreateBrandDto } from './dto/create-brand.dto';
 import slugify from 'slugify';
 import { EditBrandDto } from './dto/edit-brand-dto';
-import { UpdateStatusBrandsDto } from './dto/update-status-brands.dto';
+import { UpdateBrandsStatusDto } from './dto/update-brands-status.dto';
 import { Product } from '@/entities/product.entity';
 import { KibanaService } from '@/common/services/kibana/kibana.service';
 import { getPagination } from '@/common/utils/get-pagination.util';
 import { getQualityLabel } from './utils/calculate-total.util';
-import type { CreateBrandRes, FilesCreateBrand, GetBrandRes, GetBrandsRes, UpdateBrandRes } from './interfaces/controller.interface';
+import type { CreateBrandRes, FilesCreateBrand, FilesUpdateBrand, GetBrandRes, GetBrandsRes, UpdateBrandRes, UpdateBrandsStatusRes, UpdateBrandStatusRes } from './interfaces/controller.interface';
 import { FindBrandsQueryDto } from './dto/find-brands.dto';
 import { FindBrandsBuilder } from './builders/find-brands.builder';
 import { awsProcessImage } from '@/common/utils/aws-process-image.util';
 import { deleteImageVariants } from '@/common/utils/delete-image-variants.util';
+import { UpdateBrandStatusDto } from './dto/update-brand-status.dto';
+import { FindBrandProductsQueryDto } from './dto/find-brand-products.dto';
+import { FindCategoryProductsBuilder } from '../category/builders/find-category-products.builder';
 
 interface ProductPreview {
 	id: string;
@@ -34,8 +37,24 @@ export class BrandService {
 		private kibanaService: KibanaService
 	) {}
 
-	async createBrand(dto: CreateBrandDto, request: any): Promise<CreateBrandRes> {
+	async createBrand(dto: CreateBrandDto, files: FilesCreateBrand, request: any): Promise<CreateBrandRes> {
+		const newImages: string[] = [];
+		let id: string;
+
 		try {
+			const logoFile = files?.logoUrl?.[0];
+			const bannerFile = files?.bannerUrl?.[0];
+
+			if (logoFile) {
+				dto.logoUrl = await awsProcessImage(logoFile, 'brands');
+				newImages.push(dto.logoUrl);
+			}
+
+			if (bannerFile) {
+				dto.bannerUrl = await awsProcessImage(bannerFile, 'brands');
+				newImages.push(dto.bannerUrl);
+			}
+
 			const result = await this.brandRepository
 				.createQueryBuilder()
 				.insert()
@@ -51,29 +70,30 @@ export class BrandService {
 				.returning(['id'])
 				.execute();
 
-			const id = result.raw[0]?.id;
+			id = result.raw[0]?.id;
 
 			if (!id) {
 				throw new InternalServerErrorException('No se pudo registrar la marca.');
 			}
 
-			this.kibanaService.audit({
-				action: 'createBrand',
-				performedBy: request.user.id,
-				targetId: id,
-				requestBody: JSON.stringify(dto),
-				response: JSON.stringify({ id }),
-				requestId: request.requestId,
-			});
-
-			return {
-				message: 'Registro creado correctamente.',
-				data: id,
-			};
-		} catch (err: any) {
-			if (err) throw err;
-			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
+		} catch (error) {
+			await Promise.allSettled(newImages.map((filename) => deleteImageVariants('brands', filename)));
+			throw error;
 		}
+
+		this.kibanaService.audit({
+			action: 'createBrand',
+			performedBy: request.user.id,
+			targetId: id,
+			requestBody: JSON.stringify(dto),
+			response: JSON.stringify({ id }),
+			requestId: request.requestId,
+		});
+
+		return {
+			message: 'Registro creado correctamente.',
+			data: id,
+		};
 	}
 
 	async getBrands(query: FindBrandsQueryDto): Promise<GetBrandsRes> {
@@ -169,51 +189,46 @@ export class BrandService {
 		}
 	}
 
-	async update_status_brand(id: string, status: boolean, request: any) {
-		try {
-			const exists = await this.brandRepository.exists({ where: { id } });
+	async updateBrandStatus(id: string, dto: UpdateBrandStatusDto, request: any):Promise<UpdateBrandStatusRes> {
+		const result = await this.brandRepository
+			.createQueryBuilder()
+			.update(Brand)
+			.set({
+				status: dto.status,
+				statusAt: () => 'CURRENT_TIMESTAMP',
+			})
+			.where('id = :id', { id })
+			.andWhere('status IS DISTINCT FROM :status', { status: dto.status })
+			.returning(['id', 'status', 'name'])
+			.execute();
 
-			if (!exists) {
-				throw new NotFoundException('No se encontró el registro.');
-			}
-
-			const result = await this.brandRepository
-				.createQueryBuilder()
-				.update(Brand)
-				.set({
-					status: !status,
-					statusAt: () => 'CURRENT_TIMESTAMP',
-				})
-				.where('id = :id', { id })
-				.returning(['id', 'status', 'name'])
-				.execute();
-
-			if (!result.affected) {
-				throw new InternalServerErrorException('No se pudo actualizar el registro.');
-			}
-
-			if (!result.raw?.length) {
-				throw new InternalServerErrorException('No se pudo recuperar el registro actualizado.');
-			}
-
-			const updatedBrand = result.raw[0];
-
-			this.kibanaService.audit({
-				action: 'update_status_brand',
-				performedBy: request.user.id,
-				targetId: id,
-				requestBody: JSON.stringify({ status }),
-				response: JSON.stringify(result.raw[0]),
-				requestId: request.requestId,
+		if (!result.affected) {
+			const brandExists = await this.brandRepository.exists({
+				where: { id },
 			});
-			return {
-				message: 'Registro actualizado correctamente.',
-				data: updatedBrand,
-			};
-		} catch (err: any) {
-			if (err) throw err;
-			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
+
+			if (!brandExists) {
+				throw new NotFoundException('No se encontró la marca.');
+			}
+
+			throw new BadRequestException(dto.status ? 'La marca ya se encuentra activa.' : 'La marca ya se encuentra inactiva.');
 		}
+
+		const updatedBrand = result.raw[0];
+
+		this.kibanaService.audit({
+			action: 'updateBrandStatus',
+			performedBy: request.user.id,
+			targetId: id,
+			requestBody: JSON.stringify(dto),
+			response: JSON.stringify(updatedBrand),
+			requestId: request.requestId,
+		});
+
+		return {
+			message: 'Registro actualizado correctamente.',
+			data: updatedBrand,
+		};
 	}
 
 	async getBrand(id: string): Promise<GetBrandRes> {
@@ -251,7 +266,7 @@ export class BrandService {
 		}
 	}
 
-	async updateBrand(id: string, dto: EditBrandDto, files: FilesCreateBrand, request: any): Promise<UpdateBrandRes> {
+	async updateBrand(id: string, dto: EditBrandDto, files: FilesUpdateBrand, request: any): Promise<UpdateBrandRes> {
 		const currentBrand = await this.brandRepository.findOne({
 			select: {
 				id: true,
@@ -270,9 +285,6 @@ export class BrandService {
 		const newImages: string[] = [];
 		const updateData = { ...dto };
 
-		if (updateData.description === undefined) {
-			delete updateData.description;
-		}
 
 		let result;
 
@@ -340,62 +352,63 @@ export class BrandService {
 		};
 	}
 
-	async update_status_brands(updateStatusBrandsDto: UpdateStatusBrandsDto, request: any) {
-		try {
-			const ids = [...new Set(updateStatusBrandsDto.ids)];
+	async updateBrandsStatus(dto: UpdateBrandsStatusDto, request: any): Promise<UpdateBrandsStatusRes> {
+		const ids = [...new Set(dto.ids)];
+		
+		const result = await this.brandRepository
+			.createQueryBuilder()
+			.update(Brand)
+			.set({
+				status: dto.status,
+				statusAt: () => 'CURRENT_TIMESTAMP',
+			})
+			.where('id IN (:...ids)', { ids })
+			.andWhere('status IS DISTINCT FROM :status', { status: dto.status })
+			.returning(['id'])
+			.execute();
 
-			if (!ids.length) {
-				throw new BadRequestException('Debe seleccionar al menos un registro.');
-			}
-
-			const result = await this.brandRepository
-				.createQueryBuilder()
-				.update(Brand)
-				.set({
-					status: updateStatusBrandsDto.status,
-					statusAt: () => 'CURRENT_TIMESTAMP',
-				})
-				.where('id IN (:...ids)', { ids })
-				.returning(['id'])
-				.execute();
-
-			if (!result.affected) {
-				throw new NotFoundException('No se encontraron registros para actualizar.');
-			}
-
-			if (!result.raw?.length) {
-				throw new InternalServerErrorException('No se pudo recuperar el registro actualizado.');
-			}
-
-			const updatedIds: string[] = result.raw.map((item: { id: string }) => item.id);
-
-			this.kibanaService.audit({
-				action: 'update_status_brands',
-				performedBy: request.user.id,
-				targetId: updatedIds,
-				requestBody: JSON.stringify({
-					status: updateStatusBrandsDto.status,
-				}),
-				response: JSON.stringify({
-					updatedIds,
-					total: updatedIds.length,
-				}),
-				requestId: request.requestId,
+		if (!result.affected) {
+			const existingBrand = await this.brandRepository.count({
+				where: {
+					id: In(ids),
+				},
 			});
 
-			return {
-				message: 'Registros actualizados correctamente.',
-				data: updatedIds,
-			};
-		} catch (err: any) {
-			if (err) throw err;
-			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
+			if (existingBrand === 0) {
+				throw new NotFoundException('No se encontraron marcas.');
+			}
+
+			throw new BadRequestException(dto.status ? 'Las marcas seleccionadas ya se encuentran activas.' : 'Las marcas seleccionadas ya se encuentran inactivas.');
 		}
+
+		const updatedIds: string[] = result.raw.map((item: { id: string }) => item.id);
+
+		this.kibanaService.audit({
+			action: 'updateBrandsStatus',
+			performedBy: request.user.id,
+			targetId: updatedIds,
+			requestBody: JSON.stringify(dto),
+			response: JSON.stringify({
+				updatedIds,
+				total: updatedIds.length,
+			}),
+			requestId: request.requestId,
+		});
+
+		return {
+			message: 'Registros actualizados correctamente.',
+			data: updatedIds,
+		};
 	}
 
-	async get_product_by_brand(brandId: string, query: { filter: string; page: number; limit: number; status: string; sort: string; subcategoryIds?: string }) {
+	async findBrandProducts(brandId: string, query: FindBrandProductsQueryDto) {
 		try {
-			const pagination = getPagination(query.page, query.limit);
+			if (query.minPrice !== undefined && query.maxPrice !== undefined && query.minPrice > query.maxPrice) {
+				throw new BadRequestException({
+					code: 'INVALID_QUERY_PARAMS',
+					message: 'Los parámetros de la URL no son válidos.',
+				});
+			}
 
 			const exists = await this.brandRepository.exists({ where: { id: brandId } });
 			if (!exists) {
@@ -406,91 +419,13 @@ export class BrandService {
 				.createQueryBuilder('product')
 				.leftJoinAndSelect('product.category', 'category')
 				.leftJoinAndSelect('product.subcategory', 'subcategory')
-				.leftJoinAndSelect('product.brand', 'brand');
-
-			queryBuilder.where('product.brandId = :brandId', {
-				brandId,
-			});
-
-			if (query.subcategoryIds != 'Todos') {
-				const subcategoryIds = query.subcategoryIds
-					?.split(',')
-					.map((id) => id.trim())
-					.filter(Boolean);
-
-				if (subcategoryIds?.length) {
-					queryBuilder.andWhere('product.subcategoryId IN (:...subcategoryIds)', { subcategoryIds });
-				}
-			}
-
-			if (query.filter?.trim()) {
-				const searchTerms = query.filter
-					.trim()
-					.split(/\s+/)
-					.slice(0, 5)
-					.map((t) => t.toLowerCase());
-
-				const columns = ['product.name', 'product.description', 'product.extract', 'category.name', 'subcategory.name'];
-
-				searchTerms.forEach((term, idx) => {
-					const conditions = columns.map((c) => `${c} ILIKE :term${idx}`).join(' OR ');
-
-					const params = {
-						[`term${idx}`]: `%${term}%`,
-					};
-
-					idx === 0 ? queryBuilder.andWhere(`(${conditions})`, params) : queryBuilder.andWhere(`(${conditions})`, params);
-				});
-			}
-
-			if (query.status && query.status !== 'todos' && ['draft', 'published'].includes(query.status)) {
-				queryBuilder.andWhere('product.status = :status', {
-					status: query.status,
-				});
-			}
-
-			console.log('query.sort', query.sort);
-
-			if (query.sort?.trim() && query.sort !== 'Predeterminado') {
-				const [field, direction] = query.sort.split(':');
-
-				if (!field || !direction) {
-					queryBuilder.orderBy('product.createdAt', 'DESC');
-				} else {
-					const allowedFields = ['name', 'description', 'priceRegular', 'priceDiscount', 'quality', 'stockQuantity', 'subcategoryId'];
-					const allowedDirections = ['asc', 'desc'];
-
-					if (allowedFields.includes(field) && allowedDirections.includes(direction.toLowerCase())) {
-						const order = direction.toUpperCase() as 'ASC' | 'DESC';
-
-						if (field === 'priceRegular') {
-							// No hagas nada aquí
-						} else {
-							const fieldMap = {
-								name: 'product.name',
-								description: 'product.description',
-								priceDiscount: 'product.priceDiscount',
-								quality: 'product.quality',
-								stockQuantity: 'product.stockQuantity',
-								categoryId: 'category.name',
-							};
-
-							queryBuilder.orderBy(fieldMap[field], order);
-						}
-					} else {
-						queryBuilder.orderBy('product.createdAt', 'DESC');
-					}
-				}
-			} else {
-				queryBuilder.orderBy('product.createdAt', 'DESC');
-			}
-
-			let [products, totalProducts] = await queryBuilder
+				.leftJoinAndSelect('product.brand', 'brand')
 				.select([
 					'product.id',
 					'product.name',
 					'product.cover',
 					'product.status',
+					'product.visibility',
 					'product.createdAt',
 					'product.priceRegular',
 					'product.quality',
@@ -498,30 +433,25 @@ export class BrandService {
 					'product.priceDiscount',
 					'category.id',
 					'category.name',
-					'category.prefix',
-					'category.code',
 					'subcategory.id',
 					'subcategory.name',
 					'subcategory.prefix',
 					'subcategory.code',
+					'brand.id',
 					'brand.name',
 					'brand.logoUrl',
 				])
-				.skip(pagination.skip)
-				.take(pagination.limit)
-				.getManyAndCount();
-
-			if (query.sort?.startsWith('priceRegular:')) {
-				const [, direction] = query.sort.split(':');
-
-				products.sort((a, b) => {
-					const priceA = a.priceDiscount && Number(a.priceDiscount) > 0 ? Number(a.priceDiscount) : Number(a.priceRegular);
-
-					const priceB = b.priceDiscount && Number(b.priceDiscount) > 0 ? Number(b.priceDiscount) : Number(b.priceRegular);
-
-					return direction === 'asc' ? priceA - priceB : priceB - priceA;
+				.where('product.brandId = :brandId', {
+					brandId,
 				});
-			}
+
+			FindCategoryProductsBuilder.applyFilters(queryBuilder, query);
+
+			const totalProducts = await queryBuilder.clone().getCount();
+			const totalPages = Math.ceil(totalProducts / query.limit);
+			const currentPage = totalPages === 0 ? 1 : Math.min(query.page, totalPages);
+			const skip = (currentPage - 1) * query.limit;
+			let products = await queryBuilder.skip(skip).take(query.limit).getMany();
 
 			products = products.map((product) => ({
 				...product,
@@ -532,11 +462,22 @@ export class BrandService {
 				products,
 				meta: {
 					totalProducts,
-					totalPages: Math.ceil(totalProducts / pagination.limit),
-					currentPage: pagination.page,
+					totalPages,
+					currentPage,
+					limit: query.limit,
+				},
+				filters: {
+					filter: query.filter,
+					status: query.status,
+					sort: query.sort,
+					subcategoryIds: query.subcategoryIds?.join(',') ?? 'Todos',
+					quality: query.quality,
+					visibility: query.visibility,
+					minPrice: query.minPrice,
+					maxPrice: query.maxPrice,
 				},
 			};
-		} catch (err: any) {
+		} catch (err) {
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
