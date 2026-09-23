@@ -382,6 +382,10 @@ export class CollaboratorService {
 
 			const updatedIds: string[] = result.raw.map((item: { id: string }) => item.id);
 
+			if (!dto.status && process.env.TOKEN_REVOCATION === 'true') {
+				await Promise.all(updatedIds.map((id) => this.authService.revokeUserTokens(id)));
+			}
+
 			this.kibanaService.audit({
 				action: 'updateCollaboratorsStatus',
 				performedBy: request.user.id,
