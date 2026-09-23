@@ -27,15 +27,37 @@ export class AuthService {
 				id: user.id,
 				jti: crypto.randomUUID(),
 			};
-			return this.jwtService.sign(payload);
+			const token = this.jwtService.sign(payload);
+			const decoded = this.jwtService.decode(token) as { exp?: number } | null;
+			const expiresIn = decoded?.exp ? decoded.exp - Math.floor(Date.now() / 1000) : 86400;
+
+			await this.redisTokenService.addToSet(
+				`active-tokens:${user.id}`,
+				JSON.stringify({ jti: payload.jti, exp: decoded?.exp }),
+				expiresIn
+			);
+
+			return token;
 		} catch (error) {
 			throw new InternalServerErrorException('Error generando el token.');
 		}
 	}
 
-	async revokeToken(jti: string) {
-		const decoded: any = this.jwtService.decode(jti);
-		const expiresIn = decoded?.exp ? decoded.exp - Math.floor(Date.now() / 1000) : 3600;
+	async revokeToken(jti: string, exp?: number) {
+		const expiresIn = exp ? Math.max(exp - Math.floor(Date.now() / 1000), 1) : 86400;
 		await this.redisTokenService.set(`revoked:${jti}`, 'true', expiresIn);
+	}
+
+	async revokeUserTokens(userId: string) {
+		const key = `active-tokens:${userId}`;
+		const activeTokens = await this.redisTokenService.getSetMembers(key);
+
+		for (const activeToken of activeTokens) {
+			const { jti, exp } = JSON.parse(activeToken) as { jti?: string; exp?: number };
+			if (jti) await this.revokeToken(jti, exp);
+		}
+
+		await this.redisTokenService.del(key);
+		return activeTokens.length;
 	}
 }

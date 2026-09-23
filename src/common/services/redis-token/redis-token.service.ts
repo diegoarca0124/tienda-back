@@ -33,6 +33,17 @@ export class RedisTokenService {
 		return this.client.get(key);
 	}
 
+	async addToSet(key: string, value: string, ttlSeconds: number) {
+		const transaction = this.client.multi();
+		transaction.sadd(key, value);
+		transaction.expire(key, ttlSeconds);
+		await transaction.exec();
+	}
+
+	async getSetMembers(key: string): Promise<string[]> {
+		return this.client.smembers(key);
+	}
+
 	async del(key: string) {
 		return this.client.del(key);
 	}

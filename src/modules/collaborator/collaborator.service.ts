@@ -316,6 +316,10 @@ export class CollaboratorService {
 
 			const updatedCollaborator = result.raw[0];
 
+			if (!dto.status && process.env.TOKEN_REVOCATION === 'true') {
+				await this.authService.revokeUserTokens(id);
+			}
+
 			this.kibanaService.audit({
 				action: 'updateCollaboratorStatus',
 				performedBy: request.user.id,
@@ -512,7 +516,8 @@ export class CollaboratorService {
 				}
 				if (mode === 'upsert') {
 					if (existing) {
-						Object.assign(existing, item);
+						const { password, ...updateData } = item;
+						Object.assign(existing, updateData);
 						toUpdate.push(existing);
 					} else {
 						toCreate.push(this.collaboratorRepository.create(item));

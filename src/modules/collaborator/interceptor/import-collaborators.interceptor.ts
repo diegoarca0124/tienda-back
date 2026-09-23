@@ -9,6 +9,10 @@ type RowErrors = Record<string, string[]>;
 type ValidationResult = { field: string; message: any };
 type ImportRowResult = Record<number, RowErrors>;
 type DuplicateField = 'email' | 'phone' | 'number_document';
+type ValidatedRow = {
+	rowErrors: RowErrors;
+	normalizedRow?: ValidateImportCollaboratorDto;
+};
 
 @Injectable()
 export class ImportCollaboratorsInterceptor extends BaseValidationInterceptor<ImportCollaboratorsDto> {
@@ -32,15 +36,16 @@ export class ImportCollaboratorsInterceptor extends BaseValidationInterceptor<Im
 	private async validateRows(data: unknown[], mode: string, duplicateErrors: Map<number, RowErrors>): Promise<ImportRowResult[]> {
 		const result: ImportRowResult[] = [];
 		for (let index = 0; index < data.length; index++) {
-			const rowErrors = await this.validateRow(data[index], mode, duplicateErrors.get(index));
+			const { rowErrors, normalizedRow } = await this.validateRow(data[index], mode, duplicateErrors.get(index));
+			if (normalizedRow) data[index] = normalizedRow;
 			if (Object.keys(rowErrors).length) result.push({ [index]: rowErrors });
 		}
 		return result;
 	}
 
-	private async validateRow(raw: unknown, mode: string, duplicateErrors?: RowErrors): Promise<RowErrors> {
+	private async validateRow(raw: unknown, mode: string, duplicateErrors?: RowErrors): Promise<ValidatedRow> {
 		if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
-			return { row: ['La fila debe ser un objeto válido.'] };
+			return { rowErrors: { row: ['La fila debe ser un objeto válido.'] } };
 		}
 		const dto = plainToInstance(ValidateImportCollaboratorDto, raw);
 		const [dtoErrors, databaseErrors] = await Promise.all([this.getDtoErrors(dto), this.getDatabaseErrors(dto, mode)]);
@@ -48,7 +53,7 @@ export class ImportCollaboratorsInterceptor extends BaseValidationInterceptor<Im
 		this.mergeErrors(rowErrors, dtoErrors);
 		this.mergeErrors(rowErrors, duplicateErrors);
 		this.mergeErrors(rowErrors, databaseErrors);
-		return rowErrors;
+		return { rowErrors, normalizedRow: dto };
 	}
 
 	private async getDtoErrors(dto: ValidateImportCollaboratorDto): Promise<RowErrors> {

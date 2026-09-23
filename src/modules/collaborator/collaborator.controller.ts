@@ -66,7 +66,7 @@ export class CollaboratorController {
 					message: 'No se proporcionó el JTI de acceso.',
 				};
 			}
-			await this.authService.revokeToken(jti);
+			await this.authService.revokeToken(jti, req.user.exp);
 			return {
 				success: true,
 				revoked: true,
