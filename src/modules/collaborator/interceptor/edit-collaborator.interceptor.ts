@@ -14,12 +14,12 @@ export class EditCollaboratorInterceptor extends BaseValidationInterceptor<EditC
 		return EditCollaboratorDto;
 	}
 
-	protected async validateBody(body: any): Promise<{ field: string; message: string }[]> {
+	protected async validateBody(body: any, request: any): Promise<{ field: string; message: string }[]> {
 		console.log('EditCollaboratorInterceptor', body);
 
 		const customErrors: { field: string; message: string }[] = [];
 
-		const fieldsErrors = await this.validateFieldsExist(body);
+		const fieldsErrors = await this.validateFieldsExist(body, request);
 		fieldsErrors.forEach((item) => {
 			customErrors.push({ field: item.field, message: item.msm });
 		});
@@ -31,12 +31,14 @@ export class EditCollaboratorInterceptor extends BaseValidationInterceptor<EditC
 		return [];
 	}
 
-	private async validateFieldsExist(body: any): Promise<{ msm: string; field: string }[]> {
+	private async validateFieldsExist(body: any, request: any): Promise<{ msm: string; field: string }[]> {
 		const messages: { msm: string; field: string }[] = [];
+		const collaboratorId = request.params.id;
+		
 		if (body.email) {
 			const isEmailExist = await this.collaboratorValidator.existsEmailCollaborator(body.email);
 
-			if (isEmailExist && isEmailExist.id != body.id) {
+			if (isEmailExist && isEmailExist.id != collaboratorId) {
 				messages.push({
 					msm: 'Ya existe una cuenta con ese correo.',
 					field: 'email',
@@ -47,7 +49,7 @@ export class EditCollaboratorInterceptor extends BaseValidationInterceptor<EditC
 		if (body.number_document) {
 			const isDocumentNumberExist = await this.collaboratorValidator.existsDocumentNumberCollaborator(body.number_document);
 
-			if (isDocumentNumberExist && isDocumentNumberExist.id != body.id) {
+			if (isDocumentNumberExist && isDocumentNumberExist.id != collaboratorId) {
 				messages.push({
 					msm: 'Ya existe una cuenta con ese numero de documento.',
 					field: 'number_document',
@@ -58,7 +60,7 @@ export class EditCollaboratorInterceptor extends BaseValidationInterceptor<EditC
 		if (body.phone) {
 			const isPhoneExist = await this.collaboratorValidator.existsPhoneCollaborator(body.phone);
 
-			if (isPhoneExist && isPhoneExist.id != body.id) {
+			if (isPhoneExist && isPhoneExist.id != collaboratorId) {
 				messages.push({
 					msm: 'Ya existe una cuenta con ese numero de telefono.',
 					field: 'phone',

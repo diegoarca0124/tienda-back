@@ -6,7 +6,7 @@ import { validate } from 'class-validator';
 @Injectable()
 export abstract class BaseValidationInterceptor<T> implements NestInterceptor {
 	protected abstract getDtoClass(): new () => T;
-	protected abstract validateBody(body: any): Promise<{ field: string; message: string }[]>;
+	protected abstract validateBody(body: any, request: any): Promise<{ field: string; message: string }[]>;
 	protected abstract validateFiles(files: any): Promise<{ field: string; message: string }[]>;
 
 	async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
@@ -52,7 +52,7 @@ export abstract class BaseValidationInterceptor<T> implements NestInterceptor {
 		}
 
 		// ✅ Errores personalizados del body
-		const customErrors = await this.validateBody(body);
+		const customErrors = await this.validateBody(body, request);
 		customErrors.forEach((err) => {
 			if (!groupedErrors[err.field]) groupedErrors[err.field] = [];
 			groupedErrors[err.field].push(err.message);

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { BaseValidationInterceptor } from '@/common/interceptors/base-validation.interceptor';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
@@ -11,7 +11,7 @@ type ImportRowResult = Record<number, RowErrors>;
 type DuplicateField = 'email' | 'phone' | 'number_document';
 type ValidatedRow = {
 	rowErrors: RowErrors;
-	normalizedRow?: ValidateImportCollaboratorDto;
+	normalizedRow?: Record<string, unknown>;
 };
 
 @Injectable()
@@ -26,6 +26,9 @@ export class ImportCollaboratorsInterceptor extends BaseValidationInterceptor<Im
 
 	protected async validateBody(body: any): Promise<ValidationResult[]> {
 		if (!Array.isArray(body.data)) return [{ field: 'data', message: ['Debe enviar un arreglo válido.'] }];
+		if (body.data.length > 100) {
+			throw new BadRequestException('Solo se permiten 100 registros por importación.');
+		}
 		const missingColumns = this.getMissingColumns(body.data);
 		const duplicateErrors = this.getDuplicateErrors(body.data);
 		const rowErrors = await this.validateRows(body.data, body.mode, duplicateErrors);
@@ -53,7 +56,13 @@ export class ImportCollaboratorsInterceptor extends BaseValidationInterceptor<Im
 		this.mergeErrors(rowErrors, dtoErrors);
 		this.mergeErrors(rowErrors, duplicateErrors);
 		this.mergeErrors(rowErrors, databaseErrors);
-		return { rowErrors, normalizedRow: dto };
+		return {
+			rowErrors,
+			normalizedRow: {
+				...dto,
+				status: dto.status === 'Activo',
+			},
+		};
 	}
 
 	private async getDtoErrors(dto: ValidateImportCollaboratorDto): Promise<RowErrors> {

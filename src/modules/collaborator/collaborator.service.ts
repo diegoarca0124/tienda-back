@@ -488,12 +488,13 @@ export class CollaboratorService {
 		try {
 			const { data, mode, identifyBy } = dto;
 			const defaultPassword = await hashPassword('123456');
-			const cleanData = await Promise.all(
-				data.map(async ({ index, ...item }) => ({
+			const cleanData = data.map((row) => {
+				const { index, ...item } = row as Record<string, any> & { index?: unknown };
+				return {
 					...item,
 					password: defaultPassword,
-				}))
-			);
+				};
+			});
 			const identifyValues = cleanData.map((item) => item[identifyBy]).filter(Boolean);
 			const existingCollaborators = await this.collaboratorRepository.find({
 				where: {

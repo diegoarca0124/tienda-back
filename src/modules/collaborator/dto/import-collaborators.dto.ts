@@ -1,5 +1,5 @@
 import { Transform, Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsDefined, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsDefined, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
 import { CreateCollaboratorDto } from './create-collaborator.dto';
 import { OmitType } from '@nestjs/mapped-types';
 import { ALLOWED_PREFIX } from '../constants/allowed-prefix.constant';
@@ -21,18 +21,21 @@ export class ValidateImportCollaboratorDto extends OmitType(CreateCollaboratorDt
 	@Transform(({ value }) => {
 		if (typeof value !== 'string') return value;
 		const normalizedValue = value.trim().toLowerCase();
-		if (normalizedValue === 'true') return true;
-		if (normalizedValue === 'false') return false;
+		if (normalizedValue === 'activo') return 'Activo';
+		if (normalizedValue === 'inactivo') return 'Inactivo';
 		return value;
 	})
-	@IsBoolean({ message: 'El estado debe ser verdadero o falso.' })
+	@IsIn(['Activo', 'Inactivo'], { message: 'El estado solo puede ser Activo o Inactivo.' })
+	@IsString({ message: 'El estado debe ser una cadena de texto.' })
 	@IsDefined({ message: 'El estado es obligatorio.' })
-	readonly status: boolean;
+	readonly status: 'Activo' | 'Inactivo';
 }
 
 export class ImportCollaboratorsDto {
-	@IsArray({ message: 'Debe enviar un arreglo de registros.' })
-	data: any[];
+	@IsArray({message: 'Debe enviar un arreglo de registros.'})
+	@ArrayMinSize(1, {message: 'Debe incluir al menos un registro.'})
+	@ArrayMaxSize(100, {message: 'Solo se permiten 100 registros por importación.'})
+	data: unknown[];
 
 	@IsIn(['news', 'upsert', 'update'], {
 		message: 'El modo no es un valor válido',
