@@ -40,9 +40,7 @@ export class FindCollaboratorsQueryDto {
 	page: number = 1;
 
 	@Transform(({ value }) => transformPositiveInteger(value, 'limit', 10))
-	@IsInt()
-	@Min(1)
-	@Max(MAX_LIMIT)
+	@IsIn([10, 25, 50])
 	limit: number = 10;
 
 	@Transform(({ value }) => {

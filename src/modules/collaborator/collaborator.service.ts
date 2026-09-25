@@ -79,60 +79,64 @@ export class CollaboratorService {
 	}
 
 	async login(loginDto: LoginDto) {
-		const { email, password } = loginDto;
+		try{
+			const { email, password } = loginDto;
 
-		const collaborator = await this.collaboratorRepository.findOne({
-			select: {
-				id: true,
-				names: true,
-				surname: true,
-				email: true,
-				password: true,
-				role: true,
-				status: true,
-			},
-			where: { email },
-		});
-
-		if (!collaborator) {
-			throw new UnauthorizedException('Correo o contraseña incorrectos.');
-		}
-
-		if (!collaborator.status) {
-			throw new ForbiddenException('Tu cuenta se encuentra inactivas.');
-		}
-
-		const isValidPassword = await bcrypt.compare(password, collaborator.password);
-
-		if (!isValidPassword) {
-			throw new UnauthorizedException('Correo o contraseña incorrectos.');
-		}
-
-		const accessToken = await this.authService.generateToken(collaborator);
-
-		void this.collaboratorRepository
-			.createQueryBuilder()
-			.update(Collaborator)
-			.set({
-				lastDatelogin: new Date(),
-			})
-			.where('id = :id', { id: collaborator.id })
-			.execute()
-			.catch(() => {});
-
-		return {
-			message: 'Inicio de sesión realizado correctamente.',
-			data: {
-				accessToken,
-				collaborator: {
-					id: collaborator.id,
-					names: collaborator.names,
-					surname: collaborator.surname,
-					email: collaborator.email,
-					role: collaborator.role,
+			const collaborator = await this.collaboratorRepository.findOne({
+				select: {
+					id: true,
+					names: true,
+					surname: true,
+					email: true,
+					password: true,
+					role: true,
+					status: true,
 				},
-			},
-		};
+				where: { email },
+			});
+
+			if (!collaborator) {
+				throw new UnauthorizedException('Correo o contraseña incorrectos.');
+			}
+
+			if (!collaborator.status) {
+				throw new ForbiddenException('Tu cuenta se encuentra inactivas.');
+			}
+
+			const isValidPassword = await bcrypt.compare(password, collaborator.password);
+
+			if (!isValidPassword) {
+				throw new UnauthorizedException('Correo o contraseña incorrectos.');
+			}
+
+			const accessToken = await this.authService.generateToken(collaborator);
+
+			void this.collaboratorRepository
+				.createQueryBuilder()
+				.update(Collaborator)
+				.set({
+					lastDatelogin: new Date(),
+				})
+				.where('id = :id', { id: collaborator.id })
+				.execute()
+				.catch(() => {});
+
+			return {
+				message: 'Inicio de sesión realizado correctamente.',
+				data: {
+					accessToken,
+					collaborator: {
+						id: collaborator.id,
+						names: collaborator.names,
+						surname: collaborator.surname,
+						email: collaborator.email,
+						role: collaborator.role,
+					},
+				},
+			};
+		}catch(err: any) {
+			console.log('err', err);
+		}
 	}
 
 	async getCollaborators(query: FindCollaboratorsQueryDto): Promise<GetCollaboratorsRes> {
@@ -196,6 +200,7 @@ export class CollaboratorService {
 					'collaborator.type_document',
 					'collaborator.number_document',
 					'collaborator.prefix',
+					'collaborator.status',
 					'collaborator.createdAt',
 					'collaborator.updatedAt',
 					'collaborator.statusAt',
@@ -295,7 +300,7 @@ export class CollaboratorService {
 				.andWhere('status IS DISTINCT FROM :status', {
 					status: dto.status,
 				})
-				.returning(['id', 'status', 'names'])
+				.returning(['id', 'status', 'statusAt', 'names'])
 				.execute();
 
 			if (!result.affected) {

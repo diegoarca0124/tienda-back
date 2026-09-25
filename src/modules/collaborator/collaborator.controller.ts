@@ -50,7 +50,7 @@ export class CollaboratorController {
 	@Post('login')
 	@Public()
 	@UseInterceptors(LoginInterceptor)
-	login(@Body() loginDto: LoginDto): Promise<{ data: any; message: string }> {
+	login(@Body() loginDto: LoginDto): Promise<any> {
 		return this.collaboratorService.login(loginDto);
 	}
 

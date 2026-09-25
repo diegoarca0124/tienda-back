@@ -26,6 +26,7 @@ import { UpdateCategoryStatusDto } from './dto/update-category-status.dto';
 import {
 	CreateCategoryRes,
 	CreateSubcategoryRes,
+	FindCategoryProductsRes,
 	GetCategoriesRes,
 	GetCategoriesWithSubcategoriesRes,
 	GetCategoryRes,
@@ -127,7 +128,7 @@ export class CategoryController {
 		@Param('id', ValidateUUID) id: string,
 		@Query(new QueryParamsErrorsPipe(FindCategoryProductsQueryDto))
 		query: unknown
-	) {
+	): Promise<FindCategoryProductsRes> {
 		return this.categoryService.findCategoryProducts(id, query as FindCategoryProductsQueryDto);
 	}
 

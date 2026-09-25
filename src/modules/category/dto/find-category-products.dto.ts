@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { Transform } from 'class-transformer';
-import { IsIn, IsInt, IsNumber, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min, ValidateIf } from 'class-validator';
+import { IsArray, IsIn, IsInt, IsNumber, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min, ValidateIf } from 'class-validator';
 
 const ALLOWED_STATUS = ['Todos', 'draft', 'published'] as const;
 const ALLOWED_SORT = [
@@ -86,10 +86,12 @@ export class FindCategoryProductsQueryDto {
 		value = rejectRepeatedParameter(value, 'subcategoryIds');
 		if (value === undefined || value === 'Todos') return undefined;
 		if (typeof value !== 'string') return value;
+
 		return [...new Set(value.split(',').map((id) => id.trim().toLowerCase()))];
 	})
 	@IsOptional()
-	@IsUUID('4', { each: true })
+	@IsArray({ message: 'Las subcategorías deben enviarse separadas por comas.' })
+	@IsUUID('4', { each: true, message: 'Cada subcategoría debe ser un UUID válido.' })
 	subcategoryIds?: string[];
 
 	@Transform(({ value }) => {

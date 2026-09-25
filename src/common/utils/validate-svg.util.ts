@@ -1,24 +1,112 @@
-export function validateSvg(code: string): { valid: boolean; reason?: string } {
-	if (!code || typeof code !== 'string') {
-		return { valid: false, reason: 'El código está vacío o no es un string' };
+import createDOMPurify from 'dompurify';
+import { JSDOM } from 'jsdom';
+
+const window = new JSDOM('').window;
+const DOMPurify = createDOMPurify(window);
+
+const ALLOWED_SVG_TAGS = [
+	'svg',
+	'g',
+	'path',
+	'circle',
+	'ellipse',
+	'rect',
+	'line',
+	'polyline',
+	'polygon',
+	'title',
+	'desc',
+	'defs',
+	'linearGradient',
+	'radialGradient',
+	'stop',
+];
+
+const ALLOWED_SVG_ATTRIBUTES = [
+	'xmlns',
+	'viewBox',
+	'width',
+	'height',
+	'fill',
+	'fill-opacity',
+	'stroke',
+	'stroke-width',
+	'stroke-linecap',
+	'stroke-linejoin',
+	'stroke-opacity',
+	'opacity',
+	'd',
+	'x',
+	'y',
+	'x1',
+	'y1',
+	'x2',
+	'y2',
+	'cx',
+	'cy',
+	'r',
+	'rx',
+	'ry',
+	'points',
+	'transform',
+	'offset',
+	'stop-color',
+	'stop-opacity',
+	'fill-rule',
+	'clip-rule',
+];
+
+export function sanitizeSvg(code: string): {
+	valid: boolean;
+	sanitized?: string;
+	reason?: string;
+} {
+	if (typeof code !== 'string' || !code.trim()) {
+		return {
+			valid: false,
+			reason: 'El código SVG está vacío.',
+		};
 	}
 
-	const src = code.trim();
-
-	// longitud mínima razonable
-	if (src.length < 15) {
-		return { valid: false, reason: 'El código es demasiado corto para ser un SVG' };
+	if (code.length > 2000) {
+		return {
+			valid: false,
+			reason: 'El código SVG supera la longitud permitida.',
+		};
 	}
 
-	// debe abrir y cerrar con <svg>...</svg>
-	if (!/^<svg[\s\S]*<\/svg>\s*$/i.test(src)) {
-		return { valid: false, reason: 'Debe empezar con <svg> y terminar con </svg>' };
+	const sanitized = DOMPurify.sanitize(code.trim(), {
+		USE_PROFILES: {
+			svg: true,
+			svgFilters: false,
+		},
+		ALLOWED_TAGS: ALLOWED_SVG_TAGS,
+		ALLOWED_ATTR: ALLOWED_SVG_ATTRIBUTES,
+		FORBID_TAGS: [
+			'script',
+			'style',
+			'foreignObject',
+			'iframe',
+			'object',
+			'embed',
+			'image',
+			'use',
+			'a',
+			'animate',
+			'set',
+		],
+		FORBID_ATTR: ['style', 'href', 'xlink:href'],
+	});
+
+	if (!/^<svg[\s\S]*<\/svg>\s*$/i.test(sanitized)) {
+		return {
+			valid: false,
+			reason: 'El contenido no es un SVG válido.',
+		};
 	}
 
-	// chequeo rápido de etiquetas prohibidas (ejemplo básico)
-	if (/<script[\s>]/i.test(src)) {
-		return { valid: false, reason: 'No se permite <script> en SVG' };
-	}
-
-	return { valid: true };
+	return {
+		valid: true,
+		sanitized,
+	};
 }

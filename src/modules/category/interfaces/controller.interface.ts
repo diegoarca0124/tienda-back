@@ -1,6 +1,8 @@
 import { Category } from '@/entities/category.entity';
 import { FindCategoriesQueryDto } from '../dto/find-categories.dto';
 import { Subcategory } from '@/entities/subcategory.entity';
+import { Product } from '@/entities/product.entity';
+import { FindCategoryProductsQueryDto } from '../dto/find-category-products.dto';
 
 export interface GetCategoriesRes {
 	categories: Category[];
@@ -94,4 +96,17 @@ export interface GetCategoriesWithSubcategoriesRes {
 export interface MoveProductsToSubcategoryRes {
 	data: number;
 	message: string;
+}
+
+export interface FindCategoryProductsRes {
+	products: Product[];
+	meta: {
+		totalProducts: number;
+		totalPages: number;
+		currentPage: number;
+		limit: number;
+	};
+	filters: Omit<Pick<FindCategoryProductsQueryDto, 'filter' | 'status' | 'sort' | 'subcategoryIds' | 'quality' | 'visibility' | 'minPrice' | 'maxPrice'>, 'subcategoryIds'> & {
+		subcategoryIds: string;
+	};
 }

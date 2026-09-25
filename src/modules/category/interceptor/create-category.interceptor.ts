@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { BaseValidationInterceptor } from '@/common/interceptors/base-validation.interceptor';
 import { CreateCategoryDto } from '../dto/create-category.dto';
 import { CategoryService } from '../category.service';
-import { validateSvg } from '@/common/utils/validate-svg.util';
+import { sanitizeSvg } from '@/common/utils/validate-svg.util';
 import { CategoryValidator } from '../validators/category.validator';
 
 @Injectable()
@@ -34,12 +34,15 @@ export class CreateCategoryInterceptor extends BaseValidationInterceptor<CreateC
 		const messages: { msm: string; field: string }[] = [];
 
 		if (body.icon) {
-			const resValidateIcon = validateSvg(body.icon);
-			if (!resValidateIcon.valid) {
+			const result = sanitizeSvg(body.icon);
+
+			if (!result.valid) {
 				messages.push({
-					msm: resValidateIcon.reason || 'Error en el formato del icono.',
+					msm: result.reason || 'Error en el formato del icono.',
 					field: 'icon',
 				});
+			} else {
+				body.icon = result.sanitized;
 			}
 		}
 

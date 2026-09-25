@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { BaseValidationInterceptor } from '@/common/interceptors/base-validation.interceptor';
-import { validateSvg } from '@/common/utils/validate-svg.util';
 import { CreateBrandDto } from '../dto/create-brand.dto';
 import { BrandService } from '../brand.service';
 import { validateUrl } from '@/common/utils/validate-url.util';

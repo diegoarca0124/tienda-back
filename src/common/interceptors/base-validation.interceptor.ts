@@ -19,8 +19,8 @@ export abstract class BaseValidationInterceptor<T> implements NestInterceptor {
 		 * Intenta convertir a objeto cualquier campo que tenga formato JSON
 		 * Esto solo afecta a los campos que son string.
 		 */
-		/* console.log('body before parse =>', body);
-		console.log('files before parse =>', files); */
+		console.log('body before parse =>', body);
+		/* console.log('files before parse =>', files); */
 		for (const key of Object.keys(body)) {
 			const value = body[key];
 			if (typeof value === 'string') {

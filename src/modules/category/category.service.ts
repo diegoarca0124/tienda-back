@@ -25,6 +25,7 @@ import { UpdatCategoriesStatusDto } from './dto/update-categories-status.dto';
 import {
 	CreateCategoryRes,
 	CreateSubcategoryRes,
+	FindCategoryProductsRes,
 	GetCategoriesRes,
 	GetCategoriesWithSubcategoriesRes,
 	GetCategoryRes,
@@ -332,16 +333,27 @@ export class CategoryService {
 	}
 
 	async updateCategory(id: string, dto: EditCategoryDto, request: any): Promise<UpdateCategoryRes> {
-		const exists = await this.categoryRepository.exists({
+		const currentCategory = await this.categoryRepository.findOne({
+			select: {
+				id: true,
+				name: true,
+			},
 			where: { id },
 		});
 
-		if (!exists) {
+		if (!currentCategory) {
 			throw new NotFoundException('No se encontró el registro.');
 		}
 
 		const updateData = {
 			...dto,
+			...(currentCategory.name !== dto.name && {
+				slug: slugify(dto.name, {
+					lower: true,
+					strict: true,
+					trim: true,
+				}),
+			}),
 			updatedAt: () => 'CURRENT_TIMESTAMP',
 		};
 
@@ -355,6 +367,7 @@ export class CategoryService {
 				.returning([
 					'id',
 					'name',
+					'slug',
 					'icon',
 					'prefix',
 					'code',
@@ -542,7 +555,9 @@ export class CategoryService {
 			dto.updatedAt = new Date();
 			let result;
 
-			result = await this.subcategoryRepository.createQueryBuilder().update(Subcategory).set(dto).where('id = :id', { id }).returning('*').execute();
+			result = await this.subcategoryRepository
+			.createQueryBuilder()
+			.update(Subcategory).set(dto).where('id = :id', { id }).returning('*').execute();
 
 			if (!result.affected) {
 				throw new InternalServerErrorException('No se pudo actualizar el registro.');
@@ -594,13 +609,13 @@ export class CategoryService {
 				.execute();
 
 			if (!result.affected) {
-				const existingCategories = await this.categoryRepository.count({
+				const existingSubcategories = await this.subcategoryRepository.count({
 					where: {
 						id: In(ids),
 					},
 				});
 
-				if (existingCategories === 0) {
+				if (existingSubcategories === 0) {
 					throw new NotFoundException('No se encontraron subcategorías.');
 				}
 
@@ -639,7 +654,7 @@ export class CategoryService {
 		}
 	}
 
-	async findCategoryProducts(categoryId: string, query: FindCategoryProductsQueryDto) {
+	async findCategoryProducts(categoryId: string, query: FindCategoryProductsQueryDto): Promise<FindCategoryProductsRes> {
 		try {
 			if (query.minPrice !== undefined && query.maxPrice !== undefined && query.minPrice > query.maxPrice) {
 				throw new BadRequestException({
