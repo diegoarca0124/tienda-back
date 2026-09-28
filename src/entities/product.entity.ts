@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, OneToMany, OneToOne, Generated } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, OneToMany, OneToOne, Generated, Index } from 'typeorm';
 import { Brand } from './brand.entity';
 import { Category } from './category.entity';
 import { Subcategory } from './subcategory.entity';
@@ -11,6 +11,8 @@ import { ProductGroupItem } from './product-group-item.entity';
 import { ProductDescription } from './product-description.entity';
 
 @Entity({ name: 'products' })
+@Index('IDX_PRODUCTS_CATEGORY_ID', ['categoryId'])
+@Index('IDX_PRODUCTS_SUBCATEGORY_ID', ['subcategoryId'])
 export class Product {
 	// =====================================================
 	// 🆔 IDENTIFICACIÓN

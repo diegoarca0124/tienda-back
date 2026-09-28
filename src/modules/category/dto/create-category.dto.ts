@@ -43,45 +43,45 @@ export class CreateCategoryDto {
 	@IsString({ message: 'El icono debe ser una cadena de caracteres.' })
 	readonly icon: string;
 
-	@IsBoolean({ message: 'El campo “Dimensiones” debe ser verdadero o falso.' })
-	@IsNotEmpty({ message: 'El campo “Dimensiones” es requerido.' })
-	@IsNotEmpty({ message: 'El campo “Dimensiones” no debe estar vacía.' })
-	@IsDefined({ message: 'El campo “Dimensiones” es obligatoria.' })
+	@IsBoolean({ message: 'El campo Dimensiones debe ser verdadero o falso.' })
+	@IsNotEmpty({ message: 'El campo Dimensiones es requerido.' })
+	@IsNotEmpty({ message: 'El campo Dimensiones no debe estar vacía.' })
+	@IsDefined({ message: 'El campo Dimensiones es obligatoria.' })
 	isDimensions: boolean;
 
-	@IsBoolean({ message: 'El campo “Caracteristicas” debe ser verdadero o falso.' })
-	@IsNotEmpty({ message: 'El campo “Caracteristicas” es requerido.' })
-	@IsNotEmpty({ message: 'El campo “Caracteristicas” no debe estar vacía.' })
-	@IsDefined({ message: 'El campo “Caracteristicas” es obligatoria.' })
+	@IsBoolean({ message: 'El campo Caracteristicas debe ser verdadero o falso.' })
+	@IsNotEmpty({ message: 'El campo Caracteristicas es requerido.' })
+	@IsNotEmpty({ message: 'El campo Caracteristicas no debe estar vacía.' })
+	@IsDefined({ message: 'El campo Caracteristicas es obligatoria.' })
 	isCharacteristics: boolean;
 
-	@IsBoolean({ message: 'El campo “Condición” debe ser verdadero o falso.' })
-	@IsNotEmpty({ message: 'El campo “Condición” es requerido.' })
-	@IsNotEmpty({ message: 'El campo “Condición” no debe estar vacía.' })
-	@IsDefined({ message: 'El campo “Condición” es obligatoria.' })
+	@IsBoolean({ message: 'El campo Condición debe ser verdadero o falso.' })
+	@IsNotEmpty({ message: 'El campo Condición es requerido.' })
+	@IsNotEmpty({ message: 'El campo Condición no debe estar vacía.' })
+	@IsDefined({ message: 'El campo Condición es obligatoria.' })
 	isCondition: boolean;
 
-	@IsBoolean({ message: 'El campo “Garantía” debe ser verdadero o falso.' })
-	@IsNotEmpty({ message: 'El campo “Garantía” es requerido.' })
-	@IsNotEmpty({ message: 'El campo “Garantía” no debe estar vacía.' })
-	@IsDefined({ message: 'El campo “Garantía” es obligatoria.' })
+	@IsBoolean({ message: 'El campo Garantía debe ser verdadero o falso.' })
+	@IsNotEmpty({ message: 'El campo Garantía es requerido.' })
+	@IsNotEmpty({ message: 'El campo Garantía no debe estar vacía.' })
+	@IsDefined({ message: 'El campo Garantía es obligatoria.' })
 	isWarranty: boolean;
 
-	@IsBoolean({ message: 'El campo “País de origen” debe ser verdadero o falso.' })
-	@IsNotEmpty({ message: 'El campo “País de origen” es requerido.' })
-	@IsNotEmpty({ message: 'El campo “País de origen” no debe estar vacía.' })
-	@IsDefined({ message: 'El campo “País de origen” es obligatoria.' })
+	@IsBoolean({ message: 'El campo País de origen debe ser verdadero o falso.' })
+	@IsNotEmpty({ message: 'El campo País de origen es requerido.' })
+	@IsNotEmpty({ message: 'El campo País de origen no debe estar vacía.' })
+	@IsDefined({ message: 'El campo País de origen es obligatoria.' })
 	isCountryOfOrigin: boolean;
 
-	@IsBoolean({ message: 'El campo “Material” debe ser verdadero o falso.' })
-	@IsNotEmpty({ message: 'El campo “Material” es requerido.' })
-	@IsNotEmpty({ message: 'El campo “Material” no debe estar vacía.' })
-	@IsDefined({ message: 'El campo “Material” es obligatoria.' })
+	@IsBoolean({ message: 'El campo Material debe ser verdadero o falso.' })
+	@IsNotEmpty({ message: 'El campo Material es requerido.' })
+	@IsNotEmpty({ message: 'El campo Material no debe estar vacía.' })
+	@IsDefined({ message: 'El campo Material es obligatoria.' })
 	isMaterial: boolean;
 
-	@IsBoolean({ message: 'El campo “Temperatura” debe ser verdadero o falso.' })
-	@IsNotEmpty({ message: 'El campo “Temperatura” es requerido.' })
-	@IsNotEmpty({ message: 'El campo “Temperatura” no debe estar vacía.' })
-	@IsDefined({ message: 'El campo “Temperatura” es obligatoria.' })
+	@IsBoolean({ message: 'El campo Temperatura debe ser verdadero o falso.' })
+	@IsNotEmpty({ message: 'El campo Temperatura es requerido.' })
+	@IsNotEmpty({ message: 'El campo Temperatura no debe estar vacía.' })
+	@IsDefined({ message: 'El campo Temperatura es obligatoria.' })
 	isTemperature: boolean;
 }

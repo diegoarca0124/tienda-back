@@ -99,6 +99,7 @@ export interface MoveProductsToSubcategoryRes {
 }
 
 export interface FindCategoryProductsRes {
+	category: string;
 	products: Product[];
 	meta: {
 		totalProducts: number;

@@ -202,38 +202,78 @@ export class CategoryService {
 	}
 
 	async updateCategoryStatus(id: string, dto: UpdateCategoryStatusDto, request: any): Promise<UpdateCategoryStatusRes> {
-		const result = await this.categoryRepository
-			.createQueryBuilder()
-			.update(Category)
-			.set({
-				status: dto.status,
-				statusAt: () => 'CURRENT_TIMESTAMP',
-			})
-			.where('id = :id', { id })
-			.andWhere('status IS DISTINCT FROM :status', { status: dto.status })
-			.returning(['id', 'status', 'name'])
-			.execute();
+		const { updatedCategory, affectedSubcategories, affectedProducts } = await this.dataSource.transaction(async (manager) => {
+			const categoryResult = await manager
+				.createQueryBuilder()
+				.update(Category)
+				.set({
+					status: dto.status,
+					statusAt: () => 'CURRENT_TIMESTAMP',
+				})
+				.where('id = :id', { id })
+				.andWhere('status IS DISTINCT FROM :status', { status: dto.status })
+				.returning(['id', 'status', 'name'])
+				.execute();
 
-		if (!result.affected) {
-			const categoryExists = await this.categoryRepository.exists({
-				where: { id },
-			});
+			if (!categoryResult.affected) {
+				const categoryExists = await manager.exists(Category, {
+					where: { id },
+				});
 
-			if (!categoryExists) {
-				throw new NotFoundException('No se encontró la categoría.');
+				if (!categoryExists) {
+					throw new NotFoundException('No se encontró la categoría.');
+				}
+
+				throw new BadRequestException(dto.status ? 'La categoría ya se encuentra activa.' : 'La categoría ya se encuentra inactiva.');
 			}
 
-			throw new BadRequestException(dto.status ? 'La categoría ya se encuentra activa.' : 'La categoría ya se encuentra inactiva.');
-		}
+			let affectedSubcategories = 0;
+			let affectedProducts = 0;
 
-		const updatedCategory = result.raw[0];
+			if (!dto.status) {
+				const subcategoriesResult = await manager
+					.createQueryBuilder()
+					.update(Subcategory)
+					.set({
+						status: false,
+						statusAt: () => 'CURRENT_TIMESTAMP',
+					})
+					.where('categoryId = :id', { id })
+					.andWhere('status = :active', { active: true })
+					.execute();
+
+				const productsResult = await manager
+					.createQueryBuilder()
+					.update(Product)
+					.set({
+						status: 'draft',
+						statusAt: () => 'CURRENT_TIMESTAMP',
+					})
+					.where('categoryId = :id', { id })
+					.andWhere('status IS DISTINCT FROM :draftStatus', { draftStatus: 'draft' })
+					.execute();
+
+				affectedSubcategories = subcategoriesResult.affected ?? 0;
+				affectedProducts = productsResult.affected ?? 0;
+			}
+
+			return {
+				updatedCategory: categoryResult.raw[0],
+				affectedSubcategories,
+				affectedProducts,
+			};
+		});
 
 		this.kibanaService.audit({
 			action: 'updateCategoryStatus',
 			performedBy: request.user.id,
 			targetId: id,
 			requestBody: JSON.stringify(dto),
-			response: JSON.stringify(updatedCategory),
+			response: JSON.stringify({
+				...updatedCategory,
+				affectedSubcategories,
+				affectedProducts,
+			}),
 			requestId: request.requestId,
 		});
 
@@ -246,33 +286,70 @@ export class CategoryService {
 	async updateCategoriesStatus(dto: UpdatCategoriesStatusDto, request: any): Promise<UpdateCategoriesStatusRes> {
 		const ids = [...new Set(dto.ids)];
 
-		const result = await this.categoryRepository
-			.createQueryBuilder()
-			.update(Category)
-			.set({
-				status: dto.status,
-				statusAt: () => 'CURRENT_TIMESTAMP',
-			})
-			.where('id IN (:...ids)', { ids })
-			.andWhere('status IS DISTINCT FROM :status', { status: dto.status })
-			.returning(['id'])
-			.execute();
+		const { updatedIds, affectedSubcategories, affectedProducts } = await this.dataSource.transaction(async (manager) => {
+			const categoriesResult = await manager
+				.createQueryBuilder()
+				.update(Category)
+				.set({
+					status: dto.status,
+					statusAt: () => 'CURRENT_TIMESTAMP',
+				})
+				.where('id IN (:...ids)', { ids })
+				.andWhere('status IS DISTINCT FROM :status', { status: dto.status })
+				.returning(['id'])
+				.execute();
 
-		if (!result.affected) {
-			const existingCategories = await this.categoryRepository.count({
-				where: {
-					id: In(ids),
-				},
-			});
+			if (!categoriesResult.affected) {
+				const existingCategories = await manager.count(Category, {
+					where: {
+						id: In(ids),
+					},
+				});
 
-			if (existingCategories === 0) {
-				throw new NotFoundException('No se encontraron categorías.');
+				if (existingCategories === 0) {
+					throw new NotFoundException('No se encontraron categorías.');
+				}
+
+				throw new BadRequestException(dto.status ? 'Las categorías seleccionadas ya se encuentran activas.' : 'Las categorías seleccionadas ya se encuentran inactivas.');
 			}
 
-			throw new BadRequestException(dto.status ? 'Las categorías seleccionadas ya se encuentran activas.' : 'Las categorías seleccionadas ya se encuentran inactivas.');
-		}
+			const updatedIds: string[] = categoriesResult.raw.map((item: { id: string }) => item.id);
+			let affectedSubcategories = 0;
+			let affectedProducts = 0;
 
-		const updatedIds: string[] = result.raw.map((item: { id: string }) => item.id);
+			if (!dto.status) {
+				const subcategoriesResult = await manager
+					.createQueryBuilder()
+					.update(Subcategory)
+					.set({
+						status: false,
+						statusAt: () => 'CURRENT_TIMESTAMP',
+					})
+					.where('categoryId IN (:...ids)', { ids })
+					.andWhere('status = :active', { active: true })
+					.execute();
+
+				const productsResult = await manager
+					.createQueryBuilder()
+					.update(Product)
+					.set({
+						status: 'draft',
+						statusAt: () => 'CURRENT_TIMESTAMP',
+					})
+					.where('categoryId IN (:...ids)', { ids })
+					.andWhere('status IS DISTINCT FROM :draftStatus', { draftStatus: 'draft' })
+					.execute();
+
+				affectedSubcategories = subcategoriesResult.affected ?? 0;
+				affectedProducts = productsResult.affected ?? 0;
+			}
+
+			return {
+				updatedIds,
+				affectedSubcategories,
+				affectedProducts,
+			};
+		});
 
 		this.kibanaService.audit({
 			action: 'updateCategoriesStatus',
@@ -282,6 +359,8 @@ export class CategoryService {
 			response: JSON.stringify({
 				updatedIds,
 				total: updatedIds.length,
+				affectedSubcategories,
+				affectedProducts,
 			}),
 			requestId: request.requestId,
 		});
@@ -480,16 +559,45 @@ export class CategoryService {
 	}
 
 	async updateSubcategoryStatus(id: string, dto: UpdateSubcategoryStatusDto, request: any): Promise<UpdateSubcategoryStatusRes> {
-		try {
-			console.log('UpdateSubcategoryStatusDto', dto);
+		const { updatedSubcategory, affectedProducts } = await this.dataSource.transaction(async (manager) => {
+			let categoryId: string | undefined;
 
-			const exists = await this.subcategoryRepository.exists({ where: { id } });
+			if (dto.status) {
+				const subcategory = await manager.findOne(Subcategory, {
+					where: { id },
+					select: {
+						id: true,
+						categoryId: true,
+					},
+				});
 
-			if (!exists) {
-				throw new NotFoundException('No se encontró el registro.');
+				if (!subcategory) {
+					throw new NotFoundException('No se encontró la subcategoría.');
+				}
+
+				const category = await manager.findOne(Category, {
+					where: { id: subcategory.categoryId },
+					select: {
+						id: true,
+						status: true,
+					},
+					lock: {
+						mode: 'pessimistic_write',
+					},
+				});
+
+				if (!category) {
+					throw new NotFoundException('No se encontró la categoría de la subcategoría.');
+				}
+
+				if (!category.status) {
+					throw new BadRequestException('No se puede activar la subcategoría porque su categoría está inactiva.');
+				}
+
+				categoryId = category.id;
 			}
 
-			const result = await this.subcategoryRepository
+			const subcategoryQuery = manager
 				.createQueryBuilder()
 				.update(Subcategory)
 				.set({
@@ -497,49 +605,73 @@ export class CategoryService {
 					statusAt: () => 'CURRENT_TIMESTAMP',
 				})
 				.where('id = :id', { id })
-				.andWhere('status IS DISTINCT FROM :status', {
-					status: dto.status,
-				})
-				.returning(['id', 'status', 'name'])
-				.execute();
+				.andWhere('status IS DISTINCT FROM :status', { status: dto.status });
 
-			if (!result.affected) {
-				const subcategoryExists = await this.subcategoryRepository.exists({
+			if (categoryId) {
+				subcategoryQuery.andWhere('categoryId = :categoryId', { categoryId });
+			}
+
+			const subcategoryResult = await subcategoryQuery.returning(['id', 'status', 'name']).execute();
+
+			if (!subcategoryResult.affected) {
+				const existingSubcategory = await manager.findOne(Subcategory, {
 					where: { id },
+					select: {
+						id: true,
+						categoryId: true,
+					},
 				});
 
-				if (!subcategoryExists) {
+				if (!existingSubcategory) {
 					throw new NotFoundException('No se encontró la subcategoría.');
+				}
+
+				if (categoryId && existingSubcategory.categoryId !== categoryId) {
+					throw new BadRequestException('La categoría asignada cambió durante la operación. Inténtalo nuevamente.');
 				}
 
 				throw new BadRequestException(dto.status ? 'La subcategoría ya se encuentra activa.' : 'La subcategoría ya se encuentra inactiva.');
 			}
 
-			if (!result.raw?.length) {
-				throw new InternalServerErrorException('No se pudo recuperar el registro actualizado.');
+			let affectedProducts = 0;
+
+			if (!dto.status) {
+				const productsResult = await manager
+					.createQueryBuilder()
+					.update(Product)
+					.set({
+						status: 'draft',
+						statusAt: () => 'CURRENT_TIMESTAMP',
+					})
+					.where('subcategoryId = :id', { id })
+					.andWhere('status IS DISTINCT FROM :draftStatus', { draftStatus: 'draft' })
+					.execute();
+
+				affectedProducts = productsResult.affected ?? 0;
 			}
 
-			const updatedSubcategory = result.raw[0];
-
-			this.kibanaService.audit({
-				action: 'update_status_subcategory',
-				performedBy: request.user.id,
-				targetId: id,
-				requestBody: JSON.stringify({ status: dto.status }),
-				response: JSON.stringify(updatedSubcategory),
-				requestId: request.requestId,
-			});
-
 			return {
-				message: 'Registro actualizado correctamente.',
-				data: updatedSubcategory,
+				updatedSubcategory: subcategoryResult.raw[0],
+				affectedProducts,
 			};
-		} catch (err: any) {
-			console.log(err);
+		});
 
-			if (err) throw err;
-			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
-		}
+		this.kibanaService.audit({
+			action: 'update_status_subcategory',
+			performedBy: request.user.id,
+			targetId: id,
+			requestBody: JSON.stringify({ status: dto.status }),
+			response: JSON.stringify({
+				...updatedSubcategory,
+				affectedProducts,
+			}),
+			requestId: request.requestId,
+		});
+
+		return {
+			message: 'Registro actualizado correctamente.',
+			data: updatedSubcategory,
+		};
 	}
 
 	async updateSubcategory(id: string, dto: EditSubcategoryDto, request: any): Promise<UpdateSubcategoryRes> {
@@ -587,14 +719,33 @@ export class CategoryService {
 	}
 
 	async updateSubcategoriesStatus(dto: UpdateSubcategoriesStatusDto, request: any): Promise<UpdateSubcategoriesStatusRes> {
-		try {
-			const ids = [...new Set(dto.ids)];
+		const ids = [...new Set(dto.ids)];
 
-			if (!ids.length) {
-				throw new BadRequestException('Debe seleccionar al menos un registro.');
+		const { updatedIds, affectedProducts } = await this.dataSource.transaction(async (manager) => {
+			if (dto.status) {
+				const selectedSubcategories = await manager.find(Subcategory, {
+					where: { id: In(ids) },
+					select: { id: true, categoryId: true },
+					lock: { mode: 'pessimistic_write' },
+				});
+
+				if (!selectedSubcategories.length) {
+					throw new NotFoundException('No se encontraron subcategorías.');
+				}
+
+				const categoryIds = [...new Set(selectedSubcategories.map((subcategory) => subcategory.categoryId))];
+				const activeCategories = await manager.find(Category, {
+					where: { id: In(categoryIds), status: true },
+					select: { id: true },
+					lock: { mode: 'pessimistic_write' },
+				});
+
+				if (activeCategories.length !== categoryIds.length) {
+					throw new BadRequestException('No se pueden activar subcategorías cuya categoría se encuentra inactiva.');
+				}
 			}
 
-			const result = await this.subcategoryRepository
+			const subcategoriesResult = await manager
 				.createQueryBuilder()
 				.update(Subcategory)
 				.set({
@@ -602,17 +753,13 @@ export class CategoryService {
 					statusAt: () => 'CURRENT_TIMESTAMP',
 				})
 				.where('id IN (:...ids)', { ids })
-				.andWhere('status IS DISTINCT FROM :status', {
-					status: dto.status,
-				})
+				.andWhere('status IS DISTINCT FROM :status', { status: dto.status })
 				.returning(['id'])
 				.execute();
 
-			if (!result.affected) {
-				const existingSubcategories = await this.subcategoryRepository.count({
-					where: {
-						id: In(ids),
-					},
+			if (!subcategoriesResult.affected) {
+				const existingSubcategories = await manager.count(Subcategory, {
+					where: { id: In(ids) },
 				});
 
 				if (existingSubcategories === 0) {
@@ -620,38 +767,50 @@ export class CategoryService {
 				}
 
 				throw new BadRequestException(
-					dto.status ? 'Los subcategorías seleccionados ya se encuentran activos.' : 'Los subcategorías seleccionados ya se encuentran inactivos.'
+					dto.status
+						? 'Las subcategorías seleccionadas ya se encuentran activas.'
+						: 'Las subcategorías seleccionadas ya se encuentran inactivas.'
 				);
 			}
 
-			if (!result.raw?.length) {
-				throw new InternalServerErrorException('No se pudo recuperar el registro actualizado.');
+			const updatedIds: string[] = subcategoriesResult.raw.map((item: { id: string }) => item.id);
+			let affectedProducts = 0;
+
+			if (!dto.status) {
+				const productsResult = await manager
+					.createQueryBuilder()
+					.update(Product)
+					.set({
+						status: 'draft',
+						statusAt: () => 'CURRENT_TIMESTAMP',
+					})
+					.where('subcategoryId IN (:...ids)', { ids })
+					.andWhere('status IS DISTINCT FROM :draftStatus', { draftStatus: 'draft' })
+					.execute();
+
+				affectedProducts = productsResult.affected ?? 0;
 			}
 
-			const updatedIds: string[] = result.raw.map((item: { id: string }) => item.id);
+			return { updatedIds, affectedProducts };
+		});
 
-			this.kibanaService.audit({
-				action: 'update_status_subcategories',
-				performedBy: request.user.id,
-				targetId: dto.ids,
-				requestBody: JSON.stringify({
-					status: dto.status,
-				}),
-				response: JSON.stringify({
-					updatedIds,
-					total: updatedIds.length,
-				}),
-				requestId: request.requestId,
-			});
+		this.kibanaService.audit({
+			action: 'update_status_subcategories',
+			performedBy: request.user.id,
+			targetId: updatedIds,
+			requestBody: JSON.stringify(dto),
+			response: JSON.stringify({
+				updatedIds,
+				total: updatedIds.length,
+				affectedProducts,
+			}),
+			requestId: request.requestId,
+		});
 
-			return {
-				message: 'Registros actualizados correctamente.',
-				data: updatedIds,
-			};
-		} catch (err: any) {
-			if (err) throw err;
-			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
-		}
+		return {
+			message: 'Registros actualizados correctamente.',
+			data: updatedIds,
+		};
 	}
 
 	async findCategoryProducts(categoryId: string, query: FindCategoryProductsQueryDto): Promise<FindCategoryProductsRes> {
@@ -663,8 +822,11 @@ export class CategoryService {
 				});
 			}
 
-			const exists = await this.categoryRepository.exists({ where: { id: categoryId } });
-			if (!exists) {
+			const category = await this.categoryRepository.findOne({
+				where: { id: categoryId },
+			});
+
+			if (!category) {
 				throw new NotFoundException('No se encontró el registro.');
 			}
 
@@ -712,6 +874,7 @@ export class CategoryService {
 			}));
 
 			return {
+				category: category.name,
 				products,
 				meta: {
 					totalProducts,

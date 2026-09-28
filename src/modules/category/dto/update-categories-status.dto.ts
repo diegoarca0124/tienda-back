@@ -6,7 +6,7 @@ export class UpdatCategoriesStatusDto {
 	@ArrayNotEmpty({ message: 'Debe seleccionar al menos una categoria.' })
 	@IsUUID('4', { each: true, message: 'Cada ID de categoria debe ser un UUID válido.' })
 	@ArrayMaxSize(20, {
-		message: 'Solo puede actualizar hasta 20 colaboradores.',
+		message: 'Solo puede actualizar hasta 20 categorías.',
 	})
 	ids: string[];
 

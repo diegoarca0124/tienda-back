@@ -1,8 +1,9 @@
-import { Entity, Column, PrimaryGeneratedColumn, UpdateDateColumn, CreateDateColumn, OneToMany, ManyToOne, JoinColumn, Generated } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, UpdateDateColumn, CreateDateColumn, OneToMany, ManyToOne, JoinColumn, Generated, Index } from 'typeorm';
 import { Category } from './category.entity';
 import { Product } from './product.entity';
 
 @Entity('subcategories')
+@Index('IDX_SUBCATEGORIES_CATEGORY_ID', ['categoryId'])
 export class Subcategory {
 	@PrimaryGeneratedColumn('uuid')
 	id: string;
