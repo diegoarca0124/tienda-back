@@ -505,12 +505,11 @@ export class BrandService {
 		}
 	}
 
-	async get_brands_by_select() {
+	async getBrandsSelect() {
 		try {
 			let brands = await this.brandRepository
 				.createQueryBuilder('brand')
 				.select(['brand.id', 'brand.name', 'brand.status', 'brand.logoUrl'])
-				.where('brand.status = :status', { status: true })
 				.orderBy('brand.name', 'ASC')
 				.getMany();
 			return brands;
@@ -519,4 +518,6 @@ export class BrandService {
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
 	}
+
+	
 }

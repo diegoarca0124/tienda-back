@@ -40,6 +40,11 @@ export interface GetCategoryRes {
 	message: string;
 }
 
+export interface GetSubcategoriesByCategorySelect{
+	data: Subcategory[];
+	message: string;
+}
+
 export interface GetSubcategoriesRes {
 	data: Subcategory[];
 	message: string;

@@ -30,6 +30,7 @@ import {
 	GetCategoriesRes,
 	GetCategoriesWithSubcategoriesRes,
 	GetCategoryRes,
+	GetSubcategoriesByCategorySelect,
 	GetSubcategoriesRes,
 	MoveProductsToSubcategoryRes,
 	MoveSubcategoryRes,
@@ -147,9 +148,9 @@ export class CategoryController {
 		return this.categoryService.get_subcat_by_select();
 	}
 
-	@Get('get_subcategories_by_select/:id')
-	get_subcategories_by_select(@Param('id', ValidateUUID) id: string) {
-		return this.categoryService.get_subcategories_by_select(id);
+	@Get('getSubcategoriesByCategorySelect/:id')
+	getSubcategoriesByCategorySelect(@Param('id', ValidateUUID) id: string): Promise<GetSubcategoriesByCategorySelect> {
+		return this.categoryService.getSubcategoriesByCategorySelect(id);
 	}
 
 	@Post('moveProductsToSubcategory')

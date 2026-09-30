@@ -29,6 +29,7 @@ import {
 	GetCategoriesRes,
 	GetCategoriesWithSubcategoriesRes,
 	GetCategoryRes,
+	GetSubcategoriesByCategorySelect,
 	GetSubcategoriesRes,
 	MoveProductsToSubcategoryRes,
 	MoveSubcategoryRes,
@@ -902,8 +903,8 @@ export class CategoryService {
 	async getCategoriesWithSubcategories(): Promise<GetCategoriesWithSubcategoriesRes> {
 		const categories = await this.categoryRepository
 			.createQueryBuilder('category')
-			.leftJoinAndSelect('category.subcategories', 'subcategory')
-			.select(['category.id', 'category.name', 'category.color', 'category.icon', 'subcategory.id', 'subcategory.name', 'subcategory.categoryId'])
+			.innerJoinAndSelect('category.subcategories', 'subcategory')
+			.select(['category.id', 'category.name', 'category.color', 'category.icon', 'category.status', 'subcategory.id', 'subcategory.name', 'subcategory.status', 'subcategory.categoryId'])
 			.orderBy('category.name', 'ASC')
 			.addOrderBy('subcategory.name', 'ASC')
 			.getMany();
@@ -944,13 +945,13 @@ export class CategoryService {
 		}
 	}
 
-	async get_subcategories_by_select(id: string) {
+	async getSubcategoriesByCategorySelect(id: string): Promise<GetSubcategoriesByCategorySelect> {
 		try {
-			const exists = await this.categoryRepository.exists({
+			const category = await this.categoryRepository.exists({
 				where: { id },
 			});
 
-			if (!exists) {
+			if (!category) {
 				throw new NotFoundException('No se encontró la categoría asignada.');
 			}
 
