@@ -37,25 +37,29 @@ export class EditSubcategoryInterceptor extends BaseValidationInterceptor<EditSu
 		const subcategoryId = request.params.id;
 
 		if (body.icon) {
-					const result = sanitizeSvg(body.icon);
-		
-					if (!result.valid) {
-						messages.push({
-							msm: result.reason || 'Error en el formato del icono.',
-							field: 'icon',
-						});
-					} else {
-						body.icon = result.sanitized;
-					}
-				}
-		
+			const result = sanitizeSvg(body.icon);
 
-		if (body.name) {
+			if (!result.valid) {
+				messages.push({
+					msm: result.reason || 'Error en el formato del icono.',
+					field: 'icon',
+				});
+			} else {
+				body.icon = result.sanitized;
+			}
+		}
+
+		if (typeof body.name === 'string' && body.name) {
 			const isNameExist = await this.categoryValidator.existsNameSubcategory(body.name);
 
 			if (isNameExist && isNameExist.id != subcategoryId) {
 				messages.push({
 					msm: 'Ya existe una subcategoría con ese nombre.',
+					field: 'name',
+				});
+			} else if (await this.categoryValidator.existsSlugSubcategory(body.name, subcategoryId)) {
+				messages.push({
+					msm: 'Intenta con un nombre de subcategoría diferente.',
 					field: 'name',
 				});
 			}

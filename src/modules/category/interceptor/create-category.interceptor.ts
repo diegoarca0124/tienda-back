@@ -35,7 +35,6 @@ export class CreateCategoryInterceptor extends BaseValidationInterceptor<CreateC
 
 		if (body.icon) {
 			const result = sanitizeSvg(body.icon);
-
 			if (!result.valid) {
 				messages.push({
 					msm: result.reason || 'Error en el formato del icono.',
@@ -46,12 +45,17 @@ export class CreateCategoryInterceptor extends BaseValidationInterceptor<CreateC
 			}
 		}
 
-		if (body.name) {
+		if (typeof body.name === 'string' && body.name) {
 			const isNameExist = await this.categoryValidator.existsNameCategory(body.name);
 
 			if (isNameExist) {
 				messages.push({
 					msm: 'Ya existe una categoría con ese nombre.',
+					field: 'name',
+				});
+			} else if (await this.categoryValidator.existsSlugCategory(body.name)) {
+				messages.push({
+					msm: 'Intenta con un nombre de categoría diferente.',
 					field: 'name',
 				});
 			}

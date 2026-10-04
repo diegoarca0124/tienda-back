@@ -22,12 +22,12 @@ export class CreateBrandDto {
 	@IsString({ message: 'El nombre debe ser una cadena de caracteres' })
 	@IsNotEmpty({ message: 'El nombre no debe estar vacio.' })
 	@IsDefined({ message: 'El nombre es obligatorio.' })
-	@Transform(({ value }) => capitalizeWords(value))
+	@Transform(({ value }) => (typeof value === 'string' ? capitalizeWords(value) : value))
 	name: string;
 
 	@IsString({ message: 'El prefijo debe ser texto' })
-	@Matches(/^[A-Z]{2}$/, {
-		message: 'El prefijo debe tener exactamente 2 letras en mayúscula (A-Z)',
+	@Matches(/^[A-Z]{3}$/, {
+		message: 'El prefijo debe tener exactamente 3 letras en mayúscula (A-Z)',
 	})
 	@IsNotEmpty({ message: 'El prefijo no debe estar vacio.' })
 	@IsDefined({ message: 'El prefijo es obligatorio.' })
@@ -38,9 +38,7 @@ export class CreateBrandDto {
 	@MaxLength(2000, { message: 'La descripción debe tener máximo 2000 caracteres.' })
 	@IsString({ message: 'La descripción debe ser una cadena de caracteres.' })
 	@IsDefined({ message: 'La descripción es obligatoria.' })
-	@Transform(({ value }) =>
-		typeof value === 'string' ? normalizeText(value) : value
-	)
+	@Transform(({ value }) => (typeof value === 'string' ? normalizeText(value) : value))
 	readonly description: string;
 
 	readonly slug?: string;
@@ -52,8 +50,9 @@ export class CreateBrandDto {
 	country: CountryDto;
 
 	@IsOptional()
-	@MaxLength(255, { message: 'La url debe tener máximo 255 caracteres.' })
-	@MinLength(3, { message: 'La url debe tener minimo 3 caracteres.' })
+	@ValidateIf((_object, value) => value !== '')
+	@MaxLength(254, { message: 'La url debe tener menos de 255 caracteres.' })
+	@MinLength(4, { message: 'La url debe tener más de 3 caracteres.' })
 	@IsString({ message: 'La url debe ser una cadena de caracteres.' })
 	readonly websiteUrl: string;
 

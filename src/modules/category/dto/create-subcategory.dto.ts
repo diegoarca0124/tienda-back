@@ -8,7 +8,7 @@ export class CreateSubcategoryDto {
 	@IsString({ message: 'El nombre debe ser una cadena de caracteres.' })
 	@IsNotEmpty({ message: 'El nombre no debe estar vacio.' })
 	@IsDefined({ message: 'El nombre es obligatorio.' })
-	@Transform(({ value }) => capitalizeWords(value))
+	@Transform(({ value }) => (typeof value === 'string' ? capitalizeWords(value) : value))
 	name: string;
 
 	@IsString({ message: 'El prefijo debe ser texto' })

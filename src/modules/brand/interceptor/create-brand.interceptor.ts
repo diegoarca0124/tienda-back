@@ -72,12 +72,17 @@ export class CreateBrandInterceptor extends BaseValidationInterceptor<CreateBran
 	private async validateFieldsExist(body: any): Promise<{ msm: string; field: string }[]> {
 		const messages: { msm: string; field: string }[] = [];
 
-		if (body.name) {
+		if (typeof body.name === 'string' && body.name) {
 			const isNameExist = await this.brandValidator.existsNameBrand(body.name);
 
 			if (isNameExist) {
 				messages.push({
 					msm: 'Ya existe una marca con ese nombre.',
+					field: 'name',
+				});
+			} else if (await this.brandValidator.existsSlugBrand(body.name)) {
+				messages.push({
+					msm: 'Intenta con un nombre de marca diferente',
 					field: 'name',
 				});
 			}

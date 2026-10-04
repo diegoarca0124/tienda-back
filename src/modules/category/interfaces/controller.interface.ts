@@ -3,6 +3,7 @@ import { FindCategoriesQueryDto } from '../dto/find-categories.dto';
 import { Subcategory } from '@/entities/subcategory.entity';
 import { Product } from '@/entities/product.entity';
 import { FindCategoryProductsQueryDto } from '../dto/find-category-products.dto';
+import { Brand } from '@/entities/brand.entity';
 
 export interface GetCategoriesRes {
 	categories: Category[];
@@ -40,13 +41,18 @@ export interface GetCategoryRes {
 	message: string;
 }
 
-export interface GetSubcategoriesByCategorySelect{
+export interface GetSubcategoriesByCategorySelect {
 	data: Subcategory[];
 	message: string;
 }
 
 export interface GetSubcategoriesRes {
 	data: Subcategory[];
+	message: string;
+}
+
+export interface GetBrandsByCategoryRes {
+	data: Brand[];
 	message: string;
 }
 
@@ -112,7 +118,11 @@ export interface FindCategoryProductsRes {
 		currentPage: number;
 		limit: number;
 	};
-	filters: Omit<Pick<FindCategoryProductsQueryDto, 'filter' | 'status' | 'sort' | 'subcategoryIds' | 'quality' | 'visibility' | 'minPrice' | 'maxPrice'>, 'subcategoryIds'> & {
+	filters: Omit<
+		Pick<FindCategoryProductsQueryDto, 'filter' | 'status' | 'sort' | 'subcategoryIds' | 'brandIds' | 'quality' | 'visibility' | 'minPrice' | 'maxPrice'>,
+		'subcategoryIds' | 'brandIds'
+	> & {
 		subcategoryIds: string;
+		brandIds: string;
 	};
 }

@@ -21,11 +21,7 @@ export class BrandController {
 
 	@Post('createBrand')
 	@UseInterceptors(FileUploadInterceptor.fileInterceptor(), CreateBrandInterceptor)
-	async createBrand(
-		@UploadedFiles() files: FilesCreateBrand, 
-		@Body() dto: CreateBrandDto, 
-		@Req() request
-	): Promise<CreateBrandRes> {
+	async createBrand(@UploadedFiles() files: FilesCreateBrand, @Body() dto: CreateBrandDto, @Req() request): Promise<CreateBrandRes> {
 		return this.brandService.createBrand(dto, files, request);
 	}
 
@@ -44,30 +40,18 @@ export class BrandController {
 
 	@Put('updateBrand/:id')
 	@UseInterceptors(FileUploadInterceptor.fileInterceptor(), EditBrandInterceptor)
-	async updateBrand(
-		@UploadedFiles() files: FilesCreateBrand, 
-		@Body() dto: EditBrandDto, 
-		@Param('id', ValidateUUID) id: string, 
-		@Req() request: any
-	): Promise<UpdateBrandRes> {
+	async updateBrand(@UploadedFiles() files: FilesCreateBrand, @Body() dto: EditBrandDto, @Param('id', ValidateUUID) id: string, @Req() request: any): Promise<UpdateBrandRes> {
 		return this.brandService.updateBrand(id, dto, files, request);
 	}
 
 	@Put('updateBrandStatus/:id')
-	updateBrandStatus(
-		@Param('id', ValidateUUID) id: string, 
-		@Body() dto: UpdateBrandStatusDto, 
-		@Req() request: any
-	): Promise<UpdateBrandStatusRes> {
+	updateBrandStatus(@Param('id', ValidateUUID) id: string, @Body() dto: UpdateBrandStatusDto, @Req() request: any): Promise<UpdateBrandStatusRes> {
 		return this.brandService.updateBrandStatus(id, dto, request);
 	}
 
 	@Post('updateBrandsStatus')
 	@UseInterceptors(UpdateStatusBrandsInterceptor)
-	updateBrandsStatus(
-		@Body() dto: UpdateBrandsStatusDto, 
-		@Req() request: any
-	): Promise<UpdateBrandsStatusRes>{
+	updateBrandsStatus(@Body() dto: UpdateBrandsStatusDto, @Req() request: any): Promise<UpdateBrandsStatusRes> {
 		return this.brandService.updateBrandsStatus(dto, request);
 	}
 
@@ -80,8 +64,8 @@ export class BrandController {
 		return this.brandService.findBrandProducts(id, query as FindBrandProductsQueryDto);
 	}
 
-	@Get('get_brands_by_select')
-	get_brands_by_select() {
-		return this.brandService.get_brands_by_select();
+	@Get('getBrandsSelect')
+	getBrandsSelect() {
+		return this.brandService.getBrandsSelect();
 	}
 }

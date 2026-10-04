@@ -10,7 +10,16 @@ import { Product } from '@/entities/product.entity';
 import { KibanaService } from '@/common/services/kibana/kibana.service';
 import { getPagination } from '@/common/utils/get-pagination.util';
 import { getQualityLabel } from './utils/calculate-total.util';
-import type { CreateBrandRes, FilesCreateBrand, FilesUpdateBrand, GetBrandRes, GetBrandsRes, UpdateBrandRes, UpdateBrandsStatusRes, UpdateBrandStatusRes } from './interfaces/controller.interface';
+import type {
+	CreateBrandRes,
+	FilesCreateBrand,
+	FilesUpdateBrand,
+	GetBrandRes,
+	GetBrandsRes,
+	UpdateBrandRes,
+	UpdateBrandsStatusRes,
+	UpdateBrandStatusRes,
+} from './interfaces/controller.interface';
 import { FindBrandsQueryDto } from './dto/find-brands.dto';
 import { FindBrandsBuilder } from './builders/find-brands.builder';
 import { awsProcessImage } from '@/common/utils/aws-process-image.util';
@@ -75,7 +84,6 @@ export class BrandService {
 			if (!id) {
 				throw new InternalServerErrorException('No se pudo registrar la marca.');
 			}
-
 		} catch (error) {
 			await Promise.allSettled(newImages.map((filename) => deleteImageVariants('brands', filename)));
 			throw error;
@@ -189,7 +197,7 @@ export class BrandService {
 		}
 	}
 
-	async updateBrandStatus(id: string, dto: UpdateBrandStatusDto, request: any):Promise<UpdateBrandStatusRes> {
+	async updateBrandStatus(id: string, dto: UpdateBrandStatusDto, request: any): Promise<UpdateBrandStatusRes> {
 		const result = await this.brandRepository
 			.createQueryBuilder()
 			.update(Brand)
@@ -285,7 +293,6 @@ export class BrandService {
 		const newImages: string[] = [];
 		const updateData = { ...dto };
 
-
 		let result;
 
 		try {
@@ -299,8 +306,7 @@ export class BrandService {
 				newImages.push(dto.bannerUrl);
 			}
 
-			console.log('dto',dto);
-			
+			console.log('dto', dto);
 
 			result = await this.brandRepository
 				.createQueryBuilder()
@@ -354,7 +360,7 @@ export class BrandService {
 
 	async updateBrandsStatus(dto: UpdateBrandsStatusDto, request: any): Promise<UpdateBrandsStatusRes> {
 		const ids = [...new Set(dto.ids)];
-		
+
 		const result = await this.brandRepository
 			.createQueryBuilder()
 			.update(Brand)
@@ -483,28 +489,6 @@ export class BrandService {
 		}
 	}
 
-	async get_brand_logo_filename_by_id(id: string) {
-		try {
-			let brand: any = await this.brandRepository.createQueryBuilder('brand').select(['brand.id', 'brand.logoUrl']).where('brand.id = :id', { id }).getOne();
-
-			return brand.logoUrl;
-		} catch (err: any) {
-			if (err) throw err;
-			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
-		}
-	}
-
-	async get_brand_banner_filename_by_id(id: string) {
-		try {
-			let brand: any = await this.brandRepository.createQueryBuilder('brand').select(['brand.id', 'brand.bannerUrl']).where('brand.id = :id', { id }).getOne();
-
-			return brand.bannerUrl;
-		} catch (err: any) {
-			if (err) throw err;
-			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
-		}
-	}
-
 	async getBrandsSelect() {
 		try {
 			let brands = await this.brandRepository
@@ -518,6 +502,4 @@ export class BrandService {
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
 	}
-
-	
 }

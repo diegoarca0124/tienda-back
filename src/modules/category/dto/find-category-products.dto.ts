@@ -95,6 +95,18 @@ export class FindCategoryProductsQueryDto {
 	subcategoryIds?: string[];
 
 	@Transform(({ value }) => {
+		value = rejectRepeatedParameter(value, 'brandIds');
+		if (value === undefined || value === 'Todos') return undefined;
+		if (typeof value !== 'string') return value;
+
+		return [...new Set(value.split(',').map((id) => id.trim().toLowerCase()))];
+	})
+	@IsOptional()
+	@IsArray({ message: 'Las marcas deben enviarse separadas por comas.' })
+	@IsUUID('4', { each: true, message: 'Cada marca debe ser un UUID válido.' })
+	brandIds?: string[];
+
+	@Transform(({ value }) => {
 		value = rejectRepeatedParameter(value, 'quality');
 		return value === undefined ? 'Todos' : value;
 	})

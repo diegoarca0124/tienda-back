@@ -8,6 +8,7 @@ const PRICE_EXPRESSION = `COALESCE(NULLIF(product."priceDiscount", 0), product."
 export class FindCategoryProductsBuilder {
 	static applyFilters(qb: SelectQueryBuilder<Product>, query: FindCategoryProductsQueryDto) {
 		this.applySubcategory(qb, query.subcategoryIds);
+		this.applyBrand(qb, query.brandIds);
 		this.applySearch(qb, query.filter);
 		this.applyStatus(qb, query.status);
 		this.applyVisibility(qb, query.visibility);
@@ -19,6 +20,11 @@ export class FindCategoryProductsBuilder {
 	private static applySubcategory(qb: SelectQueryBuilder<Product>, subcategoryIds?: string[]): void {
 		if (!subcategoryIds?.length) return;
 		qb.andWhere('product.subcategoryId IN (:...subcategoryIds)', { subcategoryIds });
+	}
+
+	private static applyBrand(qb: SelectQueryBuilder<Product>, brandIds?: string[]): void {
+		if (!brandIds?.length) return;
+		qb.andWhere('product.brandId IN (:...brandIds)', { brandIds });
 	}
 
 	private static applySearch(qb: SelectQueryBuilder<Product>, filter: string): void {

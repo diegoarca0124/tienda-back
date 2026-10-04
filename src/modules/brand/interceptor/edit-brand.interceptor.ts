@@ -6,7 +6,7 @@ import { BrandValidator } from '../validators/brand.validator';
 
 @Injectable()
 export class EditBrandInterceptor extends BaseValidationInterceptor<EditBrandDto> {
-	constructor(private readonly brandService: BrandValidator) {
+	constructor(private readonly brandValidator: BrandValidator) {
 		super();
 	}
 
@@ -14,10 +14,10 @@ export class EditBrandInterceptor extends BaseValidationInterceptor<EditBrandDto
 		return EditBrandDto;
 	}
 
-	protected async validateBody(body: any): Promise<{ field: string; message: string }[]> {
+	protected async validateBody(body: any, request: any): Promise<{ field: string; message: string }[]> {
 		const customErrors: { field: string; message: string }[] = [];
 
-		const fieldsErrors = await this.validateFieldsExist(body);
+		const fieldsErrors = await this.validateFieldsExist(body, request);
 		fieldsErrors.forEach((item) => {
 			customErrors.push({ field: item.field, message: item.msm });
 		});
@@ -63,22 +63,28 @@ export class EditBrandInterceptor extends BaseValidationInterceptor<EditBrandDto
 		return messages;
 	}
 
-	private async validateFieldsExist(body: any): Promise<{ msm: string; field: string }[]> {
+	private async validateFieldsExist(body: any, request: any): Promise<{ msm: string; field: string }[]> {
 		const messages: { msm: string; field: string }[] = [];
+		const brandId = request.params.id;
 
-		if (body.name) {
-			const isNameExist = await this.brandService.existsNameBrand(body.name);
-			if (isNameExist && isNameExist.id != body.id) {
+		if (typeof body.name === 'string' && body.name) {
+			const isNameExist = await this.brandValidator.existsNameBrand(body.name, brandId);
+			if (isNameExist) {
 				messages.push({
 					msm: 'Ya existe una marca con ese nombre.',
+					field: 'name',
+				});
+			} else if (await this.brandValidator.existsSlugBrand(body.name, brandId)) {
+				messages.push({
+					msm: 'Intenta con un nombre de nombre diferente.',
 					field: 'name',
 				});
 			}
 		}
 
 		if (body.prefix) {
-			const isPrefixExist = await this.brandService.existsPrefixBrand(body.prefix);
-			if (isPrefixExist && isPrefixExist.id != body.id) {
+			const isPrefixExist = await this.brandValidator.existsPrefixBrand(body.prefix, brandId);
+			if (isPrefixExist) {
 				messages.push({
 					msm: 'Ya existe una marca con ese prefijo.',
 					field: 'prefix',

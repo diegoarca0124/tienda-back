@@ -47,14 +47,18 @@ export class EditCategoryInterceptor extends BaseValidationInterceptor<EditCateg
 				body.icon = result.sanitized;
 			}
 		}
-		
 
-		if (body.name) {
+		if (typeof body.name === 'string' && body.name) {
 			const isNameExist = await this.categoryValidator.existsNameCategory(body.name);
 
 			if (isNameExist && isNameExist.id != categoryId) {
 				messages.push({
 					msm: 'Ya existe una categoría con ese nombre.',
+					field: 'name',
+				});
+			} else if (await this.categoryValidator.existsSlugCategory(body.name, categoryId)) {
+				messages.push({
+					msm: 'Intenta con un nombre de categoría diferente.',
 					field: 'name',
 				});
 			}

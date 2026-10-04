@@ -13,6 +13,7 @@ import { ProductDescription } from './product-description.entity';
 @Entity({ name: 'products' })
 @Index('IDX_PRODUCTS_CATEGORY_ID', ['categoryId'])
 @Index('IDX_PRODUCTS_SUBCATEGORY_ID', ['subcategoryId'])
+@Index('IDX_PRODUCTS_CATEGORY_BRAND', ['categoryId', 'brandId'])
 export class Product {
 	// =====================================================
 	// 🆔 IDENTIFICACIÓN

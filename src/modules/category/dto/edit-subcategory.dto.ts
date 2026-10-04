@@ -8,7 +8,7 @@ export class EditSubcategoryDto {
 	@IsString({ message: 'El titulo debe ser una cadena de caracteres.' })
 	@IsNotEmpty({ message: 'El titulo no debe estar vacio.' })
 	@IsDefined({ message: 'El titulo es obligatorio.' })
-	@Transform(({ value }) => capitalizeWords(value))
+	@Transform(({ value }) => (typeof value === 'string' ? capitalizeWords(value) : value))
 	name: string;
 
 	@IsString({ message: 'El prefijo debe ser texto' })

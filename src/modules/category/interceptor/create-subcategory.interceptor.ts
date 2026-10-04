@@ -47,13 +47,17 @@ export class CreateSubcategoryInterceptor extends BaseValidationInterceptor<Crea
 			}
 		}
 
-
-		if (body.name) {
+		if (typeof body.name === 'string' && body.name) {
 			const isNameExist = await this.categoryValidator.existsNameSubcategory(body.name);
 
 			if (isNameExist) {
 				messages.push({
 					msm: 'Ya existe una subcategoría con ese nombre.',
+					field: 'name',
+				});
+			} else if (await this.categoryValidator.existsSlugSubcategory(body.name)) {
+				messages.push({
+					msm: 'Intenta con un nombre de subcategoría diferente.',
 					field: 'name',
 				});
 			}

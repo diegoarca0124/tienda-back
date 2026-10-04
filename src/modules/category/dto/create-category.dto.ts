@@ -9,7 +9,7 @@ export class CreateCategoryDto {
 	@IsString({ message: 'El titulo debe ser una cadena de caracteres.' })
 	@IsNotEmpty({ message: 'El titulo no debe estar vacio.' })
 	@IsDefined({ message: 'El titulo es obligatorio.' })
-	@Transform(({ value }) => capitalizeWords(value))
+	@Transform(({ value }) => (typeof value === 'string' ? capitalizeWords(value) : value))
 	name: string;
 
 	@Transform(({ value }) => (typeof value === 'string' ? value.toLowerCase() : value))
@@ -32,7 +32,7 @@ export class CreateCategoryDto {
 	@IsString({ message: 'La descripción debe ser una cadena de caracteres.' })
 	@IsNotEmpty({ message: 'La descripción no debe estar vacia.' })
 	@IsDefined({ message: 'La descripción es obligatoria.' })
-	@Transform(({ value }) => normalizeText(value))
+	@Transform(({ value }) => (typeof value === 'string' ? normalizeText(value) : value))
 	readonly description: string;
 
 	slug: string;

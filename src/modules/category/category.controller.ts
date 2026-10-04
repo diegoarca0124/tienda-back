@@ -22,12 +22,14 @@ import { MoveSubcategoryInterceptor } from './interceptor/move-subcategory.inter
 import { FindCategoryProductsQueryDto } from './dto/find-category-products.dto';
 import { QueryParamsErrorsPipe } from '@/common/pipes/query-params-errors.pipe';
 import { FindCategoriesQueryDto } from './dto/find-categories.dto';
+import { GetSubcategoriesQueryDto } from './dto/get-subcategories.dto';
 import { UpdateCategoryStatusDto } from './dto/update-category-status.dto';
 import {
 	CreateCategoryRes,
 	CreateSubcategoryRes,
 	FindCategoryProductsRes,
 	GetCategoriesRes,
+	GetBrandsByCategoryRes,
 	GetCategoriesWithSubcategoriesRes,
 	GetCategoryRes,
 	GetSubcategoriesByCategorySelect,
@@ -97,8 +99,16 @@ export class CategoryController {
 	}
 
 	@Get('getSubcategories/:id')
-	getSubcategories(@Param('id', ValidateUUID) id: string): Promise<GetSubcategoriesRes> {
-		return this.categoryService.getSubcategories(id);
+	getSubcategories(
+		@Param('id', ValidateUUID) id: string,
+		@Query(new QueryParamsErrorsPipe(GetSubcategoriesQueryDto)) query: unknown
+	): Promise<GetSubcategoriesRes> {
+		return this.categoryService.getSubcategories(id, (query as GetSubcategoriesQueryDto).filter);
+	}
+
+	@Get('getBrandsByCategory/:categoryId')
+	getBrandsByCategory(@Param('categoryId', ValidateUUID) categoryId: string): Promise<GetBrandsByCategoryRes> {
+		return this.categoryService.getBrandsByCategory(categoryId);
 	}
 
 	@Put('updateSubcategoryStatus/:id')

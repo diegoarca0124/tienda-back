@@ -1,6 +1,7 @@
 import { BadRequestException, HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { Category } from '@/entities/category.entity';
+import { Brand } from '@/entities/brand.entity';
 import { DataSource, In, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import slugify from 'slugify';
@@ -14,6 +15,7 @@ import { UpdateCatSubcatProductsDto } from './dto/update-catsubcat-products.dto'
 import { MoveSubcategoryDto } from './dto/move-subcategory.dto';
 import { KibanaService } from '@/common/services/kibana/kibana.service';
 import { getPagination } from '@/common/utils/get-pagination.util';
+import { escapeLikePattern } from '@/common/utils/escape-like-pattern.util';
 import { CategoryValidator } from './validators/category.validator';
 import { getQualityLabel } from './utils/calculate-total.util';
 import { FindCategoryProductsBuilder } from './builders/find-category-products.builder';
@@ -27,6 +29,7 @@ import {
 	CreateSubcategoryRes,
 	FindCategoryProductsRes,
 	GetCategoriesRes,
+	GetBrandsByCategoryRes,
 	GetCategoriesWithSubcategoriesRes,
 	GetCategoryRes,
 	GetSubcategoriesByCategorySelect,
@@ -56,6 +59,7 @@ export class CategoryService {
 		@InjectRepository(Category) private categoryRepository: Repository<Category>,
 		@InjectRepository(Subcategory) private subcategoryRepository: Repository<Subcategory>,
 		@InjectRepository(Product) private productRepository: Repository<Product>,
+		@InjectRepository(Brand) private brandRepository: Repository<Brand>,
 		private readonly dataSource: DataSource,
 		private kibanaService: KibanaService,
 		private categoryValidator: CategoryValidator
@@ -533,7 +537,7 @@ export class CategoryService {
 		}
 	}
 
-	async getSubcategories(id: string): Promise<GetSubcategoriesRes> {
+	async getSubcategories(id: string, filter: string = ''): Promise<GetSubcategoriesRes> {
 		try {
 			const category = await this.categoryRepository.exist({
 				where: { id },
@@ -543,11 +547,15 @@ export class CategoryService {
 				throw new NotFoundException('No se encontró el registro.');
 			}
 
-			const subcategories = await this.subcategoryRepository
-				.createQueryBuilder('subcategory')
-				.where('subcategory.categoryId = :id', { id })
-				.orderBy('subcategory.name', 'ASC')
-				.getMany();
+			const queryBuilder = this.subcategoryRepository.createQueryBuilder('subcategory').where('subcategory.categoryId = :id', { id }).orderBy('subcategory.name', 'ASC');
+
+			if (filter.trim()) {
+				queryBuilder.andWhere("subcategory.name ILIKE :filter ESCAPE '\\'", {
+					filter: `%${escapeLikePattern(filter.trim())}%`,
+				});
+			}
+
+			const subcategories = await queryBuilder.getMany();
 
 			return {
 				data: subcategories,
@@ -688,9 +696,7 @@ export class CategoryService {
 			dto.updatedAt = new Date();
 			let result;
 
-			result = await this.subcategoryRepository
-			.createQueryBuilder()
-			.update(Subcategory).set(dto).where('id = :id', { id }).returning('*').execute();
+			result = await this.subcategoryRepository.createQueryBuilder().update(Subcategory).set(dto).where('id = :id', { id }).returning('*').execute();
 
 			if (!result.affected) {
 				throw new InternalServerErrorException('No se pudo actualizar el registro.');
@@ -768,9 +774,7 @@ export class CategoryService {
 				}
 
 				throw new BadRequestException(
-					dto.status
-						? 'Las subcategorías seleccionadas ya se encuentran activas.'
-						: 'Las subcategorías seleccionadas ya se encuentran inactivas.'
+					dto.status ? 'Las subcategorías seleccionadas ya se encuentran activas.' : 'Las subcategorías seleccionadas ya se encuentran inactivas.'
 				);
 			}
 
@@ -812,6 +816,35 @@ export class CategoryService {
 			message: 'Registros actualizados correctamente.',
 			data: updatedIds,
 		};
+	}
+
+	async getBrandsByCategory(categoryId: string): Promise<GetBrandsByCategoryRes> {
+		try {
+			const categoryExists = await this.categoryRepository.exists({ where: { id: categoryId } });
+			if (!categoryExists) {
+				throw new NotFoundException('No se encontró la categoría asignada.');
+			}
+
+			const brands = await this.brandRepository
+				.createQueryBuilder('brand')
+				.select(['brand.id', 'brand.logoUrl', 'brand.name', 'brand.status', 'brand.websiteUrl'])
+				.where((qb) => {
+					const products = qb.subQuery().select('1').from(Product, 'product').where('product.categoryId = :categoryId').andWhere('product.brandId = brand.id').getQuery();
+					return `EXISTS ${products}`;
+				})
+				.setParameter('categoryId', categoryId)
+				.orderBy('brand.name', 'ASC')
+				.addOrderBy('brand.id', 'ASC')
+				.getMany();
+
+			return {
+				data: brands,
+				message: 'Registros obtenidos correctamente.',
+			};
+		} catch (err: any) {
+			if (err) throw err;
+			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
+		}
 	}
 
 	async findCategoryProducts(categoryId: string, query: FindCategoryProductsQueryDto): Promise<FindCategoryProductsRes> {
@@ -888,6 +921,7 @@ export class CategoryService {
 					status: query.status,
 					sort: query.sort,
 					subcategoryIds: query.subcategoryIds?.join(',') ?? 'Todos',
+					brandIds: query.brandIds?.join(',') ?? 'Todos',
 					quality: query.quality,
 					visibility: query.visibility,
 					minPrice: query.minPrice,
@@ -904,7 +938,17 @@ export class CategoryService {
 		const categories = await this.categoryRepository
 			.createQueryBuilder('category')
 			.innerJoinAndSelect('category.subcategories', 'subcategory')
-			.select(['category.id', 'category.name', 'category.color', 'category.icon', 'category.status', 'subcategory.id', 'subcategory.name', 'subcategory.status', 'subcategory.categoryId'])
+			.select([
+				'category.id',
+				'category.name',
+				'category.color',
+				'category.icon',
+				'category.status',
+				'subcategory.id',
+				'subcategory.name',
+				'subcategory.status',
+				'subcategory.categoryId',
+			])
 			.orderBy('category.name', 'ASC')
 			.addOrderBy('subcategory.name', 'ASC')
 			.getMany();
