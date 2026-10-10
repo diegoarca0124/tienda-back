@@ -1,4 +1,13 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+	BadRequestException,
+	ConflictException,
+	ForbiddenException,
+	Injectable,
+	InternalServerErrorException,
+	NotFoundException,
+	ServiceUnavailableException,
+	UnauthorizedException,
+} from '@nestjs/common';
 import { CreateCollaboratorDto } from './dto/create-collaborator.dto';
 import { hashPassword } from '@/common/utils/hash.util';
 import { InjectRepository } from '@nestjs/typeorm/dist/common/typeorm.decorators';
@@ -18,15 +27,20 @@ import { FindCollaboratorsQueryDto } from './dto/find-collaborators.dto';
 import { UpdateCollaboratorStatusDto } from './dto/update-collaborator-status.dto';
 import { UpdateCollaboratorsStatusDto } from './dto/update-collaborators-status.dto';
 import { ALLOWED_EXPORT } from './constants/allowed-export.constant';
+import { exportCollaboratorsFile } from './utils/export-collaborators-file.util';
+import { rethrowCollaboratorUniqueViolation } from './utils/index-messages.util';
 import {
 	CreateCollaboratorRes,
 	ExportCollaboratorsRes,
 	GetCollaboratorRes,
 	GetCollaboratorsRes,
 	ImportCollaboratorsRes,
+	LoginRes,
+	RevokeCollaboratorSessionsRes,
 	UpdateCollaboratorRes,
 	UpdateCollaboratorsStatusRes,
 	UpdateCollaboratorStatusRes,
+	ValidateTokenRes,
 } from './interface/controller.interface';
 
 dotenv.config({ path: path.resolve(process.cwd(), `.env.${process.env.NODE_ENV || 'dev'}`) });
@@ -47,6 +61,7 @@ export class CollaboratorService {
 				.into(Collaborator)
 				.values({
 					...dto,
+					fullnames: `${dto.names} ${dto.surname}`,
 					password: await hashPassword(dto.password),
 				})
 				.returning(['id'])
@@ -73,13 +88,14 @@ export class CollaboratorService {
 				data: id,
 			};
 		} catch (err: unknown) {
+			rethrowCollaboratorUniqueViolation(err);
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
 	}
 
-	async login(loginDto: LoginDto) {
-		try{
+	async login(loginDto: LoginDto): Promise<LoginRes> {
+		try {
 			const { email, password } = loginDto;
 
 			const collaborator = await this.collaboratorRepository.findOne({
@@ -96,17 +112,17 @@ export class CollaboratorService {
 			});
 
 			if (!collaborator) {
-				throw new UnauthorizedException('Correo o contraseña incorrectos.');
+				throw new UnauthorizedException('Correo o contraseña incorrectos');
 			}
 
 			if (!collaborator.status) {
-				throw new ForbiddenException('Tu cuenta se encuentra inactivas.');
+				throw new ForbiddenException('Tu cuenta se encuentra inactiva.');
 			}
 
 			const isValidPassword = await bcrypt.compare(password, collaborator.password);
 
 			if (!isValidPassword) {
-				throw new UnauthorizedException('Correo o contraseña incorrectos.');
+				throw new UnauthorizedException('Correo o contraseña incorrecto.');
 			}
 
 			const accessToken = await this.authService.generateToken(collaborator);
@@ -134,9 +150,19 @@ export class CollaboratorService {
 					},
 				},
 			};
-		}catch(err: any) {
-			console.log('err', err);
+		} catch (err: any) {
+			if (err) throw err;
+			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
+	}
+
+	async validateToken(id: string): Promise<ValidateTokenRes> {
+		const isActive = await this.collaboratorRepository.exists({ where: { id, status: true } });
+		if (!isActive) {
+			throw new UnauthorizedException('Tu cuenta no está disponible. Inicia sesión nuevamente.');
+		}
+
+		return { valid: true, message: 'Sesión válida.' };
 	}
 
 	async getCollaborators(query: FindCollaboratorsQueryDto): Promise<GetCollaboratorsRes> {
@@ -231,8 +257,14 @@ export class CollaboratorService {
 			throw new NotFoundException('No se encontró el registro.');
 		}
 
+		const passwordChanged = Boolean(dto.password);
+		if (passwordChanged && process.env.TOKEN_REVOCATION !== 'true') {
+			throw new ServiceUnavailableException('No se puede cambiar la contraseña porque la revocación de sesiones no está habilitada.');
+		}
+
 		const updateData = {
 			...dto,
+			fullnames: `${dto.names} ${dto.surname}`,
 			updatedAt: () => 'CURRENT_TIMESTAMP',
 		};
 
@@ -249,7 +281,7 @@ export class CollaboratorService {
 				.update(Collaborator)
 				.set(updateData)
 				.where('id = :id', { id })
-				.returning(['id', 'names', 'surname', 'email', 'phone', 'role', 'type_document', 'number_document', 'prefix', 'createdAt', 'statusAt', 'updatedAt'])
+				.returning(['id', 'names', 'surname', 'email', 'phone', 'role', 'type_document', 'number_document', 'prefix', 'status', 'createdAt', 'statusAt', 'updatedAt'])
 				.execute();
 
 			if (!result.affected) {
@@ -271,11 +303,20 @@ export class CollaboratorService {
 				requestId: request.requestId,
 			});
 
+			if (passwordChanged) {
+				try {
+					await this.authService.revokeUserTokens(id);
+				} catch {
+					throw new ServiceUnavailableException('La contraseña se actualizó, pero no se pudieron cerrar las sesiones. Reintenta desde "Cerrar sesiones".');
+				}
+			}
+
 			return {
 				message: 'Registro actualizado correctamente.',
 				data: result.raw[0],
 			};
 		} catch (err: any) {
+			rethrowCollaboratorUniqueViolation(err);
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
@@ -303,26 +344,26 @@ export class CollaboratorService {
 				.returning(['id', 'status', 'statusAt', 'names'])
 				.execute();
 
-			if (!result.affected) {
-				const collaboratorExists = await this.collaboratorRepository.exists({
-					where: { id },
-				});
-
-				if (!collaboratorExists) {
-					throw new NotFoundException('No se encontró el colaborador.');
-				}
-
-				throw new BadRequestException(dto.status ? 'El colaborador ya se encuentra activo.' : 'El colaborador ya se encuentra inactivo.');
-			}
-
-			if (!result.raw?.length) {
+			if (result.affected && !result.raw?.length) {
 				throw new InternalServerErrorException('No se pudo recuperar el registro actualizado.');
 			}
 
-			const updatedCollaborator = result.raw[0];
+			const updatedCollaborator = result.affected
+				? result.raw[0]
+				: await this.collaboratorRepository.findOne({
+						select: { id: true, status: true, statusAt: true, names: true },
+						where: { id },
+					});
 
-			if (!dto.status && process.env.TOKEN_REVOCATION === 'true') {
-				await this.authService.revokeUserTokens(id);
+			if (!updatedCollaborator) {
+				throw new NotFoundException('No se encontró el colaborador.');
+			}
+			if (updatedCollaborator.status !== dto.status) {
+				throw new ConflictException('El estado del colaborador cambió durante la operación. Intenta nuevamente.');
+			}
+
+			if (!dto.status) {
+				await this.revokeInactiveCollaboratorSessions([id]);
 			}
 
 			this.kibanaService.audit({
@@ -330,7 +371,7 @@ export class CollaboratorService {
 				performedBy: request.user.id,
 				targetId: id,
 				requestBody: JSON.stringify(dto),
-				response: JSON.stringify(result.raw[0]),
+				response: JSON.stringify(updatedCollaborator),
 				requestId: request.requestId,
 			});
 			return {
@@ -365,30 +406,24 @@ export class CollaboratorService {
 				.returning(['id'])
 				.execute();
 
-			if (!result.affected) {
-				const existingCollaborators = await this.collaboratorRepository.count({
-					where: {
-						id: In(ids),
-					},
-				});
-
-				if (existingCollaborators === 0) {
-					throw new NotFoundException('No se encontraron colaboradores.');
-				}
-
-				throw new BadRequestException(
-					dto.status ? 'Los colaboradores seleccionados ya se encuentran activos.' : 'Los colaboradores seleccionados ya se encuentran inactivos.'
-				);
-			}
-
-			if (!result.raw?.length) {
+			if (result.affected && !result.raw?.length) {
 				throw new InternalServerErrorException('No se pudo recuperar el registro actualizado.');
 			}
 
-			const updatedIds: string[] = result.raw.map((item: { id: string }) => item.id);
+			const collaborators = await this.collaboratorRepository.find({
+				select: { id: true, status: true },
+				where: { id: In(ids) },
+			});
+			if (!collaborators.length) {
+				throw new NotFoundException('No se encontraron colaboradores.');
+			}
+			if (collaborators.some((collaborator) => collaborator.status !== dto.status)) {
+				throw new ConflictException('El estado de un colaborador cambió durante la operación. Intenta nuevamente.');
+			}
+			const updatedIds = collaborators.map((collaborator) => collaborator.id);
 
-			if (!dto.status && process.env.TOKEN_REVOCATION === 'true') {
-				await Promise.all(updatedIds.map((id) => this.authService.revokeUserTokens(id)));
+			if (!dto.status) {
+				await this.revokeInactiveCollaboratorSessions(updatedIds);
 			}
 
 			this.kibanaService.audit({
@@ -413,19 +448,53 @@ export class CollaboratorService {
 		}
 	}
 
+	async revokeCollaboratorSessions(id: string, request: any): Promise<RevokeCollaboratorSessionsRes> {
+		const exists = await this.collaboratorRepository.exists({ where: { id } });
+		if (!exists) {
+			throw new NotFoundException('No se encontró el colaborador.');
+		}
+		if (process.env.TOKEN_REVOCATION !== 'true') {
+			throw new ServiceUnavailableException('La revocación de sesiones no está habilitada.');
+		}
+
+		let revokedSessions: number;
+		try {
+			revokedSessions = await this.authService.revokeUserTokens(id);
+		} catch {
+			throw new ServiceUnavailableException('No se pudo completar el cierre de las sesiones.');
+		}
+
+		const data = { id, revokedSessions };
+		this.kibanaService.audit({
+			action: 'revokeCollaboratorSessions',
+			performedBy: request.user.id,
+			targetId: id,
+			requestBody: JSON.stringify({ id }),
+			response: JSON.stringify(data),
+			requestId: request.requestId,
+		});
+
+		return {
+			message: revokedSessions > 0 ? 'Sesiones cerradas correctamente.' : 'No se encontraron sesiones registradas para cerrar.',
+			data,
+		};
+	}
+
 	async exportCollaborators(dto: ExportCollaboratorsDto, request: any): Promise<ExportCollaboratorsRes> {
+		let exportedFile: ExportCollaboratorsRes | undefined;
 		try {
 			const allowedFields = new Set(ALLOWED_EXPORT);
-			const fields = dto.data.filter(({ checked, field }) => checked && allowedFields.has(field)).map(({ field }) => field);
+			const fields = [...new Set(dto.data.filter(({ checked, field }) => checked && allowedFields.has(field)).map(({ field }) => field))];
 
 			if (!fields.length) throw new BadRequestException('Debe seleccionar al menos un campo válido para exportar.');
 
 			const { scope, ids = [], sort, maskData } = dto;
+			if (dto.format !== 'xlsx' && dto.format !== 'csv') throw new BadRequestException('El formato debe ser xlsx o csv.');
 			const requiresIds = scope === 'selected' || scope === 'page';
 
 			if (requiresIds && !ids.length) throw new BadRequestException('Debe seleccionar al menos un colaborador para exportar.');
 
-			const queryBuilder = this.collaboratorRepository.createQueryBuilder('collaborator');
+			const queryBuilder = this.collaboratorRepository.createQueryBuilder('collaborator').select(fields.map((field) => `collaborator.${field}`));
 
 			if (requiresIds) queryBuilder.andWhere('collaborator.id IN (:...ids)', { ids: [...new Set(ids)] });
 
@@ -439,7 +508,7 @@ export class CollaboratorService {
 				const [field, rawDirection] = sort.split(':');
 				const direction = rawDirection?.toUpperCase();
 
-				if (!(field in fieldMap)) throw new BadRequestException('El campo de ordenamiento es inválido.');
+				if (!Object.prototype.hasOwnProperty.call(fieldMap, field)) throw new BadRequestException('El campo de ordenamiento es inválido.');
 				if (direction !== 'ASC' && direction !== 'DESC') throw new BadRequestException('La dirección de ordenamiento es inválida.');
 
 				queryBuilder.orderBy(fieldMap[field as keyof typeof fieldMap], direction);
@@ -447,30 +516,45 @@ export class CollaboratorService {
 				queryBuilder.orderBy('collaborator.createdAt', 'DESC');
 			}
 
-			let collaborators: Collaborator[];
-
-			try {
-				collaborators = await queryBuilder.getMany();
-			} catch {
-				throw new InternalServerErrorException('No fue posible obtener la información para la exportación.');
-			}
-
-			if (!collaborators.length) throw new NotFoundException('No se encontraron colaboradores para exportar.');
-
-			const data = collaborators.map((collaborator) => {
-				const row: Record<string, unknown> = {};
-
-				for (const field of fields) {
-					let value = collaborator[field];
-
-					if (value instanceof Date) value = value.toISOString().slice(0, 10);
-					if (maskData && typeof value === 'string' && field === 'email') value = this.maskEmail(value);
-					if (maskData && typeof value === 'string' && field === 'number_document') value = this.maskDocument(value);
-
-					row[field] = value ?? '';
+			queryBuilder.addOrderBy('collaborator.id', 'ASC');
+			const dateFormatter = new Intl.DateTimeFormat('es-PE', {
+				timeZone: 'America/Lima',
+				year: 'numeric',
+				month: '2-digit',
+				day: '2-digit',
+				hour: '2-digit',
+				minute: '2-digit',
+				second: '2-digit',
+				hourCycle: 'h23',
+			});
+			let exportedRecords = 0;
+			const service = this;
+			// Una misma instantánea evita saltos o duplicados si cambian datos entre lotes.
+			exportedFile = await this.collaboratorRepository.manager.transaction('REPEATABLE READ', async (manager) => {
+				async function* rows(): AsyncGenerator<unknown[]> {
+					const batchSize = 500;
+					for (let offset = 0; ; offset += batchSize) {
+						const collaborators = await queryBuilder.clone().setQueryRunner(manager.queryRunner!).offset(offset).limit(batchSize).getMany();
+						if (!collaborators.length) {
+							if (!exportedRecords) throw new NotFoundException('No se encontraron colaboradores para exportar.');
+							break;
+						}
+						for (const collaborator of collaborators) {
+							exportedRecords++;
+							yield fields.map((field) => {
+								let value = collaborator[field];
+								if (value instanceof Date) value = dateFormatter.format(value);
+								if (typeof value === 'boolean' && field === 'status') value = value ? 'ACTIVO' : 'INACTIVO';
+								if (maskData && typeof value === 'string' && field === 'email') value = service.maskEmail(value);
+								if (maskData && typeof value === 'string' && field === 'number_document') value = service.maskDocument(value);
+								return value ?? '';
+							});
+						}
+						if (collaborators.length < batchSize) break;
+					}
 				}
-
-				return row;
+				exportedFile = await exportCollaboratorsFile(fields, dto.format as 'xlsx' | 'csv', rows());
+				return exportedFile;
 			});
 
 			await this.kibanaService.audit({
@@ -478,12 +562,13 @@ export class CollaboratorService {
 				performedBy: request.user.id,
 				targetId: '',
 				requestBody: JSON.stringify(dto),
-				response: JSON.stringify({ exportedRecords: data.length }),
+				response: JSON.stringify({ exportedRecords }),
 				requestId: request.requestId,
 			});
 
-			return { fields, data };
+			return exportedFile;
 		} catch (err: any) {
+			await exportedFile?.cleanup();
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
@@ -493,10 +578,11 @@ export class CollaboratorService {
 		try {
 			const { data, mode, identifyBy } = dto;
 			const defaultPassword = await hashPassword('123456');
-			const cleanData = data.map((row) => {
+			const cleanData: Record<string, any>[] = data.map((row) => {
 				const { index, ...item } = row as Record<string, any> & { index?: unknown };
 				return {
 					...item,
+					fullnames: `${item.names} ${item.surname}`,
 					password: defaultPassword,
 				};
 			});
@@ -508,7 +594,8 @@ export class CollaboratorService {
 			});
 			const existingMap = new Map(existingCollaborators.map((item) => [item[identifyBy], item]));
 			const toCreate: Array<any> = [];
-			const toUpdate: Array<any> = [];
+			const toUpdate: Collaborator[] = [];
+			const inactiveCollaboratorIds = new Set<string>();
 			for (const item of cleanData) {
 				const identifyValue = item[identifyBy];
 				const existing = existingMap.get(identifyValue);
@@ -517,30 +604,34 @@ export class CollaboratorService {
 						toCreate.push(this.collaboratorRepository.create(item));
 					}
 				}
-				if (mode === 'update') {
+				if (mode === 'update' || mode === 'upsert') {
 					if (existing) {
 						const { password, ...updateData } = item;
+						if (existing.status !== updateData.status) {
+							existing.statusAt = new Date();
+						}
 						Object.assign(existing, updateData);
 						toUpdate.push(existing);
-					}
-				}
-				if (mode === 'upsert') {
-					if (existing) {
-						const { password, ...updateData } = item;
-						Object.assign(existing, updateData);
-						toUpdate.push(existing);
-					} else {
+						if (existing.status === false) {
+							inactiveCollaboratorIds.add(existing.id);
+						}
+					} else if (mode === 'upsert') {
 						toCreate.push(this.collaboratorRepository.create(item));
 					}
 				}
 			}
 
-			if (toCreate.length > 0) {
-				await this.collaboratorRepository.save(toCreate);
+			if (toCreate.length > 0 || toUpdate.length > 0) {
+				await this.collaboratorRepository.manager.transaction(async (manager) => {
+					if (toCreate.length > 0) {
+						await manager.save(Collaborator, toCreate);
+					}
+					if (toUpdate.length > 0) {
+						await manager.save(Collaborator, toUpdate);
+					}
+				});
 			}
-			if (toUpdate.length > 0) {
-				await this.collaboratorRepository.save(toUpdate);
-			}
+			await this.revokeInactiveCollaboratorSessions([...inactiveCollaboratorIds]);
 
 			this.kibanaService.audit({
 				action: 'importCollaborators',
@@ -562,8 +653,18 @@ export class CollaboratorService {
 				ignored: cleanData.length - (toCreate.length + toUpdate.length),
 			};
 		} catch (err: any) {
+			rethrowCollaboratorUniqueViolation(err);
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
+		}
+	}
+
+	private async revokeInactiveCollaboratorSessions(ids: string[]): Promise<void> {
+		if (!ids.length || process.env.TOKEN_REVOCATION !== 'true') return;
+
+		const results = await Promise.allSettled(ids.map((id) => this.authService.revokeUserTokens(id)));
+		if (results.some((result) => result.status === 'rejected')) {
+			throw new ServiceUnavailableException('Las cuentas quedaron inactivas, pero no se pudo completar el cierre de sus sesiones. Reintenta la desactivación.');
 		}
 	}
 

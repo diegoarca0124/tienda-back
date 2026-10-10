@@ -1,10 +1,13 @@
-import { Entity, Column, PrimaryGeneratedColumn, UpdateDateColumn, CreateDateColumn, OneToMany, Generated } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, UpdateDateColumn, CreateDateColumn, OneToMany, Generated, Index } from 'typeorm';
 import { Subcategory } from './subcategory.entity';
 import { AttributeCategory } from './attribute-category.entity';
 import { Product } from './product.entity';
 import { ProductGroup } from './product-group.entity';
 
 @Entity('categories')
+// Expression index created by migration; preserve it during schema synchronization.
+@Index('UQ_CATEGORIES_NAME_NORMALIZED', { synchronize: false })
+@Index('UQ_CATEGORIES_SLUG', ['slug'], { unique: true })
 export class Category {
 	@PrimaryGeneratedColumn('uuid')
 	id: string;

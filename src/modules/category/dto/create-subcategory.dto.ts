@@ -12,8 +12,8 @@ export class CreateSubcategoryDto {
 	name: string;
 
 	@IsString({ message: 'El prefijo debe ser texto' })
-	@Matches(/^[A-Z]{2}$/, {
-		message: 'El prefijo debe tener exactamente 2 letras en mayúscula (A-Z)',
+	@Matches(/^[A-Z]{3}$/, {
+		message: 'El prefijo debe tener exactamente 3 letras en mayúscula (A-Z)',
 	})
 	@IsNotEmpty({ message: 'El prefijo no debe estar vacio.' })
 	@IsDefined({ message: 'El prefijo es obligatorio.' })

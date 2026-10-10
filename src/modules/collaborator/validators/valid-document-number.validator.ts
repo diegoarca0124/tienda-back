@@ -11,14 +11,14 @@ export const IsValidDocumentNumber = (validationOptions?: ValidationOptions) => 
 				validate(value: any, args: ValidationArguments) {
 					const obj: any = args.object;
 
-					if (!value) return false;
+					if (typeof value !== 'string' || !value) return false;
 
 					switch (obj.type_document) {
 						case 'DNI':
 							return /^\d{8}$/.test(value);
 
 						case 'CE - Carné de Extranjería':
-							return /^[a-zA-Z0-9]{9,12}$/.test(value);
+							return /^\d{9}$/.test(value);
 
 						case 'Pasaporte':
 							return /^[a-zA-Z0-9]{6,12}$/.test(value);
@@ -35,7 +35,7 @@ export const IsValidDocumentNumber = (validationOptions?: ValidationOptions) => 
 						case 'DNI':
 							return 'El DNI debe tener exactamente 8 dígitos.';
 						case 'CE - Carné de Extranjería':
-							return 'El CE debe tener entre 9 y 12 caracteres.';
+							return 'El CE debe tener exactamente 9 dígitos.';
 						case 'Pasaporte':
 							return 'El pasaporte debe tener entre 6 y 12 caracteres.';
 						default:

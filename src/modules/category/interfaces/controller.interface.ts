@@ -82,25 +82,15 @@ export interface MoveSubcategoryRes {
 		id: string;
 		name: string;
 		categoryId: string;
+		status: boolean;
 		affectedProducts: number;
 	};
 }
 
 export interface GetCategoriesWithSubcategoriesRes {
-	data: {
-		id: string;
-		name: string;
-		icon: string;
-		prefix: string;
-		color: string;
-		subcategories: {
-			id: string;
-			name: string;
-			icon: string;
-			prefix: string;
-			categoryId: string;
-		}[];
-	}[];
+	data: (Pick<Category, 'id' | 'name' | 'icon' | 'color' | 'status'> & {
+		subcategories: Pick<Subcategory, 'id' | 'name' | 'categoryId' | 'status'>[];
+	})[];
 	message: string;
 }
 

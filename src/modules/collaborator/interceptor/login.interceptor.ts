@@ -16,7 +16,7 @@ export class LoginInterceptor extends BaseValidationInterceptor<LoginDto> {
 
 	protected async validateBody(body: any): Promise<{ field: string; message: string }[]> {
 		const customErrors: { field: string; message: string }[] = [];
-		
+
 		const emailErrors = await this.validateEmailExist(body);
 		emailErrors.forEach((msg) => {
 			customErrors.push({ field: 'email', message: msg });
@@ -32,14 +32,14 @@ export class LoginInterceptor extends BaseValidationInterceptor<LoginDto> {
 	private async validateEmailExist(body: any): Promise<string[]> {
 		const messages: string[] = [];
 
-		if (body.email) {
+		/* if (body.email) {
 			const isEmailTaken = await this.collaboratorValidator.existsEmailCollaborator(body.email);
 
 			if (!isEmailTaken) {
 				messages.push('El correo electrónico no fué encontrado.');
 			}
 		}
-
+ */
 		return messages;
 	}
 }

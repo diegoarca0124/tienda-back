@@ -34,7 +34,7 @@ export class EditCollaboratorInterceptor extends BaseValidationInterceptor<EditC
 	private async validateFieldsExist(body: any, request: any): Promise<{ msm: string; field: string }[]> {
 		const messages: { msm: string; field: string }[] = [];
 		const collaboratorId = request.params.id;
-		
+
 		if (body.email) {
 			const isEmailExist = await this.collaboratorValidator.existsEmailCollaborator(body.email);
 

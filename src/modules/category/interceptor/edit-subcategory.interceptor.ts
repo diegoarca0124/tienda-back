@@ -6,6 +6,7 @@ import { sanitizeSvg } from '@/common/utils/validate-svg.util';
 import { EditCategoryDto } from '../dto/edit-category.dto';
 import { EditSubcategoryDto } from '../dto/edit-subcategory.dto';
 import { CategoryValidator } from '../validators/category.validator';
+import { isValidName } from '../utils/is-valid-name.util';
 
 @Injectable()
 export class EditSubcategoryInterceptor extends BaseValidationInterceptor<EditSubcategoryDto> {
@@ -49,7 +50,12 @@ export class EditSubcategoryInterceptor extends BaseValidationInterceptor<EditSu
 			}
 		}
 
-		if (typeof body.name === 'string' && body.name) {
+		if (typeof body.name === 'string' && !isValidName(body.name)) {
+			messages.push({
+				msm: 'El nombre solo puede contener letras, números y espacios entre palabras.',
+				field: 'name',
+			});
+		} else if (typeof body.name === 'string' && body.name) {
 			const isNameExist = await this.categoryValidator.existsNameSubcategory(body.name);
 
 			if (isNameExist && isNameExist.id != subcategoryId) {

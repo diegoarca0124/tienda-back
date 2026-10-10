@@ -1,33 +1,46 @@
-import { BadRequestException, CallHandler, ExecutionContext, Injectable, NestInterceptor, UnsupportedMediaTypeException } from '@nestjs/common';
+import { BadRequestException, CallHandler, ExecutionContext, Injectable, mixin, PayloadTooLargeException } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { diskStorage, memoryStorage } from 'multer';
-import * as path from 'path';
-import { v4 as uuidv4 } from 'uuid';
-import * as fs from 'fs';
+import { memoryStorage } from 'multer';
 import * as sharp from 'sharp';
+import { DEFAULT_IMAGE_UPLOAD_CONFIG } from '@/common/constants/file-upload.constant';
 
 sharp.cache(false); // 🔹 Desactiva caché de sharp para mejorar rendimiento en servidores con muchas imágenes
-
-const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
 
 @Injectable()
 export class FileUploadInterceptor {
 	static fileInterceptor() {
-		return FileFieldsInterceptor(
+		const UploadInterceptor = FileFieldsInterceptor(
 			[
 				{ name: 'logoUrl', maxCount: 1 },
 				{ name: 'bannerUrl', maxCount: 1 },
 			],
 			{
 				storage: memoryStorage(), // 📌 Ahora se almacena en memoria (buffer)
+				limits: {
+					fileSize: DEFAULT_IMAGE_UPLOAD_CONFIG.maxSizeBytes,
+					files: DEFAULT_IMAGE_UPLOAD_CONFIG.maxFiles,
+				},
 				fileFilter: (req, file, cb) => {
-					if (!allowed.includes(file.mimetype)) {
-						return cb(new BadRequestException('Formato de imagen no permitido'), false);
-					}
-
+					/* Se valida el formato dentro del interceptor*/
 					cb(null, true);
 				},
 			}
 		);
+
+		class BrandUploadInterceptor extends UploadInterceptor {
+			async intercept(context: ExecutionContext, next: CallHandler) {
+				try {
+					return await super.intercept(context, next);
+				} catch (error) {
+					if (error instanceof PayloadTooLargeException) {
+						throw new PayloadTooLargeException(`Los archivos en la solicitud no estan permitidas.`);
+					}
+
+					throw error;
+				}
+			}
+		}
+
+		return mixin(BrandUploadInterceptor);
 	}
 }

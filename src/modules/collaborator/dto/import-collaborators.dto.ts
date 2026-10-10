@@ -7,6 +7,12 @@ import { ALLOWED_PREFIX } from '../constants/allowed-prefix.constant';
 export class ValidateImportCollaboratorDto extends OmitType(CreateCollaboratorDto, ['password'] as const) {
 	static REQUIRED_FIELDS = ['names', 'surname', 'email', 'prefix', 'phone', 'role', 'type_document', 'number_document', 'status'];
 
+	@Transform(({ value }) => {
+		if (typeof value !== 'string') return value;
+		const prefix = value.trim();
+		const originalPrefix = prefix.startsWith("'") ? prefix.slice(1) : prefix;
+		return ALLOWED_PREFIX.includes(originalPrefix) ? originalPrefix : value;
+	})
 	@IsString({ message: 'El prefijo debe ser una cadena de texto.' })
 	@IsNotEmpty({ message: 'El prefijo es obligatorio.' })
 	@IsIn(ALLOWED_PREFIX, { message: 'El prefijo no es válido.' })

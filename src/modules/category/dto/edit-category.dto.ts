@@ -20,8 +20,8 @@ export class EditCategoryDto {
 	color: string;
 
 	@IsString({ message: 'El prefijo debe ser texto' })
-	@Matches(/^[A-Z]{2}$/, {
-		message: 'El prefijo debe tener exactamente 2 letras en mayúscula (A-Z)',
+	@Matches(/^[A-Z]{3}$/, {
+		message: 'El prefijo debe tener exactamente 3 letras en mayúscula (A-Z)',
 	})
 	@IsNotEmpty({ message: 'El prefijo no debe estar vacio.' })
 	@IsDefined({ message: 'El prefijo es obligatorio.' })
@@ -37,11 +37,10 @@ export class EditCategoryDto {
 
 	readonly slug: string;
 
-	@Transform(({ value }) => (value === '' ? undefined : value))
 	@IsOptional()
 	@MaxLength(2000, { message: 'El icono debe tener máximo 2000 caracteres.' })
 	@IsString({ message: 'El icono debe ser una cadena de caracteres.' })
-	readonly icon: string;
+	readonly icon?: string;
 
 	@IsBoolean({ message: 'El campo “Dimensiones” debe ser verdadero o falso.' })
 	@IsNotEmpty({ message: 'El campo “Dimensiones” es requerido.' })

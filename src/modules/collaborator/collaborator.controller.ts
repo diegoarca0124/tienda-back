@@ -14,6 +14,7 @@ import { UpdateStatusCollaboratorsInterceptor } from './interceptor/update-statu
 import { ExportCollaboratorsDto } from './dto/export-colllaborators.dto';
 import { ExportCollaboratorsInterceptor } from './interceptor/export-colllaborators.interceptor';
 import type { Response } from 'express';
+import { createReadStream } from 'node:fs';
 import { ImportCollaboratorsDto } from './dto/import-collaborators.dto';
 import { ImportCollaboratorsInterceptor } from './interceptor/import-collaborators.interceptor';
 import { AuthService } from '@/auth/auth.service';
@@ -24,13 +25,15 @@ import { UpdateCollaboratorStatusDto } from './dto/update-collaborator-status.dt
 import { UpdateCollaboratorsStatusDto } from './dto/update-collaborators-status.dto';
 import {
 	CreateCollaboratorRes,
-	ExportCollaboratorsRes,
 	GetCollaboratorRes,
 	GetCollaboratorsRes,
 	ImportCollaboratorsRes,
+	LoginRes,
+	RevokeCollaboratorSessionsRes,
 	UpdateCollaboratorRes,
 	UpdateCollaboratorsStatusRes,
 	UpdateCollaboratorStatusRes,
+	ValidateTokenRes,
 } from './interface/controller.interface';
 dotenv.config({ path: path.resolve(process.cwd(), `.env.${process.env.NODE_ENV || 'dev'}`) });
 
@@ -50,8 +53,13 @@ export class CollaboratorController {
 	@Post('login')
 	@Public()
 	@UseInterceptors(LoginInterceptor)
-	login(@Body() loginDto: LoginDto): Promise<any> {
+	login(@Body() loginDto: LoginDto): Promise<LoginRes> {
 		return this.collaboratorService.login(loginDto);
+	}
+
+	@Get('validate_token')
+	validateToken(@Req() request): Promise<ValidateTokenRes> {
+		return this.collaboratorService.validateToken(request.user.id);
 	}
 
 	@Get('logout')
@@ -111,12 +119,23 @@ export class CollaboratorController {
 		return this.collaboratorService.updateCollaboratorsStatus(dto, request);
 	}
 
+	@Post('revokeCollaboratorSessions/:id')
+	@HttpCode(HttpStatus.OK)
+	revokeCollaboratorSessions(@Param('id', ValidateUUID) id: string, @Req() request): Promise<RevokeCollaboratorSessionsRes> {
+		return this.collaboratorService.revokeCollaboratorSessions(id, request);
+	}
+
 	@Post('exportCollaborators')
 	@HttpCode(HttpStatus.OK)
 	@UseInterceptors(ExportCollaboratorsInterceptor)
-	async exportCollaborators(@Body() exportCollaboratorsDto: ExportCollaboratorsDto, @Req() request): Promise<ExportCollaboratorsRes> {
+	async exportCollaborators(@Body() exportCollaboratorsDto: ExportCollaboratorsDto, @Req() request): Promise<StreamableFile> {
 		const result = await this.collaboratorService.exportCollaborators(exportCollaboratorsDto, request);
-		return result;
+		const fileStream = createReadStream(result.filePath);
+		fileStream.once('close', () => { void result.cleanup().catch(() => undefined); });
+		return new StreamableFile(fileStream, {
+			type: result.contentType,
+			disposition: `attachment; filename="${result.fileName}"`,
+		});
 	}
 
 	@Post('importCollaborators')

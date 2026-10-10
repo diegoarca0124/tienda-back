@@ -4,6 +4,8 @@ import { Product } from './product.entity';
 
 @Entity('subcategories')
 @Index('IDX_SUBCATEGORIES_CATEGORY_ID', ['categoryId'])
+@Index('UQ_SUBCATEGORIES_NAME_NORMALIZED', { synchronize: false })
+@Index('UQ_SUBCATEGORIES_SLUG', ['slug'], { unique: true })
 export class Subcategory {
 	@PrimaryGeneratedColumn('uuid')
 	id: string;

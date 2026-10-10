@@ -31,27 +31,27 @@ export class ImportCollaboratorsInterceptor extends BaseValidationInterceptor<Im
 		}
 		const missingColumns = this.getMissingColumns(body.data);
 		const duplicateErrors = this.getDuplicateErrors(body.data);
-		const rowErrors = await this.validateRows(body.data, body.mode, duplicateErrors);
+		const rowErrors = await this.validateRows(body.data, body.mode, body.identifyBy, duplicateErrors);
 		if (!rowErrors.length && !missingColumns.length) return [];
 		return this.buildValidationResult(body.data.length, rowErrors, missingColumns);
 	}
 
-	private async validateRows(data: unknown[], mode: string, duplicateErrors: Map<number, RowErrors>): Promise<ImportRowResult[]> {
+	private async validateRows(data: unknown[], mode: string, identifyBy: string, duplicateErrors: Map<number, RowErrors>): Promise<ImportRowResult[]> {
 		const result: ImportRowResult[] = [];
 		for (let index = 0; index < data.length; index++) {
-			const { rowErrors, normalizedRow } = await this.validateRow(data[index], mode, duplicateErrors.get(index));
+			const { rowErrors, normalizedRow } = await this.validateRow(data[index], mode, identifyBy, duplicateErrors.get(index));
 			if (normalizedRow) data[index] = normalizedRow;
 			if (Object.keys(rowErrors).length) result.push({ [index]: rowErrors });
 		}
 		return result;
 	}
 
-	private async validateRow(raw: unknown, mode: string, duplicateErrors?: RowErrors): Promise<ValidatedRow> {
+	private async validateRow(raw: unknown, mode: string, identifyBy: string, duplicateErrors?: RowErrors): Promise<ValidatedRow> {
 		if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
 			return { rowErrors: { row: ['La fila debe ser un objeto válido.'] } };
 		}
 		const dto = plainToInstance(ValidateImportCollaboratorDto, raw);
-		const [dtoErrors, databaseErrors] = await Promise.all([this.getDtoErrors(dto), this.getDatabaseErrors(dto, mode)]);
+		const [dtoErrors, databaseErrors] = await Promise.all([this.getDtoErrors(dto), this.getDatabaseErrors(dto, mode, identifyBy)]);
 		const rowErrors: RowErrors = {};
 		this.mergeErrors(rowErrors, dtoErrors);
 		this.mergeErrors(rowErrors, duplicateErrors);
@@ -79,19 +79,22 @@ export class ImportCollaboratorsInterceptor extends BaseValidationInterceptor<Im
 		return rowErrors;
 	}
 
-	private async getDatabaseErrors(dto: ValidateImportCollaboratorDto, mode: string): Promise<RowErrors> {
+	private async getDatabaseErrors(dto: ValidateImportCollaboratorDto, mode: string, identifyBy: string): Promise<RowErrors> {
 		const errors: RowErrors = {};
-		if (mode !== 'news') return errors;
+		if (!['news', 'update', 'upsert'].includes(mode)) return errors;
 		const [emailExists, phoneExists, documentExists] = await Promise.all([
 			dto.email ? this.collaboratorValidator.existsEmailCollaborator(dto.email) : false,
 			dto.phone ? this.collaboratorValidator.existsPhoneCollaborator(dto.phone) : false,
 			dto.number_document ? this.collaboratorValidator.existsDocumentNumberCollaborator(dto.number_document) : false,
 		]);
-		console.log('emailExists', emailExists);
+		const currentCollaborator = mode === 'news' ? null : identifyBy === 'email' ? emailExists : identifyBy === 'number_document' ? documentExists : null;
+		// Las filas que no existen se ignoran en el modo update.
+		if (mode === 'update' && !currentCollaborator) return errors;
+		const belongsToAnotherCollaborator = (owner: { id: string } | null | false) => !!owner && owner.id !== currentCollaborator?.id;
 
-		if (emailExists) this.addError(errors, 'email', 'El correo ya se encuentra registrado.');
-		if (phoneExists) this.addError(errors, 'phone', 'El teléfono ya se encuentra registrado.');
-		if (documentExists) this.addError(errors, 'number_document', 'El número de documento ya se encuentra registrado.');
+		if (belongsToAnotherCollaborator(emailExists)) this.addError(errors, 'email', 'El correo ya se encuentra registrado.');
+		if (belongsToAnotherCollaborator(phoneExists)) this.addError(errors, 'phone', 'El teléfono ya se encuentra registrado.');
+		if (belongsToAnotherCollaborator(documentExists)) this.addError(errors, 'number_document', 'El número de documento ya se encuentra registrado.');
 		return errors;
 	}
 

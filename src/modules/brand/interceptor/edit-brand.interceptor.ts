@@ -3,6 +3,7 @@ import { BaseValidationInterceptor } from '@/common/interceptors/base-validation
 import { validateUrl } from '@/common/utils/validate-url.util';
 import { EditBrandDto } from '../dto/edit-brand-dto';
 import { BrandValidator } from '../validators/brand.validator';
+import { DEFAULT_IMAGE_UPLOAD_CONFIG } from '@/common/constants/file-upload.constant';
 
 @Injectable()
 export class EditBrandInterceptor extends BaseValidationInterceptor<EditBrandDto> {
@@ -39,7 +40,8 @@ export class EditBrandInterceptor extends BaseValidationInterceptor<EditBrandDto
 
 	private async validateImages(files?: { [key: string]: Express.Multer.File[] }): Promise<{ msm: string; field: string }[]> {
 		const messages: { msm: string; field: string }[] = [];
-		const maxSize = 3 * 1024 * 1024; // 3 MB
+		const { allowedMimeTypes, maxSizeBytes } = DEFAULT_IMAGE_UPLOAD_CONFIG;
+		const maxSizeMB = maxSizeBytes / (1024 * 1024);
 
 		const fields = [
 			{ name: 'logoUrl', label: 'logo' },
@@ -51,11 +53,11 @@ export class EditBrandInterceptor extends BaseValidationInterceptor<EditBrandDto
 
 			if (fieldFiles) {
 				fieldFiles.forEach((file) => {
-					if (!file.mimetype.startsWith('image/')) {
+					if (!allowedMimeTypes.includes(file.mimetype)) {
 						messages.push({ msm: `El ${label} debe ser formato de imagen.`, field: name });
 					}
-					if (file.size > maxSize) {
-						messages.push({ msm: `El ${label} no puede superar los 3MB de peso.`, field: name });
+					if (file.size > maxSizeBytes) {
+						messages.push({ msm: `El ${label} no puede superar los ${maxSizeMB}MB de peso.`, field: name });
 					}
 				});
 			}

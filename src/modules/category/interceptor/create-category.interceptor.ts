@@ -4,6 +4,7 @@ import { CreateCategoryDto } from '../dto/create-category.dto';
 import { CategoryService } from '../category.service';
 import { sanitizeSvg } from '@/common/utils/validate-svg.util';
 import { CategoryValidator } from '../validators/category.validator';
+import { isValidName } from '../utils/is-valid-name.util';
 
 @Injectable()
 export class CreateCategoryInterceptor extends BaseValidationInterceptor<CreateCategoryDto> {
@@ -45,7 +46,12 @@ export class CreateCategoryInterceptor extends BaseValidationInterceptor<CreateC
 			}
 		}
 
-		if (typeof body.name === 'string' && body.name) {
+		if (typeof body.name === 'string' && !isValidName(body.name)) {
+			messages.push({
+				msm: 'El nombre ingresado no es válido.',
+				field: 'name',
+			});
+		} else if (typeof body.name === 'string' && body.name) {
 			const isNameExist = await this.categoryValidator.existsNameCategory(body.name);
 
 			if (isNameExist) {

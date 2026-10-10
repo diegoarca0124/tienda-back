@@ -9,16 +9,23 @@ dotenv.config({ path: path.resolve(process.cwd(), `.env.${process.env.NODE_ENV |
 export class RedisTokenService {
 	private client: Redis;
 
-	onModuleInit() {
+	async onModuleInit(): Promise<void> {
 		this.client = new Redis({
 			host: process.env.REDIS_HOST_TOKEN,
 			port: Number(process.env.REDIS_PORT_TOKEN),
 			password: process.env.REDIS_PASSWORD_TOKEN,
-			connectTimeout: 1000, //Espera un minuto para conexion, si no falla
+			connectTimeout: 1000, // Tiempo máximo de conexión: 1 segundo.
 			maxRetriesPerRequest: 1, //Solo acepta un intento de conexion
 			enableOfflineQueue: false, //No guarda request pendientes
-			lazyConnect: true, //No conecta redis al iniciar el app
+			lazyConnect: true, // La conexión se inicia explícitamente y se espera abajo.
 		});
+
+		try {
+			await this.client.connect();
+		} catch (error) {
+			this.client.disconnect();
+			throw error;
+		}
 	}
 
 	async set(key: string, value: string, ttlSeconds?: number) {
@@ -49,6 +56,10 @@ export class RedisTokenService {
 	}
 
 	async onModuleDestroy() {
-		await this.client.quit();
+		if (this.client?.status === 'ready') {
+			await this.client.quit();
+		} else {
+			this.client?.disconnect();
+		}
 	}
 }

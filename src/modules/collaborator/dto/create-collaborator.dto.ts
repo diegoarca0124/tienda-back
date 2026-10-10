@@ -39,7 +39,7 @@ export class CreateCollaboratorDto {
 	@IsOptional()
 	readonly fullnames?: string;
 
-	@Transform(({ value }) => normalizeText(value).toLowerCase())
+	@Transform(({ value }) => (typeof value === 'string' ? normalizeText(value) : value))
 	@MaxLength(50, { message: 'El correo debe tener máximo 50 caracteres.' })
 	@IsEmail({}, { message: 'El correo no tiene un formato correcto.' })
 	@IsNotEmpty({ message: 'El correo no debe estar vacio.' })
@@ -56,7 +56,7 @@ export class CreateCollaboratorDto {
 	@IsString({ message: 'El número de documento debe ser texto.' })
 	@IsNotEmpty({ message: 'El número de documento no debe estar vacio.' })
 	@IsDefined({ message: 'El número de documento es obligatorio.' })
-	@Transform(({ value }) => String(value).trim())
+	@Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
 	readonly number_document: string;
 
 	@MaxLength(20, { message: 'La contraseña debe tener máximo 20 caracteres.' })

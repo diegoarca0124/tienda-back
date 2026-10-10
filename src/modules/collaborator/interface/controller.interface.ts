@@ -6,6 +6,19 @@ export interface CreateCollaboratorRes {
 	message: string;
 }
 
+export interface LoginRes {
+	data: {
+		accessToken: string;
+		collaborator: Pick<Collaborator, 'id' | 'names' | 'surname' | 'email' | 'role'>;
+	};
+	message: string;
+}
+
+export interface ValidateTokenRes {
+	valid: true;
+	message: string;
+}
+
 export interface GetCollaboratorsRes {
 	collaborators: Collaborator[];
 	meta: {
@@ -37,9 +50,19 @@ export interface UpdateCollaboratorsStatusRes {
 	message: string;
 }
 
+export interface RevokeCollaboratorSessionsRes {
+	data: {
+		id: string;
+		revokedSessions: number;
+	};
+	message: string;
+}
+
 export interface ExportCollaboratorsRes {
-	fields: string[];
-	data: Array<Record<string, unknown>>;
+	filePath: string;
+	fileName: string;
+	contentType: string;
+	cleanup: () => Promise<void>;
 }
 
 export interface ImportCollaboratorsRes {

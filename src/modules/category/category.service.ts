@@ -44,6 +44,7 @@ import {
 	UpdateSubcategoryStatusRes,
 } from './interfaces/controller.interface';
 import { UpdateSubcategoryStatusDto } from './dto/update-subcategory-status.dto';
+import { rethrowCategoryUniqueViolation } from './utils/index-messages.util';
 
 interface ProductPreview {
 	id: string;
@@ -102,6 +103,7 @@ export class CategoryService {
 				data: id,
 			};
 		} catch (err: any) {
+			rethrowCategoryUniqueViolation(err);
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
@@ -479,6 +481,7 @@ export class CategoryService {
 				requestId: request.requestId,
 			});
 		} catch (err: any) {
+			rethrowCategoryUniqueViolation(err);
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
@@ -532,6 +535,7 @@ export class CategoryService {
 				data: saveData,
 			};
 		} catch (err: any) {
+			rethrowCategoryUniqueViolation(err);
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
@@ -685,18 +689,28 @@ export class CategoryService {
 
 	async updateSubcategory(id: string, dto: EditSubcategoryDto, request: any): Promise<UpdateSubcategoryRes> {
 		try {
-			const exists = await this.subcategoryRepository.exists({
+			const currentSubcategory = await this.subcategoryRepository.findOne({
+				select: { id: true, name: true },
 				where: { id },
 			});
 
-			if (!exists) {
+			if (!currentSubcategory) {
 				throw new NotFoundException('No se encontró la categoría asignada.');
 			}
 
-			dto.updatedAt = new Date();
-			let result;
+			const updateData = {
+				...dto,
+				...(currentSubcategory.name !== dto.name && {
+					slug: slugify(dto.name, {
+						lower: true,
+						strict: true,
+						trim: true,
+					}),
+				}),
+				updatedAt: () => 'CURRENT_TIMESTAMP',
+			};
 
-			result = await this.subcategoryRepository.createQueryBuilder().update(Subcategory).set(dto).where('id = :id', { id }).returning('*').execute();
+			const result = await this.subcategoryRepository.createQueryBuilder().update(Subcategory).set(updateData).where('id = :id', { id }).returning('*').execute();
 
 			if (!result.affected) {
 				throw new InternalServerErrorException('No se pudo actualizar el registro.');
@@ -720,6 +734,7 @@ export class CategoryService {
 				data: result.raw[0],
 			};
 		} catch (err: any) {
+			rethrowCategoryUniqueViolation(err);
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
@@ -733,7 +748,6 @@ export class CategoryService {
 				const selectedSubcategories = await manager.find(Subcategory, {
 					where: { id: In(ids) },
 					select: { id: true, categoryId: true },
-					lock: { mode: 'pessimistic_write' },
 				});
 
 				if (!selectedSubcategories.length) {
@@ -744,11 +758,29 @@ export class CategoryService {
 				const activeCategories = await manager.find(Category, {
 					where: { id: In(categoryIds), status: true },
 					select: { id: true },
+					order: { id: 'ASC' },
 					lock: { mode: 'pessimistic_write' },
 				});
 
 				if (activeCategories.length !== categoryIds.length) {
 					throw new BadRequestException('No se pueden activar subcategorías cuya categoría se encuentra inactiva.');
+				}
+
+				// Lock parents before children, as category deactivation and moves do.
+				const lockedSubcategories = await manager.find(Subcategory, {
+					where: { id: In(ids) },
+					select: { id: true, categoryId: true },
+					order: { id: 'ASC' },
+					lock: { mode: 'pessimistic_write' },
+				});
+				const activeCategoryIds = new Set(activeCategories.map((category) => category.id));
+
+				if (!lockedSubcategories.length) {
+					throw new NotFoundException('No se encontraron subcategorías.');
+				}
+
+				if (lockedSubcategories.some((subcategory) => !activeCategoryIds.has(subcategory.categoryId))) {
+					throw new BadRequestException('La categoría asignada cambió durante la operación. Inténtalo nuevamente.');
 				}
 			}
 
@@ -937,7 +969,7 @@ export class CategoryService {
 	async getCategoriesWithSubcategories(): Promise<GetCategoriesWithSubcategoriesRes> {
 		const categories = await this.categoryRepository
 			.createQueryBuilder('category')
-			.innerJoinAndSelect('category.subcategories', 'subcategory')
+			.leftJoinAndSelect('category.subcategories', 'subcategory')
 			.select([
 				'category.id',
 				'category.name',
@@ -1045,64 +1077,82 @@ export class CategoryService {
 	}
 
 	async moveProductsToSubcategory(dto: UpdateCatSubcatProductsDto, request: any): Promise<MoveProductsToSubcategoryRes> {
+		if (!dto.products?.length) {
+			throw new BadRequestException('Debe seleccionar al menos un producto.');
+		}
+
+		const productIds = [...new Set(dto.products)];
+		const queryRunner = this.dataSource.createQueryRunner();
+		let affectedProducts = 0;
+
 		try {
-			if (!dto.products?.length) {
-				throw new BadRequestException('Debe seleccionar al menos un producto.');
-			}
+			await queryRunner.connect();
+			await queryRunner.startTransaction();
 
-			const [categoryExists, subcategory] = await Promise.all([
-				this.categoryRepository.exists({
-					where: {
-						id: dto.categoryId,
-					},
-				}),
+			// Usar el mismo orden de bloqueos que moveSubcategory.
+			const category = await queryRunner.manager.findOne(Category, {
+				where: { id: dto.categoryId },
+				select: { id: true },
+				lock: { mode: 'pessimistic_write' },
+			});
 
-				this.subcategoryRepository.findOne({
-					where: {
-						id: dto.subcategoryId,
-					},
-					select: {
-						id: true,
-						categoryId: true,
-					},
-				}),
-			]);
-
-			// Validar que la categoría exista
-			if (!categoryExists) {
+			if (!category) {
 				throw new NotFoundException('La categoría seleccionada no existe.');
 			}
 
-			// Validar que la subcategoría exista
+			const subcategory = await queryRunner.manager.findOne(Subcategory, {
+				where: { id: dto.subcategoryId },
+				select: { id: true, categoryId: true },
+				lock: { mode: 'pessimistic_write' },
+			});
+
 			if (!subcategory) {
 				throw new NotFoundException('La subcategoría seleccionada no existe.');
 			}
 
-			// Validar que la subcategoría pertenezca a la categoría
-			if (subcategory.categoryId !== dto.categoryId) {
-				throw new BadRequestException('La subcategoría seleccionada no pertenece a la categoría indicada.');
+			// Validar la pertenencia después de obtener el bloqueo.
+			if (subcategory.categoryId !== category.id) {
+				throw new BadRequestException('La subcategoría seleccionada no pertenece a la categoría indicada. Actualiza la selección e inténtalo nuevamente.');
 			}
 
-			const productIds = [...new Set(dto.products)];
-
-			const result = await this.productRepository
+			const result = await queryRunner.manager
 				.createQueryBuilder()
 				.update(Product)
 				.set({
-					categoryId: dto.categoryId,
-					subcategoryId: dto.subcategoryId,
+					categoryId: subcategory.categoryId,
+					subcategoryId: subcategory.id,
 					status: 'draft',
-					statusAt: () => 'CURRENT_TIMESTAMP',
+					statusAt: () => `CASE WHEN "status" IS DISTINCT FROM 'draft' THEN CURRENT_TIMESTAMP ELSE "statusAt" END`,
 				})
 				.where('id IN (:...productIds)', {
 					productIds,
 				})
 				.execute();
 
-			if (!result.affected) {
+			affectedProducts = result.affected ?? 0;
+
+			if (!affectedProducts) {
 				throw new NotFoundException('No se encontraron los productos seleccionados.');
 			}
 
+			await queryRunner.commitTransaction();
+		} catch (error: unknown) {
+			if (queryRunner.isTransactionActive) {
+				await queryRunner.rollbackTransaction();
+			}
+
+			if (error instanceof BadRequestException || error instanceof NotFoundException || error instanceof InternalServerErrorException) {
+				throw error;
+			}
+
+			throw new InternalServerErrorException('Ocurrió un problema en el servidor.');
+		} finally {
+			if (!queryRunner.isReleased) {
+				await queryRunner.release();
+			}
+		}
+
+		try {
 			await this.kibanaService.audit({
 				action: 'move_products_to_subcategory',
 				performedBy: request.user.id,
@@ -1112,25 +1162,24 @@ export class CategoryService {
 					products: productIds,
 				}),
 				response: JSON.stringify({
-					affected: result.affected,
+					affected: affectedProducts,
 				}),
 				requestId: request.requestId,
 			});
-
-			return {
-				message: result.affected === 1 ? 'El producto se movió correctamente.' : `${result.affected} productos se movieron correctamente.`,
-				data: result.affected,
-			};
-		} catch (err: unknown) {
-			if (err) throw err;
-			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
+		} catch (error: unknown) {
+			console.error('No se pudo registrar la auditoría.', error);
 		}
+
+		return {
+			message: affectedProducts === 1 ? 'El producto se movió correctamente.' : `${affectedProducts} productos se movieron correctamente.`,
+			data: affectedProducts,
+		};
 	}
 
 	async moveSubcategory(subcategoryId: string, dto: MoveSubcategoryDto, request: any): Promise<MoveSubcategoryRes> {
 		const queryRunner = this.dataSource.createQueryRunner();
 
-		let movedSubcategory: Pick<Subcategory, 'id' | 'name' | 'categoryId'> | undefined;
+		let movedSubcategory: Pick<Subcategory, 'id' | 'name' | 'categoryId' | 'status'> | undefined;
 
 		let affectedProducts = 0;
 
@@ -1138,13 +1187,15 @@ export class CategoryService {
 			await queryRunner.connect();
 			await queryRunner.startTransaction();
 
-			const categoryExists = await queryRunner.manager.exists(Category, {
+			const category = await queryRunner.manager.findOne(Category, {
 				where: {
 					id: dto.categoryId,
 				},
+				select: { id: true, status: true },
+				lock: { mode: 'pessimistic_write' },
 			});
 
-			if (!categoryExists) {
+			if (!category) {
 				throw new NotFoundException('La categoría seleccionada no existe.');
 			}
 
@@ -1156,6 +1207,7 @@ export class CategoryService {
 					id: true,
 					name: true,
 					categoryId: true,
+					status: true,
 				},
 				lock: {
 					mode: 'pessimistic_write',
@@ -1170,16 +1222,21 @@ export class CategoryService {
 				throw new BadRequestException('La subcategoría ya pertenece a la categoría seleccionada.');
 			}
 
+			const nextStatus = category.status && subcategory.status;
+			const statusChanged = subcategory.status !== nextStatus;
+
 			const subcategoryResult = await queryRunner.manager
 				.createQueryBuilder()
 				.update(Subcategory)
 				.set({
-					categoryId: dto.categoryId,
+					categoryId: category.id,
+					status: nextStatus,
+					...(statusChanged && { statusAt: () => 'CURRENT_TIMESTAMP' }),
 				})
 				.where('id = :subcategoryId', {
 					subcategoryId,
 				})
-				.returning(['id', 'name', 'categoryId'])
+				.returning(['id', 'name', 'categoryId', 'status'])
 				.execute();
 
 			if (subcategoryResult.affected !== 1 || !subcategoryResult.raw[0]) {
@@ -1190,7 +1247,11 @@ export class CategoryService {
 				.createQueryBuilder()
 				.update(Product)
 				.set({
-					categoryId: dto.categoryId,
+					categoryId: category.id,
+					...(!nextStatus && {
+						status: 'draft',
+						statusAt: () => `CASE WHEN "status" IS DISTINCT FROM 'draft' THEN CURRENT_TIMESTAMP ELSE "statusAt" END`,
+					}),
 				})
 				.where('subcategoryId = :subcategoryId', {
 					subcategoryId,
@@ -1231,6 +1292,7 @@ export class CategoryService {
 				response: JSON.stringify({
 					subcategoryId,
 					categoryId: dto.categoryId,
+					status: movedSubcategory.status,
 					affectedProducts,
 				}),
 				requestId: request.requestId,

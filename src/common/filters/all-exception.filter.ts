@@ -14,7 +14,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
 		const request = ctx.getRequest();
 
 		let status = HttpStatus.INTERNAL_SERVER_ERROR;
-		let message: string | object = 'Ha ocurrido un error interno, intente más tarde';
+		let message: string | object = 'Ha ocurrido un error inesperado.';
 		let code = 'INTERNAL_ERROR';
 		let validationMessages: any = null;
 

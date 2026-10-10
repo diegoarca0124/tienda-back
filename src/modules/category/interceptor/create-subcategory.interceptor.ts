@@ -4,6 +4,7 @@ import { CreateCategoryDto } from '../dto/create-category.dto';
 import { CategoryService } from '../category.service';
 import { CreateSubcategoryDto } from '../dto/create-subcategory.dto';
 import { CategoryValidator } from '../validators/category.validator';
+import { isValidName } from '../utils/is-valid-name.util';
 import { sanitizeSvg } from '@/common/utils/validate-svg.util';
 
 @Injectable()
@@ -47,7 +48,12 @@ export class CreateSubcategoryInterceptor extends BaseValidationInterceptor<Crea
 			}
 		}
 
-		if (typeof body.name === 'string' && body.name) {
+		if (typeof body.name === 'string' && !isValidName(body.name)) {
+			messages.push({
+				msm: 'El nombre solo puede contener letras, números y espacios entre palabras.',
+				field: 'name',
+			});
+		} else if (typeof body.name === 'string' && body.name) {
 			const isNameExist = await this.categoryValidator.existsNameSubcategory(body.name);
 
 			if (isNameExist) {
