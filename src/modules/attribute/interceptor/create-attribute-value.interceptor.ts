@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { BaseValidationInterceptor } from '@/common/interceptors/base-validation.interceptor';
-import { AttributeService } from '../attribute.service';
+import { isUUID } from 'class-validator';
+import { capitalizeWords } from '@/common/utils/string.util';
 import { CreateAttributeValueDto } from '../dto/create-attribute-value.dto';
 import { AttributeValidator } from '../validators/attribute.validator';
 
@@ -32,8 +33,8 @@ export class CreateAttributeValueInterceptor extends BaseValidationInterceptor<C
 	private async validateFieldsExist(body: any): Promise<{ msm: string; field: string }[]> {
 		const messages: { msm: string; field: string }[] = [];
 
-		if (body.value && body.attributeId) {
-			const existsValue = await this.attributeValidator.existsValueInAttribute(body.value, body.attributeId);
+		if (typeof body.value === 'string' && body.value.trim() && isUUID(body.attributeId, '4')) {
+			const existsValue = await this.attributeValidator.existsValueInAttribute(capitalizeWords(body.value), body.attributeId);
 			if (existsValue) {
 				messages.push({
 					msm: 'El valor ya existe para este atributo.',

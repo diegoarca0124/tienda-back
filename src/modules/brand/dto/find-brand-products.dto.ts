@@ -93,6 +93,16 @@ export class FindBrandProductsQueryDto {
     subcategoryIds?: string[];
 
     @Transform(({ value }) => {
+        value = rejectRepeatedParameter(value, 'categoryIds');
+        if (value === undefined || value === 'Todos') return undefined;
+        if (typeof value !== 'string') return value;
+        return [...new Set(value.split(',').map((id) => id.trim().toLowerCase()))];
+    })
+    @IsOptional()
+    @IsUUID('4', { each: true })
+    categoryIds?: string[];
+
+    @Transform(({ value }) => {
         value = rejectRepeatedParameter(value, 'quality');
         return value === undefined ? 'Todos' : value;
     })

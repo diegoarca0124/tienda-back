@@ -1,9 +1,10 @@
-import { Entity, Column, PrimaryGeneratedColumn, UpdateDateColumn, CreateDateColumn, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, UpdateDateColumn, CreateDateColumn, OneToMany, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { Category } from './category.entity';
 import { Attribute } from './attribute.entity';
 import { ProductDescription } from './product-description.entity';
 
 @Entity('attribute_values')
+@Index('UQ_ATTRIBUTE_VALUES_NORMALIZED', { synchronize: false })
 export class AttributeValue {
 	@PrimaryGeneratedColumn('uuid')
 	id: string;

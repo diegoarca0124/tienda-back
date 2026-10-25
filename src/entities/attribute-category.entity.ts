@@ -1,9 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn, UpdateDateColumn, Column, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn, UpdateDateColumn, Column, JoinColumn, Index } from 'typeorm';
 import { Attribute } from './attribute.entity';
 import { Category } from './category.entity';
 import { AttributeGroup } from './attribute-group.entity';
 
 @Entity('attribute_categories')
+@Index('UQ_ATTRIBUTE_CATEGORIES_GROUP_CATEGORY', ['attributeGroupId', 'categoryId'], { unique: true })
 export class AttributeCategory {
 	@PrimaryGeneratedColumn('uuid')
 	id: string;

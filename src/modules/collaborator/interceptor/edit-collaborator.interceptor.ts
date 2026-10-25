@@ -15,8 +15,6 @@ export class EditCollaboratorInterceptor extends BaseValidationInterceptor<EditC
 	}
 
 	protected async validateBody(body: any, request: any): Promise<{ field: string; message: string }[]> {
-		console.log('EditCollaboratorInterceptor', body);
-
 		const customErrors: { field: string; message: string }[] = [];
 
 		const fieldsErrors = await this.validateFieldsExist(body, request);

@@ -1,15 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { BaseValidationInterceptor } from '@/common/interceptors/base-validation.interceptor';
-import { AttributeService } from '../attribute.service';
 import { CreateGroupAttributeDto } from '../dto/create-group-attribute.dto';
 import { AttributeValidator } from '../validators/attribute.validator';
 
 @Injectable()
 export class CreateGroupAttributeInterceptor extends BaseValidationInterceptor<CreateGroupAttributeDto> {
-	constructor(
-		private readonly attributeService: AttributeService,
-		private readonly attributeValidator: AttributeValidator
-	) {
+	constructor(private readonly attributeValidator: AttributeValidator) {
 		super();
 	}
 
@@ -34,6 +30,17 @@ export class CreateGroupAttributeInterceptor extends BaseValidationInterceptor<C
 
 	private async validateFieldsExist(body: any): Promise<{ msm: string; field: string }[]> {
 		const messages: { msm: string; field: string }[] = [];
+
+		if (typeof body.name === 'string' && body.name) {
+			const isNameExist = await this.attributeValidator.existsNameGroupAttribute(body.name);
+
+			if (isNameExist) {
+				messages.push({
+					msm: 'Ya existe un grupo de atributos con ese nombre.',
+					field: 'name',
+				});
+			}
+		}
 
 		if (body.categories) {
 			const existsAllCategories = await this.attributeValidator.existsAllCategories(body.categories);

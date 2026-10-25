@@ -2,9 +2,14 @@ import { ConflictException } from '@nestjs/common';
 
 const messages: Record<string, string> = {
 	UQ_CATEGORIES_NAME_NORMALIZED: 'Ya existe una categoría con ese nombre.',
+	UQ_CATEGORIES_PREFIX_NORMALIZED: 'Ya existe una categoría con ese prefijo.',
+	// Support databases that have not applied the named-index migration yet.
+	UQ_1f8cfddd595b07a0726c55a22d8: 'Ya existe una categoría con ese prefijo.',
 	UQ_CATEGORIES_SLUG: 'Intenta con un nombre de categoría diferente: el slug ya existe.',
 	UQ_SUBCATEGORIES_NAME_NORMALIZED: 'Ya existe una subcategoría con ese nombreEEEEWR.',
 	UQ_SUBCATEGORIES_SLUG: 'Intenta con un nombre de subcategoría diferente: el slug ya existe.',
+	UQ_SUBCATEGORIES_PREFIX_NORMALIZED: 'Ya existe una subcategoría con ese prefijo.',
+	UQ_ed13bca77ebe87d6dd663ae2a06: 'Ya existe una subcategoría con ese prefijo.',
 };
 
 export function rethrowCategoryUniqueViolation(error: unknown): void {

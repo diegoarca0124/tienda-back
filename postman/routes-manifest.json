@@ -1,0 +1,529 @@
+{
+  "generatedFrom": "Controladores de src/ y PrometheusModule",
+  "requestCount": 78,
+  "modules": {
+    "collaborator": 12,
+    "category": 19,
+    "brand": 8,
+    "attribute": 17,
+    "product": 20,
+    "system": 2
+  },
+  "routes": [
+    {
+      "method": "POST",
+      "path": "/api/collaborator/login",
+      "handler": "login",
+      "source": "src/modules/collaborator/collaborator.controller.ts",
+      "bodyClass": "LoginDto"
+    },
+    {
+      "method": "GET",
+      "path": "/api/collaborator/validate_token",
+      "handler": "validateToken",
+      "source": "src/modules/collaborator/collaborator.controller.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/collaborator/logout",
+      "handler": "logout",
+      "source": "src/modules/collaborator/collaborator.controller.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/collaborator/createCollaborator",
+      "handler": "createCollaborator",
+      "source": "src/modules/collaborator/collaborator.controller.ts",
+      "bodyClass": "CreateCollaboratorDto"
+    },
+    {
+      "method": "GET",
+      "path": "/api/collaborator/getCollaborators",
+      "handler": "getCollaborators",
+      "source": "src/modules/collaborator/collaborator.controller.ts",
+      "queryClass": "FindCollaboratorsQueryDto"
+    },
+    {
+      "method": "GET",
+      "path": "/api/collaborator/getCollaborator/:id",
+      "handler": "getCollaborator",
+      "source": "src/modules/collaborator/collaborator.controller.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/collaborator/updateCollaborator/:id",
+      "handler": "updateCollaborator",
+      "source": "src/modules/collaborator/collaborator.controller.ts",
+      "bodyClass": "EditCollaboratorDto"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/collaborator/updateCollaboratorStatus/:id",
+      "handler": "updateCollaboratorStatus",
+      "source": "src/modules/collaborator/collaborator.controller.ts",
+      "bodyClass": "UpdateCollaboratorStatusDto"
+    },
+    {
+      "method": "POST",
+      "path": "/api/collaborator/updateCollaboratorsStatus",
+      "handler": "updateCollaboratorsStatus",
+      "source": "src/modules/collaborator/collaborator.controller.ts",
+      "bodyClass": "UpdateCollaboratorsStatusDto"
+    },
+    {
+      "method": "POST",
+      "path": "/api/collaborator/exportCollaborators",
+      "handler": "exportCollaborators",
+      "source": "src/modules/collaborator/collaborator.controller.ts",
+      "bodyClass": "ExportCollaboratorsDto"
+    },
+    {
+      "method": "POST",
+      "path": "/api/collaborator/importCollaborators",
+      "handler": "importCollaborators",
+      "source": "src/modules/collaborator/collaborator.controller.ts",
+      "bodyClass": "ImportCollaboratorsDto"
+    },
+    {
+      "method": "POST",
+      "path": "/api/collaborator/revokeCollaboratorSessions/:id",
+      "handler": "revokeCollaboratorSessions",
+      "source": "src/modules/collaborator/collaborator.controller.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/category/createCategory",
+      "handler": "createCategory",
+      "source": "src/modules/category/category.controller.ts",
+      "bodyClass": "CreateCategoryDto"
+    },
+    {
+      "method": "GET",
+      "path": "/api/category/get_categories_by_select",
+      "handler": "get_categories_by_select",
+      "source": "src/modules/category/category.controller.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/category/getCategories",
+      "handler": "getCategories",
+      "source": "src/modules/category/category.controller.ts",
+      "queryClass": "FindCategoriesQueryDto"
+    },
+    {
+      "method": "GET",
+      "path": "/api/category/getCategory/:id",
+      "handler": "getCategory",
+      "source": "src/modules/category/category.controller.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/category/updateCategoryStatus/:id",
+      "handler": "updateCategoryStatus",
+      "source": "src/modules/category/category.controller.ts",
+      "bodyClass": "UpdateCategoryStatusDto"
+    },
+    {
+      "method": "POST",
+      "path": "/api/category/updateCategoriesStatus",
+      "handler": "updateCategoriesStatus",
+      "source": "src/modules/category/category.controller.ts",
+      "bodyClass": "UpdatCategoriesStatusDto"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/category/updateCategory/:id",
+      "handler": "updateCategory",
+      "source": "src/modules/category/category.controller.ts",
+      "bodyClass": "EditCategoryDto"
+    },
+    {
+      "method": "POST",
+      "path": "/api/category/createSubcategory",
+      "handler": "createSubcategory",
+      "source": "src/modules/category/category.controller.ts",
+      "bodyClass": "CreateSubcategoryDto"
+    },
+    {
+      "method": "GET",
+      "path": "/api/category/get_subcat_by_select",
+      "handler": "get_subcat_by_select",
+      "source": "src/modules/category/category.controller.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/category/getCategoriesWithSubcategories",
+      "handler": "getCategoriesWithSubcategories",
+      "source": "src/modules/category/category.controller.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/category/getSubcategories/:id",
+      "handler": "getSubcategories",
+      "source": "src/modules/category/category.controller.ts",
+      "queryClass": "GetSubcategoriesQueryDto"
+    },
+    {
+      "method": "GET",
+      "path": "/api/category/getSubcategoriesByCategorySelect/:id",
+      "handler": "getSubcategoriesByCategorySelect",
+      "source": "src/modules/category/category.controller.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/category/updateSubcategoryStatus/:id",
+      "handler": "updateSubcategoryStatus",
+      "source": "src/modules/category/category.controller.ts",
+      "bodyClass": "UpdateSubcategoryStatusDto"
+    },
+    {
+      "method": "POST",
+      "path": "/api/category/updateSubcategoriesStatus",
+      "handler": "updateSubcategoriesStatus",
+      "source": "src/modules/category/category.controller.ts",
+      "bodyClass": "UpdateSubcategoriesStatusDto"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/category/updateSubcategory/:id",
+      "handler": "updateSubcategory",
+      "source": "src/modules/category/category.controller.ts",
+      "bodyClass": "EditSubcategoryDto"
+    },
+    {
+      "method": "GET",
+      "path": "/api/category/getBrandsByCategory/:categoryId",
+      "handler": "getBrandsByCategory",
+      "source": "src/modules/category/category.controller.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/category/findCategoryProducts/:id",
+      "handler": "findCategoryProducts",
+      "source": "src/modules/category/category.controller.ts",
+      "queryClass": "FindCategoryProductsQueryDto"
+    },
+    {
+      "method": "POST",
+      "path": "/api/category/moveProductsToSubcategory",
+      "handler": "moveProductsToSubcategory",
+      "source": "src/modules/category/category.controller.ts",
+      "bodyClass": "UpdateCatSubcatProductsDto"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/category/moveSubcategory/:id",
+      "handler": "moveSubcategory",
+      "source": "src/modules/category/category.controller.ts",
+      "bodyClass": "MoveSubcategoryDto"
+    },
+    {
+      "method": "POST",
+      "path": "/api/brand/createBrand",
+      "handler": "createBrand",
+      "source": "src/modules/brand/brand.controller.ts",
+      "bodyClass": "CreateBrandDto"
+    },
+    {
+      "method": "GET",
+      "path": "/api/brand/getBrands",
+      "handler": "getBrands",
+      "source": "src/modules/brand/brand.controller.ts",
+      "queryClass": "FindBrandsQueryDto"
+    },
+    {
+      "method": "GET",
+      "path": "/api/brand/getBrandsSelect",
+      "handler": "getBrandsSelect",
+      "source": "src/modules/brand/brand.controller.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/brand/getBrand/:id",
+      "handler": "getBrand",
+      "source": "src/modules/brand/brand.controller.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/brand/updateBrandStatus/:id",
+      "handler": "updateBrandStatus",
+      "source": "src/modules/brand/brand.controller.ts",
+      "bodyClass": "UpdateBrandStatusDto"
+    },
+    {
+      "method": "POST",
+      "path": "/api/brand/updateBrandsStatus",
+      "handler": "updateBrandsStatus",
+      "source": "src/modules/brand/brand.controller.ts",
+      "bodyClass": "UpdateBrandsStatusDto"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/brand/updateBrand/:id",
+      "handler": "updateBrand",
+      "source": "src/modules/brand/brand.controller.ts",
+      "bodyClass": "EditBrandDto"
+    },
+    {
+      "method": "GET",
+      "path": "/api/brand/findBrandProducts/:id",
+      "handler": "findBrandProducts",
+      "source": "src/modules/brand/brand.controller.ts",
+      "queryClass": "FindBrandProductsQueryDto"
+    },
+    {
+      "method": "POST",
+      "path": "/api/attribute/createGroupAttribute",
+      "handler": "createGroupAttribute",
+      "source": "src/modules/attribute/attribute.controller.ts",
+      "bodyClass": "CreateGroupAttributeDto"
+    },
+    {
+      "method": "GET",
+      "path": "/api/attribute/getAttributesGroups",
+      "handler": "getAttributesGroups",
+      "source": "src/modules/attribute/attribute.controller.ts",
+      "queryClass": "FindAttributesGroupsQueryDto"
+    },
+    {
+      "method": "GET",
+      "path": "/api/attribute/getAttributeGroup/:id",
+      "handler": "getAttributeGroup",
+      "source": "src/modules/attribute/attribute.controller.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/attribute/getCategoriesByAttributeGroup/:id",
+      "handler": "getCategoriesByAttributeGroup",
+      "source": "src/modules/attribute/attribute.controller.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/attribute/updateAttributeGroupsStatus",
+      "handler": "updateAttributeGroupsStatus",
+      "source": "src/modules/attribute/attribute.controller.ts",
+      "bodyClass": "UpdateAttributeGroupsStatusDto"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/attribute/updateAttributeGroup/:id",
+      "handler": "updateAttributeGroup",
+      "source": "src/modules/attribute/attribute.controller.ts",
+      "bodyClass": "EditGroupAttributeDto"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/attribute/updateAttributeGroupStatus/:id",
+      "handler": "updateAttributeGroupStatus",
+      "source": "src/modules/attribute/attribute.controller.ts",
+      "bodyClass": "UpdateAttributeGroupStatusDto"
+    },
+    {
+      "method": "POST",
+      "path": "/api/attribute/createAttributeValue",
+      "handler": "createAttributeValue",
+      "source": "src/modules/attribute/attribute.controller.ts",
+      "bodyClass": "CreateAttributeValueDto"
+    },
+    {
+      "method": "POST",
+      "path": "/api/attribute/createAttribute",
+      "handler": "createAttribute",
+      "source": "src/modules/attribute/attribute.controller.ts",
+      "bodyClass": "CreateAttributeDto"
+    },
+    {
+      "method": "GET",
+      "path": "/api/attribute/getAttributesByCategory/:id",
+      "handler": "getAttributesByCategory",
+      "source": "src/modules/attribute/attribute.controller.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/attribute/getAttributes/:id",
+      "handler": "getAttributes",
+      "source": "src/modules/attribute/attribute.controller.ts",
+      "queryClass": "FindAttributesQueryDto"
+    },
+    {
+      "method": "GET",
+      "path": "/api/attribute/getAttributeValues/:id",
+      "handler": "getAttributeValues",
+      "source": "src/modules/attribute/attribute.controller.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/attribute/getAttribute/:id",
+      "handler": "getAttribute",
+      "source": "src/modules/attribute/attribute.controller.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/attribute/updateAttributeStatus/:id",
+      "handler": "updateAttributeStatus",
+      "source": "src/modules/attribute/attribute.controller.ts",
+      "bodyClass": "UpdateAttributeStatusDto"
+    },
+    {
+      "method": "POST",
+      "path": "/api/attribute/updateAttributesStatus",
+      "handler": "updateAttributesStatus",
+      "source": "src/modules/attribute/attribute.controller.ts",
+      "bodyClass": "UpdateAttributesStatusDto"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/attribute/updateAttribute/:id",
+      "handler": "updateAttribute",
+      "source": "src/modules/attribute/attribute.controller.ts",
+      "bodyClass": "EditAttributeDto"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/attribute/deleteAttributeValue/:id",
+      "handler": "deleteAttributeValue",
+      "source": "src/modules/attribute/attribute.controller.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/product/create_product",
+      "handler": "create_product",
+      "source": "src/modules/product/product.controller.ts",
+      "bodyClass": "CreateProductDto"
+    },
+    {
+      "method": "GET",
+      "path": "/api/product/get_products",
+      "handler": "get_products",
+      "source": "src/modules/product/product.controller.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/product/get_product/:id",
+      "handler": "get_product",
+      "source": "src/modules/product/product.controller.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/product/update_product/:id",
+      "handler": "update_product",
+      "source": "src/modules/product/product.controller.ts",
+      "bodyClass": "UpdateProductDto"
+    },
+    {
+      "method": "GET",
+      "path": "/api/product/find_products_to_copy/:id",
+      "handler": "find_products_to_copy",
+      "source": "src/modules/product/product.controller.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/product/import_product_for_group/:productGroupId",
+      "handler": "import_product_for_group",
+      "source": "src/modules/product/product.controller.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/product/get_groups_for_create_product/:categoryId",
+      "handler": "get_groups_for_create_product",
+      "source": "src/modules/product/product.controller.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/product/update_group_in_product/:id",
+      "handler": "update_group_in_product",
+      "source": "src/modules/product/product.controller.ts",
+      "bodyClass": "UpdateGroupInProductDto"
+    },
+    {
+      "method": "GET",
+      "path": "/api/product/get_photos_product/:id",
+      "handler": "get_photos_product",
+      "source": "src/modules/product/product.controller.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/product/set_miniature_product/:id",
+      "handler": "set_miniature_product",
+      "source": "src/modules/product/product.controller.ts",
+      "bodyClass": "SetMiniatureProductDto"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/product/set_cover_product/:id",
+      "handler": "set_cover_product",
+      "source": "src/modules/product/product.controller.ts",
+      "bodyClass": "SetCoverProductDto"
+    },
+    {
+      "method": "POST",
+      "path": "/api/product/upload_images_product",
+      "handler": "upload_images_product",
+      "source": "src/modules/product/product.controller.ts",
+      "bodyClass": "UploadImagesProductProductDto"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/product/delete_image_product/:id",
+      "handler": "delete_image_product",
+      "source": "src/modules/product/product.controller.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/product/create_variation_product",
+      "handler": "create_variation_product",
+      "source": "src/modules/product/product.controller.ts",
+      "bodyClass": "CreateVariationProductDto"
+    },
+    {
+      "method": "GET",
+      "path": "/api/product/get_variations_product/:id",
+      "handler": "get_variations_product",
+      "source": "src/modules/product/product.controller.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/product/update_status_variation/:id",
+      "handler": "update_status_variation",
+      "source": "src/modules/product/product.controller.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/product/update_name_variation/:id",
+      "handler": "update_name_variation",
+      "source": "src/modules/product/product.controller.ts",
+      "bodyClass": "UpdateNameVariationDto"
+    },
+    {
+      "method": "GET",
+      "path": "/api/product/get_characteristics_product/:id",
+      "handler": "get_characteristics_product",
+      "source": "src/modules/product/product.controller.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/product/update_feature_attribute/:id",
+      "handler": "update_feature_attribute",
+      "source": "src/modules/product/product.controller.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/product/update_product_description",
+      "handler": "update_product_description",
+      "source": "src/modules/product/product.controller.ts",
+      "bodyClass": "EditProductDescriptionsDto"
+    },
+    {
+      "method": "GET",
+      "path": "/api/",
+      "handler": "getHello",
+      "source": "src/app.controller.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/metrics",
+      "handler": "metrics",
+      "source": "src/app.module.ts"
+    }
+  ]
+}

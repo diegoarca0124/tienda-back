@@ -57,13 +57,11 @@ export abstract class BaseValidationInterceptor<T> implements NestInterceptor {
 		});
 
 		// ✅ Errores de archivos
-		if (files) {
-			const fileErrors = await this.validateFiles(files);
-			fileErrors.forEach((err) => {
-				if (!groupedErrors[err.field]) groupedErrors[err.field] = [];
-				groupedErrors[err.field].push(err.message);
-			});
-		}
+		const fileErrors = await this.validateFiles(files ?? {});
+		fileErrors.forEach((err) => {
+			if (!groupedErrors[err.field]) groupedErrors[err.field] = [];
+			groupedErrors[err.field].push(err.message);
+		});
 
 		if (Object.keys(groupedErrors).length > 0) {
 			throw new BadRequestException({

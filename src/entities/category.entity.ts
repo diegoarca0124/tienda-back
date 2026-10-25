@@ -7,12 +7,13 @@ import { ProductGroup } from './product-group.entity';
 @Entity('categories')
 // Expression index created by migration; preserve it during schema synchronization.
 @Index('UQ_CATEGORIES_NAME_NORMALIZED', { synchronize: false })
+@Index('UQ_CATEGORIES_PREFIX_NORMALIZED', { synchronize: false })
 @Index('UQ_CATEGORIES_SLUG', ['slug'], { unique: true })
 export class Category {
 	@PrimaryGeneratedColumn('uuid')
 	id: string;
 
-	@Column({ type: 'varchar', unique: true })
+	@Column({ type: 'varchar' })
 	prefix: string;
 
 	@Column({

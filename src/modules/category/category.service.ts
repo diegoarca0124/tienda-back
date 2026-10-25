@@ -433,12 +433,10 @@ export class CategoryService {
 
 		const updateData = {
 			...dto,
-			...(currentCategory.name !== dto.name && {
-				slug: slugify(dto.name, {
-					lower: true,
-					strict: true,
-					trim: true,
-				}),
+			slug: slugify(dto.name, {
+				lower: true,
+				strict: true,
+				trim: true,
 			}),
 			updatedAt: () => 'CURRENT_TIMESTAMP',
 		};
@@ -700,12 +698,10 @@ export class CategoryService {
 
 			const updateData = {
 				...dto,
-				...(currentSubcategory.name !== dto.name && {
-					slug: slugify(dto.name, {
-						lower: true,
-						strict: true,
-						trim: true,
-					}),
+				slug: slugify(dto.name, {
+					lower: true,
+					strict: true,
+					trim: true,
 				}),
 				updatedAt: () => 'CURRENT_TIMESTAMP',
 			};
@@ -972,12 +968,14 @@ export class CategoryService {
 			.leftJoinAndSelect('category.subcategories', 'subcategory')
 			.select([
 				'category.id',
+				'category.prefix',
 				'category.name',
 				'category.color',
 				'category.icon',
 				'category.status',
 				'subcategory.id',
 				'subcategory.name',
+				'subcategory.prefix',
 				'subcategory.status',
 				'subcategory.categoryId',
 			])

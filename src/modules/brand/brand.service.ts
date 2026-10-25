@@ -26,7 +26,8 @@ import { awsProcessImage } from '@/common/utils/aws-process-image.util';
 import { deleteImageVariants } from '@/common/utils/delete-image-variants.util';
 import { UpdateBrandStatusDto } from './dto/update-brand-status.dto';
 import { FindBrandProductsQueryDto } from './dto/find-brand-products.dto';
-import { FindCategoryProductsBuilder } from '../category/builders/find-category-products.builder';
+import { FindBrandProductsBuilder } from './builders/find-brand-products.builder';
+import { rethrowBrandUniqueViolation } from './utils/index-messages.util';
 
 interface ProductPreview {
 	id: string;
@@ -47,6 +48,8 @@ export class BrandService {
 	) {}
 
 	async createBrand(dto: CreateBrandDto, files: FilesCreateBrand, request: any): Promise<CreateBrandRes> {
+		const { logoUrl: _logoUrl, bannerUrl: _bannerUrl, ...brandData } = dto;
+		const imageData: Partial<Pick<Brand, 'logoUrl' | 'bannerUrl'>> = {};
 		const newImages: string[] = [];
 		let id: string;
 
@@ -55,13 +58,13 @@ export class BrandService {
 			const bannerFile = files?.bannerUrl?.[0];
 
 			if (logoFile) {
-				dto.logoUrl = await awsProcessImage(logoFile, 'brands');
-				newImages.push(dto.logoUrl);
+				imageData.logoUrl = await awsProcessImage(logoFile, 'brands');
+				newImages.push(imageData.logoUrl);
 			}
 
 			if (bannerFile) {
-				dto.bannerUrl = await awsProcessImage(bannerFile, 'brands');
-				newImages.push(dto.bannerUrl);
+				imageData.bannerUrl = await awsProcessImage(bannerFile, 'brands');
+				newImages.push(imageData.bannerUrl);
 			}
 
 			const result = await this.brandRepository
@@ -69,7 +72,8 @@ export class BrandService {
 				.insert()
 				.into(Brand)
 				.values({
-					...dto,
+					...brandData,
+					...imageData,
 					slug: slugify(dto.name, {
 						lower: true,
 						strict: true,
@@ -86,6 +90,7 @@ export class BrandService {
 			}
 		} catch (error) {
 			await Promise.allSettled(newImages.map((filename) => deleteImageVariants('brands', filename)));
+			rethrowBrandUniqueViolation(error);
 			throw error;
 		}
 
@@ -93,7 +98,7 @@ export class BrandService {
 			action: 'createBrand',
 			performedBy: request.user.id,
 			targetId: id,
-			requestBody: JSON.stringify(dto),
+			requestBody: JSON.stringify({ ...brandData, ...imageData }),
 			response: JSON.stringify({ id }),
 			requestId: request.requestId,
 		});
@@ -198,38 +203,51 @@ export class BrandService {
 	}
 
 	async updateBrandStatus(id: string, dto: UpdateBrandStatusDto, request: any): Promise<UpdateBrandStatusRes> {
-		const result = await this.brandRepository
-			.createQueryBuilder()
-			.update(Brand)
-			.set({
-				status: dto.status,
-				statusAt: () => 'CURRENT_TIMESTAMP',
-			})
-			.where('id = :id', { id })
-			.andWhere('status IS DISTINCT FROM :status', { status: dto.status })
-			.returning(['id', 'status', 'name'])
-			.execute();
+		const { updatedBrand, affectedProducts } = await this.brandRepository.manager.transaction(async (manager) => {
+			const result = await manager
+				.createQueryBuilder()
+				.update(Brand)
+				.set({
+					status: dto.status,
+					statusAt: () => 'CURRENT_TIMESTAMP',
+				})
+				.where('id = :id', { id })
+				.andWhere('status IS DISTINCT FROM :status', { status: dto.status })
+				.returning(['id', 'status', 'name'])
+				.execute();
 
-		if (!result.affected) {
-			const brandExists = await this.brandRepository.exists({
-				where: { id },
-			});
+			if (!result.affected) {
+				const brandExists = await manager.exists(Brand, {
+					where: { id },
+				});
 
-			if (!brandExists) {
-				throw new NotFoundException('No se encontró la marca.');
+				if (!brandExists) {
+					throw new NotFoundException('No se encontró la marca.');
+				}
+
+				throw new BadRequestException(dto.status ? 'La marca ya se encuentra activa.' : 'La marca ya se encuentra inactiva.');
 			}
 
-			throw new BadRequestException(dto.status ? 'La marca ya se encuentra activa.' : 'La marca ya se encuentra inactiva.');
-		}
-
-		const updatedBrand = result.raw[0];
+			let affectedProducts = 0;
+			if (!dto.status) {
+				const productsResult = await manager
+					.createQueryBuilder()
+					.update(Product)
+					.set({ status: 'draft', statusAt: () => 'CURRENT_TIMESTAMP' })
+					.where('brandId = :id', { id })
+					.andWhere('status IS DISTINCT FROM :draftStatus', { draftStatus: 'draft' })
+					.execute();
+				affectedProducts = productsResult.affected ?? 0;
+			}
+			return { updatedBrand: result.raw[0], affectedProducts };
+		});
 
 		this.kibanaService.audit({
 			action: 'updateBrandStatus',
 			performedBy: request.user.id,
 			targetId: id,
 			requestBody: JSON.stringify(dto),
-			response: JSON.stringify(updatedBrand),
+			response: JSON.stringify({ ...updatedBrand, affectedProducts }),
 			requestId: request.requestId,
 		});
 
@@ -275,6 +293,8 @@ export class BrandService {
 	}
 
 	async updateBrand(id: string, dto: EditBrandDto, files: FilesUpdateBrand, request: any): Promise<UpdateBrandRes> {
+		const { logoUrl: _logoUrl, bannerUrl: _bannerUrl, ...brandData } = dto;
+		const imageData: Partial<Pick<Brand, 'logoUrl' | 'bannerUrl'>> = {};
 		const currentBrand = await this.brandRepository.findOne({
 			select: {
 				id: true,
@@ -291,22 +311,26 @@ export class BrandService {
 		const logoFile = files?.logoUrl?.[0];
 		const bannerFile = files?.bannerUrl?.[0];
 		const newImages: string[] = [];
-		const updateData = { ...dto };
 
 		let result;
 
 		try {
 			if (logoFile) {
-				dto.logoUrl = await awsProcessImage(logoFile, 'brands');
-				newImages.push(dto.logoUrl);
+				imageData.logoUrl = await awsProcessImage(logoFile, 'brands');
+				newImages.push(imageData.logoUrl);
 			}
 
 			if (bannerFile) {
-				dto.bannerUrl = await awsProcessImage(bannerFile, 'brands');
-				newImages.push(dto.bannerUrl);
+				imageData.bannerUrl = await awsProcessImage(bannerFile, 'brands');
+				newImages.push(imageData.bannerUrl);
 			}
 
-			console.log('dto', dto);
+			const updateData = {
+				...brandData,
+				...imageData,
+				slug: slugify(dto.name, { lower: true, strict: true, trim: true }),
+				...(dto.websiteUrl !== undefined ? { websiteUrl: dto.websiteUrl?.trim() || null } : {}),
+			};
 
 			result = await this.brandRepository
 				.createQueryBuilder()
@@ -328,6 +352,7 @@ export class BrandService {
 			}
 		} catch (error) {
 			await Promise.allSettled(newImages.map((filename) => deleteImageVariants('brands', filename)));
+			rethrowBrandUniqueViolation(error);
 			throw error;
 		}
 
@@ -335,7 +360,7 @@ export class BrandService {
 			action: 'update_brand',
 			performedBy: request.user.id,
 			targetId: id,
-			requestBody: JSON.stringify(dto),
+			requestBody: JSON.stringify({ ...brandData, ...imageData }),
 			response: JSON.stringify(result.raw[0]),
 			requestId: request.requestId,
 		});
@@ -361,33 +386,47 @@ export class BrandService {
 	async updateBrandsStatus(dto: UpdateBrandsStatusDto, request: any): Promise<UpdateBrandsStatusRes> {
 		const ids = [...new Set(dto.ids)];
 
-		const result = await this.brandRepository
-			.createQueryBuilder()
-			.update(Brand)
-			.set({
-				status: dto.status,
-				statusAt: () => 'CURRENT_TIMESTAMP',
-			})
-			.where('id IN (:...ids)', { ids })
-			.andWhere('status IS DISTINCT FROM :status', { status: dto.status })
-			.returning(['id'])
-			.execute();
+		const { updatedIds, affectedProducts } = await this.brandRepository.manager.transaction(async (manager) => {
+			const result = await manager
+				.createQueryBuilder()
+				.update(Brand)
+				.set({
+					status: dto.status,
+					statusAt: () => 'CURRENT_TIMESTAMP',
+				})
+				.where('id IN (:...ids)', { ids })
+				.andWhere('status IS DISTINCT FROM :status', { status: dto.status })
+				.returning(['id'])
+				.execute();
 
-		if (!result.affected) {
-			const existingBrand = await this.brandRepository.count({
-				where: {
-					id: In(ids),
-				},
-			});
+			if (!result.affected) {
+				const existingBrand = await manager.count(Brand, {
+					where: {
+						id: In(ids),
+					},
+				});
 
-			if (existingBrand === 0) {
-				throw new NotFoundException('No se encontraron marcas.');
+				if (existingBrand === 0) {
+					throw new NotFoundException('No se encontraron marcas.');
+				}
+
+				throw new BadRequestException(dto.status ? 'Las marcas seleccionadas ya se encuentran activas.' : 'Las marcas seleccionadas ya se encuentran inactivas.');
 			}
 
-			throw new BadRequestException(dto.status ? 'Las marcas seleccionadas ya se encuentran activas.' : 'Las marcas seleccionadas ya se encuentran inactivas.');
-		}
-
-		const updatedIds: string[] = result.raw.map((item: { id: string }) => item.id);
+			const updatedIds: string[] = result.raw.map((item: { id: string }) => item.id);
+			let affectedProducts = 0;
+			if (!dto.status) {
+				const productsResult = await manager
+					.createQueryBuilder()
+					.update(Product)
+					.set({ status: 'draft', statusAt: () => 'CURRENT_TIMESTAMP' })
+					.where('brandId IN (:...ids)', { ids })
+					.andWhere('status IS DISTINCT FROM :draftStatus', { draftStatus: 'draft' })
+					.execute();
+				affectedProducts = productsResult.affected ?? 0;
+			}
+			return { updatedIds, affectedProducts };
+		});
 
 		this.kibanaService.audit({
 			action: 'updateBrandsStatus',
@@ -397,6 +436,7 @@ export class BrandService {
 			response: JSON.stringify({
 				updatedIds,
 				total: updatedIds.length,
+				affectedProducts,
 			}),
 			requestId: request.requestId,
 		});
@@ -416,8 +456,8 @@ export class BrandService {
 				});
 			}
 
-			const exists = await this.brandRepository.exists({ where: { id: brandId } });
-			if (!exists) {
+			const brand = await this.brandRepository.findOne({ where: { id: brandId }, select: { id: true, name: true } });
+			if (!brand) {
 				throw new NotFoundException('No se encontró el registro.');
 			}
 
@@ -451,7 +491,7 @@ export class BrandService {
 					brandId,
 				});
 
-			FindCategoryProductsBuilder.applyFilters(queryBuilder, query);
+			FindBrandProductsBuilder.applyFilters(queryBuilder, query);
 
 			const totalProducts = await queryBuilder.clone().getCount();
 			const totalPages = Math.ceil(totalProducts / query.limit);
@@ -465,6 +505,7 @@ export class BrandService {
 			}));
 
 			return {
+				brand: brand.name,
 				products,
 				meta: {
 					totalProducts,
@@ -477,6 +518,7 @@ export class BrandService {
 					status: query.status,
 					sort: query.sort,
 					subcategoryIds: query.subcategoryIds?.join(',') ?? 'Todos',
+					categoryIds: query.categoryIds?.join(',') ?? 'Todos',
 					quality: query.quality,
 					visibility: query.visibility,
 					minPrice: query.minPrice,

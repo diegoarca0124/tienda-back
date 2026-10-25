@@ -94,8 +94,9 @@ export class EditBrandInterceptor extends BaseValidationInterceptor<EditBrandDto
 			}
 		}
 
-		if (body.websiteUrl) {
-			const isUrlValid = validateUrl(body.websiteUrl);
+		const websiteUrl = typeof body.websiteUrl === 'string' ? body.websiteUrl.trim() : body.websiteUrl;
+		if (websiteUrl) {
+			const isUrlValid = validateUrl(websiteUrl);
 			if (!isUrlValid) {
 				messages.push({
 					msm: 'La url del sitio no es valida.',

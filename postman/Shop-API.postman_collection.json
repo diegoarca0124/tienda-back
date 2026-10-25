@@ -1,0 +1,4605 @@
+{
+  "info": {
+    "_postman_id": "d2ec5d7a-0744-413e-8bac-d6acea84f0c7",
+    "name": "Shop · API completa",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Colección generada desde los controladores y DTOs actuales del backend.\n\n1. Configura baseUrl (incluye /api), loginEmail y loginPassword en Variables.\n2. Ejecuta Autenticación → Iniciar sesión: el token se guarda automáticamente.\n3. Configura los IDs o ejecuta las solicitudes de creación, cuyos IDs se guardan automáticamente.\n4. Selecciona archivos locales para las solicitudes multipart.\n\nLas peticiones están preparadas para ejecutarse individualmente. No se ha llamado a ningún endpoint para crear, editar o borrar datos al generar esta colección. Los nombres y datos de ejemplo son ficticios. Algunas rutas mantienen nombres antiguos porque así aparecen actualmente en tus controladores.\n\nLas pruebas integradas esperan una respuesta 2xx. Un 400/401/404 puede indicar variables pendientes, registros inexistentes o validaciones de negocio. No contiene credenciales reales."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000/api",
+      "type": "string",
+      "description": "URL del backend con prefijo /api y sin barra final."
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string",
+      "description": "Se completa al ejecutar login."
+    },
+    {
+      "key": "loginEmail",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "loginPassword",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "collaboratorId",
+      "value": "",
+      "type": "string",
+      "description": "ID de un registro existente; las creaciones guardan automáticamente sus IDs cuando la respuesta lo permite."
+    },
+    {
+      "key": "sessionUserId",
+      "value": "",
+      "type": "string",
+      "description": "ID de un registro existente; las creaciones guardan automáticamente sus IDs cuando la respuesta lo permite."
+    },
+    {
+      "key": "categoryId",
+      "value": "",
+      "type": "string",
+      "description": "ID de un registro existente; las creaciones guardan automáticamente sus IDs cuando la respuesta lo permite."
+    },
+    {
+      "key": "subcategoryId",
+      "value": "",
+      "type": "string",
+      "description": "ID de un registro existente; las creaciones guardan automáticamente sus IDs cuando la respuesta lo permite."
+    },
+    {
+      "key": "brandId",
+      "value": "",
+      "type": "string",
+      "description": "ID de un registro existente; las creaciones guardan automáticamente sus IDs cuando la respuesta lo permite."
+    },
+    {
+      "key": "attributeGroupId",
+      "value": "",
+      "type": "string",
+      "description": "ID de un registro existente; las creaciones guardan automáticamente sus IDs cuando la respuesta lo permite."
+    },
+    {
+      "key": "attributeId",
+      "value": "",
+      "type": "string",
+      "description": "ID de un registro existente; las creaciones guardan automáticamente sus IDs cuando la respuesta lo permite."
+    },
+    {
+      "key": "attributeValueId",
+      "value": "",
+      "type": "string",
+      "description": "ID de un registro existente; las creaciones guardan automáticamente sus IDs cuando la respuesta lo permite."
+    },
+    {
+      "key": "productId",
+      "value": "",
+      "type": "string",
+      "description": "ID de un registro existente; las creaciones guardan automáticamente sus IDs cuando la respuesta lo permite."
+    },
+    {
+      "key": "productGroupId",
+      "value": "",
+      "type": "string",
+      "description": "ID de un registro existente; las creaciones guardan automáticamente sus IDs cuando la respuesta lo permite."
+    },
+    {
+      "key": "productVariationId",
+      "value": "",
+      "type": "string",
+      "description": "ID de un registro existente; las creaciones guardan automáticamente sus IDs cuando la respuesta lo permite."
+    },
+    {
+      "key": "productPhotoId",
+      "value": "",
+      "type": "string",
+      "description": "ID de un registro existente; las creaciones guardan automáticamente sus IDs cuando la respuesta lo permite."
+    },
+    {
+      "key": "productPhotoFilename",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "productDescriptionId",
+      "value": "",
+      "type": "string",
+      "description": "ID de un registro existente; las creaciones guardan automáticamente sus IDs cuando la respuesta lo permite."
+    },
+    {
+      "key": "destinationCategoryId",
+      "value": "",
+      "type": "string",
+      "description": "ID de un registro existente; las creaciones guardan automáticamente sus IDs cuando la respuesta lo permite."
+    },
+    {
+      "key": "destinationSubcategoryId",
+      "value": "",
+      "type": "string",
+      "description": "ID de un registro existente; las creaciones guardan automáticamente sus IDs cuando la respuesta lo permite."
+    },
+    {
+      "key": "page",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "limit",
+      "value": "10",
+      "type": "string"
+    },
+    {
+      "key": "categoryName",
+      "value": "Categoria Postman",
+      "type": "string"
+    },
+    {
+      "key": "categoryPrefix",
+      "value": "CPM",
+      "type": "string"
+    },
+    {
+      "key": "subcategoryName",
+      "value": "Subcategoria Postman",
+      "type": "string"
+    },
+    {
+      "key": "subcategoryPrefix",
+      "value": "SPM",
+      "type": "string"
+    },
+    {
+      "key": "brandName",
+      "value": "Marca Postman",
+      "type": "string"
+    },
+    {
+      "key": "brandPrefix",
+      "value": "MPM",
+      "type": "string"
+    },
+    {
+      "key": "attributeGroupName",
+      "value": "Grupo Postman",
+      "type": "string"
+    },
+    {
+      "key": "attributeName",
+      "value": "Color Postman",
+      "type": "string"
+    },
+    {
+      "key": "productName",
+      "value": "Producto Postman",
+      "type": "string"
+    },
+    {
+      "key": "newCollaboratorEmail",
+      "value": "postman@example.com",
+      "type": "string"
+    },
+    {
+      "key": "newCollaboratorPassword",
+      "value": "Cambiar123!",
+      "type": "string"
+    },
+    {
+      "key": "newCollaboratorPhone",
+      "value": "987654321",
+      "type": "string"
+    },
+    {
+      "key": "newCollaboratorDocument",
+      "value": "12345678",
+      "type": "string"
+    },
+    {
+      "key": "galleryFilename",
+      "value": "producto.jpg",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "00 · Autenticación",
+      "item": [
+        {
+          "name": "01 · Sesión",
+          "item": [
+            {
+              "name": "POST · Iniciar sesión y guardar token",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/collaborator/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "collaborator",
+                    "login"
+                  ],
+                  "query": []
+                },
+                "description": "**POST /api/collaborator/login**\n\nImplementación: `src/modules/collaborator/collaborator.controller.ts` → `login`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nCuerpo basado en `LoginDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.",
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{loginEmail}}\",\n  \"password\": \"{{loginPassword}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});",
+                      "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                      "  const body = pm.response.json();",
+                      "  if (body.data && body.data.accessToken) pm.collectionVariables.set(\"token\", body.data.accessToken);",
+                      "  if (body.data && body.data.collaborator) pm.collectionVariables.set(\"sessionUserId\", body.data.collaborator.id);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "GET · Validar sesión",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/collaborator/validate_token",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "collaborator",
+                    "validate_token"
+                  ],
+                  "query": []
+                },
+                "description": "**GET /api/collaborator/validate_token**\n\nImplementación: `src/modules/collaborator/collaborator.controller.ts` → `validateToken`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "03 · Cerrar sesión",
+          "item": [
+            {
+              "name": "GET · Cerrar sesión",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/collaborator/logout",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "collaborator",
+                    "logout"
+                  ],
+                  "query": []
+                },
+                "description": "**GET /api/collaborator/logout**\n\nImplementación: `src/modules/collaborator/collaborator.controller.ts` → `logout`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nAl ejecutarlo puedes invalidar la sesión o los tokens relacionados. Vuelve a iniciar sesión si recibes 401 después."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "01 · Colaboradores",
+      "item": [
+        {
+          "name": "01 · Crear, consultar y editar",
+          "item": [
+            {
+              "name": "POST · Crear colaborador",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/collaborator/createCollaborator",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "collaborator",
+                    "createCollaborator"
+                  ],
+                  "query": []
+                },
+                "description": "**POST /api/collaborator/createCollaborator**\n\nImplementación: `src/modules/collaborator/collaborator.controller.ts` → `createCollaborator`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nCuerpo basado en `CreateCollaboratorDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"names\": \"Prueba\",\n  \"surname\": \"Postman\",\n  \"phone\": \"{{newCollaboratorPhone}}\",\n  \"role\": \"DEFAULT\",\n  \"email\": \"{{newCollaboratorEmail}}\",\n  \"type_document\": \"DNI\",\n  \"number_document\": \"{{newCollaboratorDocument}}\",\n  \"password\": \"{{newCollaboratorPassword}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});",
+                      "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                      "  const body = pm.response.json();",
+                      "  const data = body.data !== undefined ? body.data : body;",
+                      "  const id = typeof data === \"string\" ? data : data && data.id;",
+                      "  if (id) pm.collectionVariables.set(\"collaboratorId\", id);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "GET · Listar colaboradores",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/collaborator/getCollaborators?filter=&page={{page}}&limit={{limit}}&status=Todos&sort=Predeterminado",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "collaborator",
+                    "getCollaborators"
+                  ],
+                  "query": [
+                    {
+                      "key": "filter",
+                      "value": "",
+                      "disabled": false
+                    },
+                    {
+                      "key": "page",
+                      "value": "{{page}}",
+                      "disabled": false
+                    },
+                    {
+                      "key": "limit",
+                      "value": "{{limit}}",
+                      "disabled": false
+                    },
+                    {
+                      "key": "status",
+                      "value": "Todos",
+                      "disabled": false
+                    },
+                    {
+                      "key": "sort",
+                      "value": "Predeterminado",
+                      "disabled": false
+                    }
+                  ]
+                },
+                "description": "**GET /api/collaborator/getCollaborators**\n\nImplementación: `src/modules/collaborator/collaborator.controller.ts` → `getCollaborators`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "GET · Obtener colaborador",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/collaborator/getCollaborator/{{collaboratorId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "collaborator",
+                    "getCollaborator",
+                    "{{collaboratorId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**GET /api/collaborator/getCollaborator/:id**\n\nImplementación: `src/modules/collaborator/collaborator.controller.ts` → `getCollaborator`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{collaboratorId}}. Deben existir en tu base de datos."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "PUT · Editar colaborador",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/collaborator/updateCollaborator/{{collaboratorId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "collaborator",
+                    "updateCollaborator",
+                    "{{collaboratorId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**PUT /api/collaborator/updateCollaborator/:id**\n\nImplementación: `src/modules/collaborator/collaborator.controller.ts` → `updateCollaborator`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{collaboratorId}}. Deben existir en tu base de datos.\n\nCuerpo basado en `EditCollaboratorDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"names\": \"Prueba\",\n  \"surname\": \"Postman\",\n  \"phone\": \"{{newCollaboratorPhone}}\",\n  \"role\": \"DEFAULT\",\n  \"email\": \"{{newCollaboratorEmail}}\",\n  \"type_document\": \"DNI\",\n  \"number_document\": \"{{newCollaboratorDocument}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "02 · Estados",
+          "item": [
+            {
+              "name": "PUT · Cambiar estado de colaborador",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/collaborator/updateCollaboratorStatus/{{collaboratorId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "collaborator",
+                    "updateCollaboratorStatus",
+                    "{{collaboratorId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**PUT /api/collaborator/updateCollaboratorStatus/:id**\n\nImplementación: `src/modules/collaborator/collaborator.controller.ts` → `updateCollaboratorStatus`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{collaboratorId}}. Deben existir en tu base de datos.\n\nCuerpo basado en `UpdateCollaboratorStatusDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "POST · Cambiar estado de varios colaboradores",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/collaborator/updateCollaboratorsStatus",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "collaborator",
+                    "updateCollaboratorsStatus"
+                  ],
+                  "query": []
+                },
+                "description": "**POST /api/collaborator/updateCollaboratorsStatus**\n\nImplementación: `src/modules/collaborator/collaborator.controller.ts` → `updateCollaboratorsStatus`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nCuerpo basado en `UpdateCollaboratorsStatusDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"ids\": [\n    \"{{collaboratorId}}\"\n  ],\n  \"status\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "03 · Importación y exportación",
+          "item": [
+            {
+              "name": "POST · Exportar colaboradores",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "*/*"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/collaborator/exportCollaborators",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "collaborator",
+                    "exportCollaborators"
+                  ],
+                  "query": []
+                },
+                "description": "**POST /api/collaborator/exportCollaborators**\n\nImplementación: `src/modules/collaborator/collaborator.controller.ts` → `exportCollaborators`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nCuerpo basado en `ExportCollaboratorsDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.\n\nPara guardar el archivo usa Send and Download. Cambia format a csv si prefieres CSV. El ejemplo exporta todos los registros con datos enmascarados.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"format\": \"xlsx\",\n  \"maskData\": true,\n  \"scope\": \"all\",\n  \"sort\": \"Predeterminado\",\n  \"data\": [\n    {\n      \"field\": \"names\",\n      \"checked\": true\n    },\n    {\n      \"field\": \"email\",\n      \"checked\": true\n    },\n    {\n      \"field\": \"status\",\n      \"checked\": true\n    }\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "POST · Importar colaboradores",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/collaborator/importCollaborators",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "collaborator",
+                    "importCollaborators"
+                  ],
+                  "query": []
+                },
+                "description": "**POST /api/collaborator/importCollaborators**\n\nImplementación: `src/modules/collaborator/collaborator.controller.ts` → `importCollaborators`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nCuerpo basado en `ImportCollaboratorsDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.\n\nEste endpoint recibe registros JSON; el archivo Excel/CSV se procesa en el panel antes del envío. El ejemplo contiene un único registro ficticio.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"mode\": \"news\",\n  \"identifyBy\": \"email\",\n  \"data\": [\n    {\n      \"names\": \"Prueba\",\n      \"surname\": \"Importada\",\n      \"email\": \"postman-import@example.com\",\n      \"prefix\": \"+51\",\n      \"phone\": \"987654322\",\n      \"role\": \"DEFAULT\",\n      \"type_document\": \"DNI\",\n      \"number_document\": \"12345679\",\n      \"status\": \"Activo\"\n    }\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "04 · Sesiones",
+          "item": [
+            {
+              "name": "POST · Revocar sesiones de un colaborador",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/collaborator/revokeCollaboratorSessions/{{collaboratorId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "collaborator",
+                    "revokeCollaboratorSessions",
+                    "{{collaboratorId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**POST /api/collaborator/revokeCollaboratorSessions/:id**\n\nImplementación: `src/modules/collaborator/collaborator.controller.ts` → `revokeCollaboratorSessions`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{collaboratorId}}. Deben existir en tu base de datos.\n\nAl ejecutarlo puedes invalidar la sesión o los tokens relacionados. Vuelve a iniciar sesión si recibes 401 después."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 · Categorías",
+      "item": [
+        {
+          "name": "01 · Categorías",
+          "item": [
+            {
+              "name": "POST · Crear categoría",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/category/createCategory",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "category",
+                    "createCategory"
+                  ],
+                  "query": []
+                },
+                "description": "**POST /api/category/createCategory**\n\nImplementación: `src/modules/category/category.controller.ts` → `createCategory`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nCuerpo basado en `CreateCategoryDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"{{categoryName}}\",\n  \"color\": \"#1b84ff\",\n  \"prefix\": \"{{categoryPrefix}}\",\n  \"description\": \"Descripción de prueba desde Postman.\",\n  \"isDimensions\": false,\n  \"isCharacteristics\": false,\n  \"isCondition\": false,\n  \"isWarranty\": false,\n  \"isCountryOfOrigin\": false,\n  \"isMaterial\": false,\n  \"isTemperature\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});",
+                      "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                      "  const body = pm.response.json();",
+                      "  const data = body.data !== undefined ? body.data : body;",
+                      "  const id = typeof data === \"string\" ? data : data && data.id;",
+                      "  if (id) pm.collectionVariables.set(\"categoryId\", id);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "GET · Categorías para selector",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/category/get_categories_by_select",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "category",
+                    "get_categories_by_select"
+                  ],
+                  "query": []
+                },
+                "description": "**GET /api/category/get_categories_by_select**\n\nImplementación: `src/modules/category/category.controller.ts` → `get_categories_by_select`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "GET · Listar categorías",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/category/getCategories?filter=&page={{page}}&limit={{limit}}&status=Todos&sort=Predeterminado&configurations=Predeterminado",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "category",
+                    "getCategories"
+                  ],
+                  "query": [
+                    {
+                      "key": "filter",
+                      "value": "",
+                      "disabled": false
+                    },
+                    {
+                      "key": "page",
+                      "value": "{{page}}",
+                      "disabled": false
+                    },
+                    {
+                      "key": "limit",
+                      "value": "{{limit}}",
+                      "disabled": false
+                    },
+                    {
+                      "key": "status",
+                      "value": "Todos",
+                      "disabled": false
+                    },
+                    {
+                      "key": "sort",
+                      "value": "Predeterminado",
+                      "disabled": false
+                    },
+                    {
+                      "key": "configurations",
+                      "value": "Predeterminado",
+                      "disabled": false
+                    }
+                  ]
+                },
+                "description": "**GET /api/category/getCategories**\n\nImplementación: `src/modules/category/category.controller.ts` → `getCategories`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "GET · Obtener categoría",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/category/getCategory/{{categoryId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "category",
+                    "getCategory",
+                    "{{categoryId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**GET /api/category/getCategory/:id**\n\nImplementación: `src/modules/category/category.controller.ts` → `getCategory`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{categoryId}}. Deben existir en tu base de datos."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "PUT · Cambiar estado de categoría",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/category/updateCategoryStatus/{{categoryId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "category",
+                    "updateCategoryStatus",
+                    "{{categoryId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**PUT /api/category/updateCategoryStatus/:id**\n\nImplementación: `src/modules/category/category.controller.ts` → `updateCategoryStatus`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{categoryId}}. Deben existir en tu base de datos.\n\nCuerpo basado en `UpdateCategoryStatusDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "POST · Cambiar estado de varias categorías",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/category/updateCategoriesStatus",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "category",
+                    "updateCategoriesStatus"
+                  ],
+                  "query": []
+                },
+                "description": "**POST /api/category/updateCategoriesStatus**\n\nImplementación: `src/modules/category/category.controller.ts` → `updateCategoriesStatus`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nCuerpo basado en `UpdatCategoriesStatusDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"ids\": [\n    \"{{categoryId}}\"\n  ],\n  \"status\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "PUT · Editar categoría",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/category/updateCategory/{{categoryId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "category",
+                    "updateCategory",
+                    "{{categoryId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**PUT /api/category/updateCategory/:id**\n\nImplementación: `src/modules/category/category.controller.ts` → `updateCategory`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{categoryId}}. Deben existir en tu base de datos.\n\nCuerpo basado en `EditCategoryDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"{{categoryName}}\",\n  \"color\": \"#1b84ff\",\n  \"prefix\": \"{{categoryPrefix}}\",\n  \"description\": \"Descripción de prueba desde Postman.\",\n  \"isDimensions\": false,\n  \"isCharacteristics\": false,\n  \"isCondition\": false,\n  \"isWarranty\": false,\n  \"isCountryOfOrigin\": false,\n  \"isMaterial\": false,\n  \"isTemperature\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "02 · Subcategorías",
+          "item": [
+            {
+              "name": "POST · Crear subcategoría",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/category/createSubcategory",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "category",
+                    "createSubcategory"
+                  ],
+                  "query": []
+                },
+                "description": "**POST /api/category/createSubcategory**\n\nImplementación: `src/modules/category/category.controller.ts` → `createSubcategory`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nCuerpo basado en `CreateSubcategoryDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"{{subcategoryName}}\",\n  \"prefix\": \"{{subcategoryPrefix}}\",\n  \"categoryId\": \"{{categoryId}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});",
+                      "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                      "  const body = pm.response.json();",
+                      "  const data = body.data !== undefined ? body.data : body;",
+                      "  const id = typeof data === \"string\" ? data : data && data.id;",
+                      "  if (id) pm.collectionVariables.set(\"subcategoryId\", id);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "GET · Categorías y subcategorías para selector",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/category/get_subcat_by_select",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "category",
+                    "get_subcat_by_select"
+                  ],
+                  "query": []
+                },
+                "description": "**GET /api/category/get_subcat_by_select**\n\nImplementación: `src/modules/category/category.controller.ts` → `get_subcat_by_select`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "GET · Listar categorías con subcategorías",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/category/getCategoriesWithSubcategories",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "category",
+                    "getCategoriesWithSubcategories"
+                  ],
+                  "query": []
+                },
+                "description": "**GET /api/category/getCategoriesWithSubcategories**\n\nImplementación: `src/modules/category/category.controller.ts` → `getCategoriesWithSubcategories`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "GET · Listar subcategorías de una categoría",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/category/getSubcategories/{{categoryId}}?filter=",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "category",
+                    "getSubcategories",
+                    "{{categoryId}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "filter",
+                      "value": "",
+                      "disabled": false
+                    }
+                  ]
+                },
+                "description": "**GET /api/category/getSubcategories/:id**\n\nImplementación: `src/modules/category/category.controller.ts` → `getSubcategories`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{categoryId}}. Deben existir en tu base de datos."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "GET · Subcategorías activas para selector",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/category/getSubcategoriesByCategorySelect/{{categoryId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "category",
+                    "getSubcategoriesByCategorySelect",
+                    "{{categoryId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**GET /api/category/getSubcategoriesByCategorySelect/:id**\n\nImplementación: `src/modules/category/category.controller.ts` → `getSubcategoriesByCategorySelect`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{categoryId}}. Deben existir en tu base de datos."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "PUT · Cambiar estado de subcategoría",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/category/updateSubcategoryStatus/{{subcategoryId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "category",
+                    "updateSubcategoryStatus",
+                    "{{subcategoryId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**PUT /api/category/updateSubcategoryStatus/:id**\n\nImplementación: `src/modules/category/category.controller.ts` → `updateSubcategoryStatus`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{subcategoryId}}. Deben existir en tu base de datos.\n\nCuerpo basado en `UpdateSubcategoryStatusDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "POST · Cambiar estado de varias subcategorías",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/category/updateSubcategoriesStatus",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "category",
+                    "updateSubcategoriesStatus"
+                  ],
+                  "query": []
+                },
+                "description": "**POST /api/category/updateSubcategoriesStatus**\n\nImplementación: `src/modules/category/category.controller.ts` → `updateSubcategoriesStatus`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nCuerpo basado en `UpdateSubcategoriesStatusDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"ids\": [\n    \"{{subcategoryId}}\"\n  ],\n  \"status\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "PUT · Editar subcategoría",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/category/updateSubcategory/{{subcategoryId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "category",
+                    "updateSubcategory",
+                    "{{subcategoryId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**PUT /api/category/updateSubcategory/:id**\n\nImplementación: `src/modules/category/category.controller.ts` → `updateSubcategory`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{subcategoryId}}. Deben existir en tu base de datos.\n\nCuerpo basado en `EditSubcategoryDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"{{subcategoryName}}\",\n  \"prefix\": \"{{subcategoryPrefix}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "03 · Productos y marcas",
+          "item": [
+            {
+              "name": "GET · Listar marcas de una categoría",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/category/getBrandsByCategory/{{categoryId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "category",
+                    "getBrandsByCategory",
+                    "{{categoryId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**GET /api/category/getBrandsByCategory/:categoryId**\n\nImplementación: `src/modules/category/category.controller.ts` → `getBrandsByCategory`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{categoryId}}. Deben existir en tu base de datos."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "GET · Listar productos de una categoría",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/category/findCategoryProducts/{{categoryId}}?filter=&page={{page}}&limit={{limit}}&status=Todos&sort=Predeterminado&quality=Todos&visibility=Todos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "category",
+                    "findCategoryProducts",
+                    "{{categoryId}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "filter",
+                      "value": "",
+                      "disabled": false
+                    },
+                    {
+                      "key": "page",
+                      "value": "{{page}}",
+                      "disabled": false
+                    },
+                    {
+                      "key": "limit",
+                      "value": "{{limit}}",
+                      "disabled": false
+                    },
+                    {
+                      "key": "status",
+                      "value": "Todos",
+                      "disabled": false
+                    },
+                    {
+                      "key": "sort",
+                      "value": "Predeterminado",
+                      "disabled": false
+                    },
+                    {
+                      "key": "subcategoryIds",
+                      "value": "{{subcategoryId}}",
+                      "disabled": true,
+                      "description": "Filtro opcional: actívalo para usarlo."
+                    },
+                    {
+                      "key": "brandIds",
+                      "value": "{{brandId}}",
+                      "disabled": true,
+                      "description": "Filtro opcional: actívalo para usarlo."
+                    },
+                    {
+                      "key": "quality",
+                      "value": "Todos",
+                      "disabled": false
+                    },
+                    {
+                      "key": "visibility",
+                      "value": "Todos",
+                      "disabled": false
+                    },
+                    {
+                      "key": "minPrice",
+                      "value": "0",
+                      "disabled": true,
+                      "description": "Filtro opcional: actívalo para usarlo."
+                    },
+                    {
+                      "key": "maxPrice",
+                      "value": "100",
+                      "disabled": true,
+                      "description": "Filtro opcional: actívalo para usarlo."
+                    }
+                  ]
+                },
+                "description": "**GET /api/category/findCategoryProducts/:id**\n\nImplementación: `src/modules/category/category.controller.ts` → `findCategoryProducts`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{categoryId}}. Deben existir en tu base de datos."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "04 · Movimientos",
+          "item": [
+            {
+              "name": "POST · Mover productos a otra subcategoría",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/category/moveProductsToSubcategory",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "category",
+                    "moveProductsToSubcategory"
+                  ],
+                  "query": []
+                },
+                "description": "**POST /api/category/moveProductsToSubcategory**\n\nImplementación: `src/modules/category/category.controller.ts` → `moveProductsToSubcategory`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nCuerpo basado en `UpdateCatSubcatProductsDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.\n\nConfigura destinationCategoryId y, cuando corresponda, destinationSubcategoryId. Los IDs de origen y destino deben corresponder a categorías/subcategorías existentes.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"categoryId\": \"{{destinationCategoryId}}\",\n  \"subcategoryId\": \"{{destinationSubcategoryId}}\",\n  \"products\": [\n    \"{{productId}}\"\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "PUT · Mover subcategoría",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/category/moveSubcategory/{{subcategoryId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "category",
+                    "moveSubcategory",
+                    "{{subcategoryId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**PUT /api/category/moveSubcategory/:id**\n\nImplementación: `src/modules/category/category.controller.ts` → `moveSubcategory`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{subcategoryId}}. Deben existir en tu base de datos.\n\nCuerpo basado en `MoveSubcategoryDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.\n\nConfigura destinationCategoryId y, cuando corresponda, destinationSubcategoryId. Los IDs de origen y destino deben corresponder a categorías/subcategorías existentes.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"categoryId\": \"{{destinationCategoryId}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 · Marcas",
+      "item": [
+        {
+          "name": "01 · Crear, consultar, editar y estados",
+          "item": [
+            {
+              "name": "POST · Crear marca con imágenes",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/brand/createBrand",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "brand",
+                    "createBrand"
+                  ],
+                  "query": []
+                },
+                "description": "**POST /api/brand/createBrand**\n\nImplementación: `src/modules/brand/brand.controller.ts` → `createBrand`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nCuerpo basado en `CreateBrandDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.\n\nBody → form-data: selecciona los archivos locales. Postman establece automáticamente Content-Type y boundary; no agregues ese encabezado manualmente. Los objetos y listas se envían como JSON en los campos de texto.",
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "name",
+                      "value": "{{brandName}}",
+                      "type": "text"
+                    },
+                    {
+                      "key": "prefix",
+                      "value": "{{brandPrefix}}",
+                      "type": "text"
+                    },
+                    {
+                      "key": "description",
+                      "value": "Descripción de prueba desde Postman.",
+                      "type": "text"
+                    },
+                    {
+                      "key": "country",
+                      "value": "{\"code\":\"PE\",\"name\":\"Perú\",\"flag\":\"images/flags/PE.svg\"}",
+                      "type": "text"
+                    },
+                    {
+                      "key": "websiteUrl",
+                      "value": "https://example.com",
+                      "type": "text"
+                    },
+                    {
+                      "key": "logoUrl",
+                      "type": "file",
+                      "src": "",
+                      "disabled": false,
+                      "description": "Selecciona una imagen local. Obligatoria."
+                    },
+                    {
+                      "key": "bannerUrl",
+                      "type": "file",
+                      "src": "",
+                      "disabled": false,
+                      "description": "Selecciona una imagen local. Obligatoria."
+                    }
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});",
+                      "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                      "  const body = pm.response.json();",
+                      "  const data = body.data !== undefined ? body.data : body;",
+                      "  const id = typeof data === \"string\" ? data : data && data.id;",
+                      "  if (id) pm.collectionVariables.set(\"brandId\", id);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "GET · Listar marcas",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/brand/getBrands?filter=&page={{page}}&limit={{limit}}&status=Todos&sort=Predeterminado",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "brand",
+                    "getBrands"
+                  ],
+                  "query": [
+                    {
+                      "key": "filter",
+                      "value": "",
+                      "disabled": false
+                    },
+                    {
+                      "key": "page",
+                      "value": "{{page}}",
+                      "disabled": false
+                    },
+                    {
+                      "key": "limit",
+                      "value": "{{limit}}",
+                      "disabled": false
+                    },
+                    {
+                      "key": "status",
+                      "value": "Todos",
+                      "disabled": false
+                    },
+                    {
+                      "key": "sort",
+                      "value": "Predeterminado",
+                      "disabled": false
+                    },
+                    {
+                      "key": "countries",
+                      "value": "Todos",
+                      "disabled": true,
+                      "description": "Filtro opcional: actívalo para usarlo."
+                    }
+                  ]
+                },
+                "description": "**GET /api/brand/getBrands**\n\nImplementación: `src/modules/brand/brand.controller.ts` → `getBrands`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "GET · Marcas para selector",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/brand/getBrandsSelect",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "brand",
+                    "getBrandsSelect"
+                  ],
+                  "query": []
+                },
+                "description": "**GET /api/brand/getBrandsSelect**\n\nImplementación: `src/modules/brand/brand.controller.ts` → `getBrandsSelect`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "GET · Obtener marca",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/brand/getBrand/{{brandId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "brand",
+                    "getBrand",
+                    "{{brandId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**GET /api/brand/getBrand/:id**\n\nImplementación: `src/modules/brand/brand.controller.ts` → `getBrand`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{brandId}}. Deben existir en tu base de datos."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "PUT · Cambiar estado de marca",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/brand/updateBrandStatus/{{brandId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "brand",
+                    "updateBrandStatus",
+                    "{{brandId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**PUT /api/brand/updateBrandStatus/:id**\n\nImplementación: `src/modules/brand/brand.controller.ts` → `updateBrandStatus`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{brandId}}. Deben existir en tu base de datos.\n\nCuerpo basado en `UpdateBrandStatusDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "POST · Cambiar estado de varias marcas",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/brand/updateBrandsStatus",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "brand",
+                    "updateBrandsStatus"
+                  ],
+                  "query": []
+                },
+                "description": "**POST /api/brand/updateBrandsStatus**\n\nImplementación: `src/modules/brand/brand.controller.ts` → `updateBrandsStatus`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nCuerpo basado en `UpdateBrandsStatusDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"ids\": [\n    \"{{brandId}}\"\n  ],\n  \"status\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "PUT · Editar marca",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/brand/updateBrand/{{brandId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "brand",
+                    "updateBrand",
+                    "{{brandId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**PUT /api/brand/updateBrand/:id**\n\nImplementación: `src/modules/brand/brand.controller.ts` → `updateBrand`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{brandId}}. Deben existir en tu base de datos.\n\nCuerpo basado en `EditBrandDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.\n\nBody → form-data: selecciona los archivos locales. Postman establece automáticamente Content-Type y boundary; no agregues ese encabezado manualmente. Los objetos y listas se envían como JSON en los campos de texto.",
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "name",
+                      "value": "{{brandName}}",
+                      "type": "text"
+                    },
+                    {
+                      "key": "prefix",
+                      "value": "{{brandPrefix}}",
+                      "type": "text"
+                    },
+                    {
+                      "key": "description",
+                      "value": "Descripción de prueba desde Postman.",
+                      "type": "text"
+                    },
+                    {
+                      "key": "country",
+                      "value": "{\"code\":\"PE\",\"name\":\"Perú\",\"flag\":\"images/flags/PE.svg\"}",
+                      "type": "text"
+                    },
+                    {
+                      "key": "websiteUrl",
+                      "value": "https://example.com",
+                      "type": "text"
+                    },
+                    {
+                      "key": "logoUrl",
+                      "type": "file",
+                      "src": "",
+                      "disabled": true,
+                      "description": "Activa este campo si deseas reemplazar la imagen."
+                    },
+                    {
+                      "key": "bannerUrl",
+                      "type": "file",
+                      "src": "",
+                      "disabled": true,
+                      "description": "Activa este campo si deseas reemplazar la imagen."
+                    }
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "02 · Productos",
+          "item": [
+            {
+              "name": "GET · Listar productos de una marca",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/brand/findBrandProducts/{{brandId}}?filter=&page={{page}}&limit={{limit}}&status=Todos&sort=Predeterminado&quality=Todos&visibility=Todos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "brand",
+                    "findBrandProducts",
+                    "{{brandId}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "filter",
+                      "value": "",
+                      "disabled": false
+                    },
+                    {
+                      "key": "page",
+                      "value": "{{page}}",
+                      "disabled": false
+                    },
+                    {
+                      "key": "limit",
+                      "value": "{{limit}}",
+                      "disabled": false
+                    },
+                    {
+                      "key": "status",
+                      "value": "Todos",
+                      "disabled": false
+                    },
+                    {
+                      "key": "sort",
+                      "value": "Predeterminado",
+                      "disabled": false
+                    },
+                    {
+                      "key": "subcategoryIds",
+                      "value": "{{subcategoryId}}",
+                      "disabled": true,
+                      "description": "Filtro opcional: actívalo para usarlo."
+                    },
+                    {
+                      "key": "categoryIds",
+                      "value": "{{categoryId}}",
+                      "disabled": true,
+                      "description": "Filtro opcional: actívalo para usarlo."
+                    },
+                    {
+                      "key": "quality",
+                      "value": "Todos",
+                      "disabled": false
+                    },
+                    {
+                      "key": "visibility",
+                      "value": "Todos",
+                      "disabled": false
+                    },
+                    {
+                      "key": "minPrice",
+                      "value": "0",
+                      "disabled": true,
+                      "description": "Filtro opcional: actívalo para usarlo."
+                    },
+                    {
+                      "key": "maxPrice",
+                      "value": "100",
+                      "disabled": true,
+                      "description": "Filtro opcional: actívalo para usarlo."
+                    }
+                  ]
+                },
+                "description": "**GET /api/brand/findBrandProducts/:id**\n\nImplementación: `src/modules/brand/brand.controller.ts` → `findBrandProducts`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{brandId}}. Deben existir en tu base de datos."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 · Atributos",
+      "item": [
+        {
+          "name": "01 · Grupos de atributos",
+          "item": [
+            {
+              "name": "POST · Crear grupo de atributos",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/attribute/createGroupAttribute",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "attribute",
+                    "createGroupAttribute"
+                  ],
+                  "query": []
+                },
+                "description": "**POST /api/attribute/createGroupAttribute**\n\nImplementación: `src/modules/attribute/attribute.controller.ts` → `createGroupAttribute`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nCuerpo basado en `CreateGroupAttributeDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"{{attributeGroupName}}\",\n  \"description\": \"Descripción de prueba desde Postman.\",\n  \"categories\": [\n    \"{{categoryId}}\"\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});",
+                      "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                      "  const body = pm.response.json();",
+                      "  const data = body.data !== undefined ? body.data : body;",
+                      "  const id = typeof data === \"string\" ? data : data && data.id;",
+                      "  if (id) pm.collectionVariables.set(\"attributeGroupId\", id);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "GET · Listar grupos de atributos",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/attribute/getAttributesGroups?filter=&page={{page}}&limit={{limit}}&status=Todos&sort=Predeterminado&categories=Todos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "attribute",
+                    "getAttributesGroups"
+                  ],
+                  "query": [
+                    {
+                      "key": "filter",
+                      "value": "",
+                      "disabled": false
+                    },
+                    {
+                      "key": "page",
+                      "value": "{{page}}",
+                      "disabled": false
+                    },
+                    {
+                      "key": "limit",
+                      "value": "{{limit}}",
+                      "disabled": false
+                    },
+                    {
+                      "key": "status",
+                      "value": "Todos",
+                      "disabled": false
+                    },
+                    {
+                      "key": "sort",
+                      "value": "Predeterminado",
+                      "disabled": false
+                    },
+                    {
+                      "key": "categories",
+                      "value": "Todos",
+                      "disabled": false
+                    }
+                  ]
+                },
+                "description": "**GET /api/attribute/getAttributesGroups**\n\nImplementación: `src/modules/attribute/attribute.controller.ts` → `getAttributesGroups`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "GET · Obtener grupo de atributos",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/attribute/getAttributeGroup/{{attributeGroupId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "attribute",
+                    "getAttributeGroup",
+                    "{{attributeGroupId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**GET /api/attribute/getAttributeGroup/:id**\n\nImplementación: `src/modules/attribute/attribute.controller.ts` → `getAttributeGroup`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{attributeGroupId}}. Deben existir en tu base de datos."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "GET · Obtener grupo y categorías",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/attribute/getCategoriesByAttributeGroup/{{attributeGroupId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "attribute",
+                    "getCategoriesByAttributeGroup",
+                    "{{attributeGroupId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**GET /api/attribute/getCategoriesByAttributeGroup/:id**\n\nImplementación: `src/modules/attribute/attribute.controller.ts` → `getCategoriesByAttributeGroup`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{attributeGroupId}}. Deben existir en tu base de datos."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "POST · Cambiar estado de varios grupos",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/attribute/updateAttributeGroupsStatus",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "attribute",
+                    "updateAttributeGroupsStatus"
+                  ],
+                  "query": []
+                },
+                "description": "**POST /api/attribute/updateAttributeGroupsStatus**\n\nImplementación: `src/modules/attribute/attribute.controller.ts` → `updateAttributeGroupsStatus`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nCuerpo basado en `UpdateAttributeGroupsStatusDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"ids\": [\n    \"{{attributeGroupId}}\"\n  ],\n  \"status\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "PUT · Editar grupo de atributos",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/attribute/updateAttributeGroup/{{attributeGroupId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "attribute",
+                    "updateAttributeGroup",
+                    "{{attributeGroupId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**PUT /api/attribute/updateAttributeGroup/:id**\n\nImplementación: `src/modules/attribute/attribute.controller.ts` → `updateAttributeGroup`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{attributeGroupId}}. Deben existir en tu base de datos.\n\nCuerpo basado en `EditGroupAttributeDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"{{attributeGroupName}}\",\n  \"description\": \"Descripción de prueba desde Postman.\",\n  \"categories\": [\n    \"{{categoryId}}\"\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "PUT · updateAttributeGroupStatus",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/attribute/updateAttributeGroupStatus/{{attributeGroupId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "attribute",
+                    "updateAttributeGroupStatus",
+                    "{{attributeGroupId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**PUT /api/attribute/updateAttributeGroupStatus/:id**\n\nImplementación: `src/modules/attribute/attribute.controller.ts` → `updateAttributeGroupStatus`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{attributeGroupId}}. Deben existir en tu base de datos.\n\nCuerpo basado en `UpdateAttributeGroupStatusDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "02 · Atributos",
+          "item": [
+            {
+              "name": "POST · Agregar valor a un atributo",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/attribute/createAttributeValue",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "attribute",
+                    "createAttributeValue"
+                  ],
+                  "query": []
+                },
+                "description": "**POST /api/attribute/createAttributeValue**\n\nImplementación: `src/modules/attribute/attribute.controller.ts` → `createAttributeValue`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nCuerpo basado en `CreateAttributeValueDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"value\": \"Azul\",\n  \"attributeId\": \"{{attributeId}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});",
+                      "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                      "  const body = pm.response.json();",
+                      "  const data = body.data !== undefined ? body.data : body;",
+                      "  const id = typeof data === \"string\" ? data : data && data.id;",
+                      "  if (id) pm.collectionVariables.set(\"attributeValueId\", id);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "POST · Crear atributo y sus valores",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/attribute/createAttribute",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "attribute",
+                    "createAttribute"
+                  ],
+                  "query": []
+                },
+                "description": "**POST /api/attribute/createAttribute**\n\nImplementación: `src/modules/attribute/attribute.controller.ts` → `createAttribute`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nCuerpo basado en `CreateAttributeDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"{{attributeName}}\",\n  \"unit\": \"kg\",\n  \"description\": \"Descripción de prueba desde Postman.\",\n  \"values\": [\n    {\n      \"value\": \"Azul\"\n    }\n  ],\n  \"attributeGroupId\": \"{{attributeGroupId}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});",
+                      "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                      "  const body = pm.response.json();",
+                      "  const data = body.data !== undefined ? body.data : body;",
+                      "  const id = typeof data === \"string\" ? data : data && data.id;",
+                      "  if (id) pm.collectionVariables.set(\"attributeId\", id);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "GET · Atributos de una categoría",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/attribute/getAttributesByCategory/{{categoryId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "attribute",
+                    "getAttributesByCategory",
+                    "{{categoryId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**GET /api/attribute/getAttributesByCategory/:id**\n\nImplementación: `src/modules/attribute/attribute.controller.ts` → `getAttributesByCategory`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{categoryId}}. Deben existir en tu base de datos."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "GET · Listar atributos de un grupo",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/attribute/getAttributes/{{attributeGroupId}}?filter=&page={{page}}&limit={{limit}}&status=Todos&sort=Predeterminado",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "attribute",
+                    "getAttributes",
+                    "{{attributeGroupId}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "filter",
+                      "value": "",
+                      "disabled": false
+                    },
+                    {
+                      "key": "page",
+                      "value": "{{page}}",
+                      "disabled": false
+                    },
+                    {
+                      "key": "limit",
+                      "value": "{{limit}}",
+                      "disabled": false
+                    },
+                    {
+                      "key": "status",
+                      "value": "Todos",
+                      "disabled": false
+                    },
+                    {
+                      "key": "sort",
+                      "value": "Predeterminado",
+                      "disabled": false
+                    }
+                  ]
+                },
+                "description": "**GET /api/attribute/getAttributes/:id**\n\nImplementación: `src/modules/attribute/attribute.controller.ts` → `getAttributes`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{attributeGroupId}}. Deben existir en tu base de datos."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "GET · Listar valores de atributo",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/attribute/getAttributeValues/{{attributeId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "attribute",
+                    "getAttributeValues",
+                    "{{attributeId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**GET /api/attribute/getAttributeValues/:id**\n\nImplementación: `src/modules/attribute/attribute.controller.ts` → `getAttributeValues`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{attributeId}}. Deben existir en tu base de datos."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});",
+                      "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                      "  const body = pm.response.json();",
+                      "  const values = Array.isArray(body) ? body : (body.data || body.values || body.attributeValues);",
+                      "  if (Array.isArray(values) && values[0] && values[0].id) pm.collectionVariables.set(\"attributeValueId\", values[0].id);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "GET · Obtener atributo",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/attribute/getAttribute/{{attributeId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "attribute",
+                    "getAttribute",
+                    "{{attributeId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**GET /api/attribute/getAttribute/:id**\n\nImplementación: `src/modules/attribute/attribute.controller.ts` → `getAttribute`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{attributeId}}. Deben existir en tu base de datos."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "PUT · Cambiar estado de atributo",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/attribute/updateAttributeStatus/{{attributeId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "attribute",
+                    "updateAttributeStatus",
+                    "{{attributeId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**PUT /api/attribute/updateAttributeStatus/:id**\n\nImplementación: `src/modules/attribute/attribute.controller.ts` → `updateAttributeStatus`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{attributeId}}. Deben existir en tu base de datos.\n\nCuerpo basado en `UpdateAttributeStatusDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "POST · Cambiar estado de varios atributos",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/attribute/updateAttributesStatus",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "attribute",
+                    "updateAttributesStatus"
+                  ],
+                  "query": []
+                },
+                "description": "**POST /api/attribute/updateAttributesStatus**\n\nImplementación: `src/modules/attribute/attribute.controller.ts` → `updateAttributesStatus`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nCuerpo basado en `UpdateAttributesStatusDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"ids\": [\n    \"{{attributeId}}\"\n  ],\n  \"status\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "PUT · Editar atributo",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/attribute/updateAttribute/{{attributeId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "attribute",
+                    "updateAttribute",
+                    "{{attributeId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**PUT /api/attribute/updateAttribute/:id**\n\nImplementación: `src/modules/attribute/attribute.controller.ts` → `updateAttribute`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{attributeId}}. Deben existir en tu base de datos.\n\nCuerpo basado en `EditAttributeDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"{{attributeName}}\",\n  \"description\": \"Descripción de prueba desde Postman.\",\n  \"unit\": \"kg\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "DELETE · Eliminar valor de atributo",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/attribute/deleteAttributeValue/{{attributeValueId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "attribute",
+                    "deleteAttributeValue",
+                    "{{attributeValueId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**DELETE /api/attribute/deleteAttributeValue/:id**\n\nImplementación: `src/modules/attribute/attribute.controller.ts` → `deleteAttributeValue`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{attributeValueId}}. Deben existir en tu base de datos."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 · Productos",
+      "item": [
+        {
+          "name": "01 · Crear, consultar y editar",
+          "item": [
+            {
+              "name": "POST · Crear producto con galería",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/product/create_product",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "product",
+                    "create_product"
+                  ],
+                  "query": []
+                },
+                "description": "**POST /api/product/create_product**\n\nImplementación: `src/modules/product/product.controller.ts` → `create_product`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nCuerpo basado en `CreateProductDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.\n\nBody → form-data: selecciona los archivos locales. Postman establece automáticamente Content-Type y boundary; no agregues ese encabezado manualmente. Los objetos y listas se envían como JSON en los campos de texto.\n\nPrimero configura categoryId, subcategoryId y brandId con registros relacionados. galleryFilename debe coincidir exactamente con el nombre de una imagen seleccionada en gallery, pues se usa para portada y miniatura. El ejemplo crea un borrador.",
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "status",
+                      "value": "draft",
+                      "type": "text"
+                    },
+                    {
+                      "key": "visibility",
+                      "value": "public",
+                      "type": "text"
+                    },
+                    {
+                      "key": "name",
+                      "value": "{{productName}}",
+                      "type": "text"
+                    },
+                    {
+                      "key": "description",
+                      "value": "Descripción de prueba desde Postman.",
+                      "type": "text"
+                    },
+                    {
+                      "key": "extract",
+                      "value": "Producto de prueba para el catálogo.",
+                      "type": "text"
+                    },
+                    {
+                      "key": "cover",
+                      "value": "{{galleryFilename}}",
+                      "type": "text"
+                    },
+                    {
+                      "key": "miniature",
+                      "value": "{{galleryFilename}}",
+                      "type": "text"
+                    },
+                    {
+                      "key": "unitOfMeasure",
+                      "value": "{\"group\":\"Unidad\",\"name\":\"Unidad\",\"abbr\":\"und\"}",
+                      "type": "text"
+                    },
+                    {
+                      "key": "condition",
+                      "value": "Nuevo",
+                      "type": "text"
+                    },
+                    {
+                      "key": "warranty",
+                      "value": "Garantía de fábrica",
+                      "type": "text"
+                    },
+                    {
+                      "key": "countryOfOrigin",
+                      "value": "{\"code\":\"PE\",\"name\":\"Perú\",\"flag\":\"images/flags/PE.svg\"}",
+                      "type": "text"
+                    },
+                    {
+                      "key": "priceRegular",
+                      "value": "100",
+                      "type": "text"
+                    },
+                    {
+                      "key": "tags",
+                      "value": "[\"postman\"]",
+                      "type": "text"
+                    },
+                    {
+                      "key": "brandId",
+                      "value": "{{brandId}}",
+                      "type": "text"
+                    },
+                    {
+                      "key": "categoryId",
+                      "value": "{{categoryId}}",
+                      "type": "text"
+                    },
+                    {
+                      "key": "subcategoryId",
+                      "value": "{{subcategoryId}}",
+                      "type": "text"
+                    },
+                    {
+                      "key": "isBestSeller",
+                      "value": "false",
+                      "type": "text"
+                    },
+                    {
+                      "key": "isNewArrival",
+                      "value": "false",
+                      "type": "text"
+                    },
+                    {
+                      "key": "isFeatured",
+                      "value": "false",
+                      "type": "text"
+                    },
+                    {
+                      "key": "isLimitedEdition",
+                      "value": "false",
+                      "type": "text"
+                    },
+                    {
+                      "key": "isPreOrder",
+                      "value": "false",
+                      "type": "text"
+                    },
+                    {
+                      "key": "isExportable",
+                      "value": "false",
+                      "type": "text"
+                    },
+                    {
+                      "key": "allowBackorder",
+                      "value": "false",
+                      "type": "text"
+                    },
+                    {
+                      "key": "attributes",
+                      "value": "[]",
+                      "type": "text"
+                    },
+                    {
+                      "key": "weight",
+                      "value": "1",
+                      "type": "text"
+                    },
+                    {
+                      "key": "height",
+                      "value": "10",
+                      "type": "text"
+                    },
+                    {
+                      "key": "width",
+                      "value": "10",
+                      "type": "text"
+                    },
+                    {
+                      "key": "length",
+                      "value": "10",
+                      "type": "text"
+                    },
+                    {
+                      "key": "weightUnit",
+                      "value": "{\"group\":\"Masa\",\"name\":\"Kilogramo\",\"abbr\":\"kg\"}",
+                      "type": "text"
+                    },
+                    {
+                      "key": "dimensionUnit",
+                      "value": "{\"group\":\"Longitud\",\"name\":\"Centímetro\",\"abbr\":\"cm\"}",
+                      "type": "text"
+                    },
+                    {
+                      "key": "isFragile",
+                      "value": "false",
+                      "type": "text"
+                    },
+                    {
+                      "key": "isPerishable",
+                      "value": "false",
+                      "type": "text"
+                    },
+                    {
+                      "key": "isEcoFriendly",
+                      "value": "false",
+                      "type": "text"
+                    },
+                    {
+                      "key": "isBiodegradable",
+                      "value": "false",
+                      "type": "text"
+                    },
+                    {
+                      "key": "isHazardous",
+                      "value": "false",
+                      "type": "text"
+                    },
+                    {
+                      "key": "isRequiresRefrigeration",
+                      "value": "false",
+                      "type": "text"
+                    },
+                    {
+                      "key": "isFlammable",
+                      "value": "false",
+                      "type": "text"
+                    },
+                    {
+                      "key": "isRequiresAssembly",
+                      "value": "false",
+                      "type": "text"
+                    },
+                    {
+                      "key": "minStorageTemp",
+                      "value": "5",
+                      "type": "text"
+                    },
+                    {
+                      "key": "maxStorageTemp",
+                      "value": "25",
+                      "type": "text"
+                    },
+                    {
+                      "key": "storageTempUnit",
+                      "value": "{\"name\":\"Celsius\",\"abbr\":\"°C\"}",
+                      "type": "text"
+                    },
+                    {
+                      "key": "packageType",
+                      "value": "Caja",
+                      "type": "text"
+                    },
+                    {
+                      "key": "handlingDays",
+                      "value": "2",
+                      "type": "text"
+                    },
+                    {
+                      "key": "freeShipping",
+                      "value": "false",
+                      "type": "text"
+                    },
+                    {
+                      "key": "pickupInStore",
+                      "value": "false",
+                      "type": "text"
+                    },
+                    {
+                      "key": "variations",
+                      "value": "[]",
+                      "type": "text"
+                    },
+                    {
+                      "key": "gallery",
+                      "type": "file",
+                      "src": [],
+                      "description": "Selecciona entre 1 y 10 imágenes locales. En create_product, galleryFilename debe coincidir con el nombre de una imagen seleccionada."
+                    }
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});",
+                      "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                      "  const body = pm.response.json();",
+                      "  const data = body.data !== undefined ? body.data : body;",
+                      "  const id = typeof data === \"string\" ? data : data && data.id;",
+                      "  if (id) pm.collectionVariables.set(\"productId\", id);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "GET · Listar productos",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/product/get_products?filter=&page={{page}}&limit={{limit}}&status=Todos&visibility=Todos&categories=Todos&brands=Todos&countries=Todos&quality=Todos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "product",
+                    "get_products"
+                  ],
+                  "query": [
+                    {
+                      "key": "filter",
+                      "value": "",
+                      "disabled": false
+                    },
+                    {
+                      "key": "page",
+                      "value": "{{page}}",
+                      "disabled": false
+                    },
+                    {
+                      "key": "limit",
+                      "value": "{{limit}}",
+                      "disabled": false
+                    },
+                    {
+                      "key": "status",
+                      "value": "Todos",
+                      "disabled": false
+                    },
+                    {
+                      "key": "visibility",
+                      "value": "Todos",
+                      "disabled": false
+                    },
+                    {
+                      "key": "categories",
+                      "value": "Todos",
+                      "disabled": false
+                    },
+                    {
+                      "key": "brands",
+                      "value": "Todos",
+                      "disabled": false
+                    },
+                    {
+                      "key": "countries",
+                      "value": "Todos",
+                      "disabled": false
+                    },
+                    {
+                      "key": "minPrice",
+                      "value": "0",
+                      "disabled": true
+                    },
+                    {
+                      "key": "maxPrice",
+                      "value": "100",
+                      "disabled": true
+                    },
+                    {
+                      "key": "quality",
+                      "value": "Todos",
+                      "disabled": false
+                    }
+                  ]
+                },
+                "description": "**GET /api/product/get_products**\n\nImplementación: `src/modules/product/product.controller.ts` → `get_products`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "GET · Obtener producto",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/product/get_product/{{productId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "product",
+                    "get_product",
+                    "{{productId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**GET /api/product/get_product/:id**\n\nImplementación: `src/modules/product/product.controller.ts` → `get_product`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{productId}}. Deben existir en tu base de datos."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "PUT · Editar producto",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/product/update_product/{{productId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "product",
+                    "update_product",
+                    "{{productId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**PUT /api/product/update_product/:id**\n\nImplementación: `src/modules/product/product.controller.ts` → `update_product`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{productId}}. Deben existir en tu base de datos.\n\nCuerpo basado en `UpdateProductDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"draft\",\n  \"visibility\": \"public\",\n  \"name\": \"{{productName}}\",\n  \"description\": \"Descripción de prueba desde Postman.\",\n  \"extract\": \"Producto de prueba para el catálogo.\",\n  \"unitOfMeasure\": {\n    \"group\": \"Unidad\",\n    \"name\": \"Unidad\",\n    \"abbr\": \"und\"\n  },\n  \"condition\": \"Nuevo\",\n  \"warranty\": \"Garantía de fábrica\",\n  \"countryOfOrigin\": {\n    \"code\": \"PE\",\n    \"name\": \"Perú\",\n    \"flag\": \"images/flags/PE.svg\"\n  },\n  \"priceRegular\": 100,\n  \"tags\": [\n    \"postman\"\n  ],\n  \"brandId\": \"{{brandId}}\",\n  \"categoryId\": \"{{categoryId}}\",\n  \"subcategoryId\": \"{{subcategoryId}}\",\n  \"isBestSeller\": false,\n  \"isNewArrival\": false,\n  \"isFeatured\": false,\n  \"isLimitedEdition\": false,\n  \"isPreOrder\": false,\n  \"isExportable\": false,\n  \"allowBackorder\": false,\n  \"weight\": 1,\n  \"height\": 10,\n  \"width\": 10,\n  \"length\": 10,\n  \"weightUnit\": {\n    \"group\": \"Masa\",\n    \"name\": \"Kilogramo\",\n    \"abbr\": \"kg\"\n  },\n  \"dimensionUnit\": {\n    \"group\": \"Longitud\",\n    \"name\": \"Centímetro\",\n    \"abbr\": \"cm\"\n  },\n  \"isFragile\": false,\n  \"isPerishable\": false,\n  \"isEcoFriendly\": false,\n  \"isBiodegradable\": false,\n  \"isHazardous\": false,\n  \"isRequiresRefrigeration\": false,\n  \"isFlammable\": false,\n  \"isRequiresAssembly\": false,\n  \"minStorageTemp\": 5,\n  \"maxStorageTemp\": 25,\n  \"storageTempUnit\": {\n    \"name\": \"Celsius\",\n    \"abbr\": \"°C\"\n  },\n  \"packageType\": \"Caja\",\n  \"handlingDays\": 2,\n  \"freeShipping\": false,\n  \"pickupInStore\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "02 · Grupos y copias",
+          "item": [
+            {
+              "name": "GET · Buscar productos para copiar",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/product/find_products_to_copy/{{categoryId}}?name=",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "product",
+                    "find_products_to_copy",
+                    "{{categoryId}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "name",
+                      "value": "",
+                      "disabled": false
+                    }
+                  ]
+                },
+                "description": "**GET /api/product/find_products_to_copy/:id**\n\nImplementación: `src/modules/product/product.controller.ts` → `find_products_to_copy`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{categoryId}}. Deben existir en tu base de datos."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "GET · Consultar producto desde un grupo",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/product/import_product_for_group/{{productGroupId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "product",
+                    "import_product_for_group",
+                    "{{productGroupId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**GET /api/product/import_product_for_group/:productGroupId**\n\nImplementación: `src/modules/product/product.controller.ts` → `import_product_for_group`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{productGroupId}}. Deben existir en tu base de datos."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "GET · Grupos disponibles para crear producto",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/product/get_groups_for_create_product/{{categoryId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "product",
+                    "get_groups_for_create_product",
+                    "{{categoryId}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "filter",
+                      "value": "",
+                      "disabled": true,
+                      "description": "Filtro opcional: actívalo para usarlo."
+                    },
+                    {
+                      "key": "productId",
+                      "value": "{{productId}}",
+                      "disabled": true,
+                      "description": "Filtro opcional: actívalo para usarlo."
+                    }
+                  ]
+                },
+                "description": "**GET /api/product/get_groups_for_create_product/:categoryId**\n\nImplementación: `src/modules/product/product.controller.ts` → `get_groups_for_create_product`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{categoryId}}. Deben existir en tu base de datos."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "PUT · Cambiar grupo del producto",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/product/update_group_in_product/{{productId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "product",
+                    "update_group_in_product",
+                    "{{productId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**PUT /api/product/update_group_in_product/:id**\n\nImplementación: `src/modules/product/product.controller.ts` → `update_group_in_product`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{productId}}. Deben existir en tu base de datos.\n\nCuerpo basado en `UpdateGroupInProductDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"productGroupId\": \"{{productGroupId}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "03 · Galería",
+          "item": [
+            {
+              "name": "GET · Listar fotos del producto",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/product/get_photos_product/{{productId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "product",
+                    "get_photos_product",
+                    "{{productId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**GET /api/product/get_photos_product/:id**\n\nImplementación: `src/modules/product/product.controller.ts` → `get_photos_product`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{productId}}. Deben existir en tu base de datos."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});",
+                      "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                      "  const photos = pm.response.json();",
+                      "  if (Array.isArray(photos) && photos[0]) {",
+                      "    pm.collectionVariables.set(\"productPhotoId\", photos[0].id);",
+                      "    pm.collectionVariables.set(\"productPhotoFilename\", photos[0].url);",
+                      "  }",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "PUT · Elegir miniatura",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/product/set_miniature_product/{{productId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "product",
+                    "set_miniature_product",
+                    "{{productId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**PUT /api/product/set_miniature_product/:id**\n\nImplementación: `src/modules/product/product.controller.ts` → `set_miniature_product`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{productId}}. Deben existir en tu base de datos.\n\nCuerpo basado en `SetMiniatureProductDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"miniature\": \"{{productPhotoFilename}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "PUT · Elegir portada",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/product/set_cover_product/{{productId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "product",
+                    "set_cover_product",
+                    "{{productId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**PUT /api/product/set_cover_product/:id**\n\nImplementación: `src/modules/product/product.controller.ts` → `set_cover_product`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{productId}}. Deben existir en tu base de datos.\n\nCuerpo basado en `SetCoverProductDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"cover\": \"{{productPhotoFilename}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "POST · Subir imágenes del producto",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/product/upload_images_product",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "product",
+                    "upload_images_product"
+                  ],
+                  "query": []
+                },
+                "description": "**POST /api/product/upload_images_product**\n\nImplementación: `src/modules/product/product.controller.ts` → `upload_images_product`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nCuerpo basado en `UploadImagesProductProductDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.\n\nBody → form-data: selecciona los archivos locales. Postman establece automáticamente Content-Type y boundary; no agregues ese encabezado manualmente. Los objetos y listas se envían como JSON en los campos de texto.",
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "productId",
+                      "value": "{{productId}}",
+                      "type": "text"
+                    },
+                    {
+                      "key": "gallery",
+                      "type": "file",
+                      "src": [],
+                      "description": "Selecciona entre 1 y 10 imágenes locales. En create_product, galleryFilename debe coincidir con el nombre de una imagen seleccionada."
+                    }
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "DELETE · Eliminar imagen",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/product/delete_image_product/{{productPhotoId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "product",
+                    "delete_image_product",
+                    "{{productPhotoId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**DELETE /api/product/delete_image_product/:id**\n\nImplementación: `src/modules/product/product.controller.ts` → `delete_image_product`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{productPhotoId}}. Deben existir en tu base de datos."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "04 · Variaciones",
+          "item": [
+            {
+              "name": "POST · Crear variación",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/product/create_variation_product",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "product",
+                    "create_variation_product"
+                  ],
+                  "query": []
+                },
+                "description": "**POST /api/product/create_variation_product**\n\nImplementación: `src/modules/product/product.controller.ts` → `create_variation_product`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nCuerpo basado en `CreateVariationProductDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Presentación Postman\",\n  \"productId\": \"{{productId}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});",
+                      "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                      "  const body = pm.response.json();",
+                      "  const data = body.data !== undefined ? body.data : body;",
+                      "  const id = typeof data === \"string\" ? data : data && data.id;",
+                      "  if (id) pm.collectionVariables.set(\"productVariationId\", id);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "GET · Listar variaciones del producto",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/product/get_variations_product/{{productId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "product",
+                    "get_variations_product",
+                    "{{productId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**GET /api/product/get_variations_product/:id**\n\nImplementación: `src/modules/product/product.controller.ts` → `get_variations_product`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{productId}}. Deben existir en tu base de datos."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "PUT · Cambiar estado de variación (envía estado actual)",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/product/update_status_variation/{{productVariationId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "product",
+                    "update_status_variation",
+                    "{{productVariationId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**PUT /api/product/update_status_variation/:id**\n\nImplementación: `src/modules/product/product.controller.ts` → `update_status_variation`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{productVariationId}}. Deben existir en tu base de datos.\n\nEste endpoint antiguo invierte el estado recibido: status representa el estado ACTUAL. Los endpoints camelCase de estado reciben el estado DESTINO.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "PUT · Cambiar nombre de variación",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/product/update_name_variation/{{productVariationId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "product",
+                    "update_name_variation",
+                    "{{productVariationId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**PUT /api/product/update_name_variation/:id**\n\nImplementación: `src/modules/product/product.controller.ts` → `update_name_variation`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{productVariationId}}. Deben existir en tu base de datos.\n\nCuerpo basado en `UpdateNameVariationDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Presentación Postman\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "05 · Características",
+          "item": [
+            {
+              "name": "GET · Obtener características",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/product/get_characteristics_product/{{productId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "product",
+                    "get_characteristics_product",
+                    "{{productId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**GET /api/product/get_characteristics_product/:id**\n\nImplementación: `src/modules/product/product.controller.ts` → `get_characteristics_product`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{productId}}. Deben existir en tu base de datos."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "PUT · Cambiar característica destacada",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/product/update_feature_attribute/{{productDescriptionId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "product",
+                    "update_feature_attribute",
+                    "{{productDescriptionId}}"
+                  ],
+                  "query": []
+                },
+                "description": "**PUT /api/product/update_feature_attribute/:id**\n\nImplementación: `src/modules/product/product.controller.ts` → `update_feature_attribute`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nIDs necesarios: {{productDescriptionId}}. Deben existir en tu base de datos.\n\nEste endpoint recibe el ID de ProductDescription (productDescriptionId), no attributeId ni attributeValueId. Envía el valor ACTUAL de isFeatured: el backend lo invierte. Puedes obtener el ID en get_characteristics_product.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"isFeatured\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "POST · Editar características del producto",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/product/update_product_description",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "product",
+                    "update_product_description"
+                  ],
+                  "query": []
+                },
+                "description": "**POST /api/product/update_product_description**\n\nImplementación: `src/modules/product/product.controller.ts` → `update_product_description`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nCuerpo basado en `EditProductDescriptionsDto`. Los ejemplos usan datos ficticios; ajusta los campos a tus registros.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"descriptions\": [\n    {\n      \"attributeId\": \"{{attributeId}}\",\n      \"productId\": \"{{productId}}\",\n      \"attributeValueId\": \"{{attributeValueId}}\",\n      \"value\": \"Azul\"\n    }\n  ],\n  \"attributeId\": \"{{attributeId}}\",\n  \"productId\": \"{{productId}}\",\n  \"groupId\": \"{{attributeGroupId}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 · Sistema",
+      "item": [
+        {
+          "name": "01 · Diagnóstico",
+          "item": [
+            {
+              "name": "GET · Comprobar API",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [],
+                  "query": []
+                },
+                "description": "**GET /api/**\n\nImplementación: `src/app.controller.ts` → `getHello`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "GET · Consultar métricas Prometheus",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "*/*"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/metrics",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "metrics"
+                  ],
+                  "query": []
+                },
+                "description": "**GET /api/metrics**\n\nImplementación: `src/app.module.ts` → `metrics`.\n\nConfigura baseUrl y token en las variables de esta colección. Ejecuta primero Autenticación / Iniciar sesión.\n\nRuta registrada por PrometheusModule con el prefijo global /api. La aplicación configura defaultMetrics.enabled=false, por lo que la respuesta puede estar vacía."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Respuesta exitosa (2xx)\", function () {",
+                      "  pm.expect(pm.response.code).to.be.within(200, 299);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

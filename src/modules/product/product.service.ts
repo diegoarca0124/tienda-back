@@ -1,10 +1,11 @@
 import { Product } from '@/entities/product.entity';
-import { ConflictException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import { Brand } from '@/entities/brand.entity';
 import { CreateProductDto } from './dto/create-product.dto';
 import { capitalizeStr } from '@/common/utils/capitalize-str.util';
 import slugify from 'slugify';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, EntityManager, In, Repository } from 'typeorm';
 import { logHelper } from '@/common/utils/logger-helper.util';
 import { ProductPhisycal } from '@/entities/product-phisycal.entity';
 import { ProductShipping } from '@/entities/product-shipping.entity';
@@ -53,6 +54,7 @@ export class ProductService {
 		try {
 			const savedProduct = await this.dataSource.transaction(async (manager) => {
 				const data = { ...createProductDto };
+				await this.validateBrandPublication(manager, data.brandId, data.status);
 				const randomNumber = Math.floor(10000 + Math.random() * 99999);
 				data.name = capitalizeStr(data.name.toUpperCase());
 				data.slug = `${slugify(data.name, {
@@ -157,6 +159,17 @@ export class ProductService {
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
+	}
+
+	private async validateBrandPublication(manager: EntityManager, brandId: string | undefined, status: string): Promise<void> {
+		if (status !== 'published' || !brandId) return;
+		const brand = await manager.findOne(Brand, {
+			where: { id: brandId },
+			select: { id: true, status: true },
+			lock: { mode: 'pessimistic_write' },
+		});
+		if (!brand) throw new NotFoundException('La marca seleccionada no existe.');
+		if (!brand.status) throw new BadRequestException('No se puede publicar el producto porque su marca está inactiva.');
 	}
 
 	async update_quality(id: string): Promise<void> {
@@ -401,6 +414,13 @@ export class ProductService {
 		await queryRunner.startTransaction();
 
 		try {
+			let brandId = data.brandId;
+			if (data.status === 'published' && brandId === undefined) {
+				const currentProduct = await queryRunner.manager.findOne(Product, { where: { id }, select: { brandId: true } });
+				if (!currentProduct) throw new NotFoundException('No se encontró el producto.');
+				brandId = currentProduct.brandId;
+			}
+			await this.validateBrandPublication(queryRunner.manager, brandId, data.status);
 			await queryRunner.manager.update(
 				Product,
 				{ id },

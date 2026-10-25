@@ -5,6 +5,7 @@ import { Product } from './product.entity';
 @Entity('subcategories')
 @Index('IDX_SUBCATEGORIES_CATEGORY_ID', ['categoryId'])
 @Index('UQ_SUBCATEGORIES_NAME_NORMALIZED', { synchronize: false })
+@Index('UQ_SUBCATEGORIES_PREFIX_NORMALIZED', { synchronize: false })
 @Index('UQ_SUBCATEGORIES_SLUG', ['slug'], { unique: true })
 export class Subcategory {
 	@PrimaryGeneratedColumn('uuid')
@@ -13,7 +14,7 @@ export class Subcategory {
 	@Column({ type: 'varchar', length: 100, nullable: true })
 	name: string;
 
-	@Column({ type: 'varchar', unique: true })
+	@Column({ type: 'varchar' })
 	prefix: string;
 
 	@Column({

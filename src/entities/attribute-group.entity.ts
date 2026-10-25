@@ -1,8 +1,9 @@
-import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, Index, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { Attribute } from './attribute.entity';
 import { AttributeCategory } from './attribute-category.entity';
 
 @Entity('attribute_groups')
+@Index('UQ_ATTRIBUTE_GROUPS_NAME_NORMALIZED', { synchronize: false })
 export class AttributeGroup {
 	@PrimaryGeneratedColumn('uuid')
 	id: string;

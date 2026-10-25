@@ -4,118 +4,141 @@ import { CreateAttributeInterceptor } from './interceptor/create-attribute.inter
 import { CreateAttributeDto } from './dto/create-attribute.dto';
 import { Attribute } from '@/entities/attribute.entity';
 import { log } from 'console';
-import { CreateAttributeValueInterceptor } from './interceptor/create-atribute-value.interceptor';
+import { CreateAttributeValueInterceptor } from './interceptor/create-attribute-value.interceptor';
 import { CreateAttributeValueDto } from './dto/create-attribute-value.dto';
 import { EditAttributeDto } from './dto/edit-attribute.dto';
 import { EditAttributeInterceptor } from './interceptor/edit-attribute.interceptor';
 import { ValidateUUID } from '@/common/pipes/validate-uuid.pipe';
 import { UpdateStatusAttributesInterceptor } from './interceptor/update-status-attributes.interceptor';
-import { UpdateStatusAttributesDto } from './dto/update-status-attributes.dto';
+import { UpdateStatusAttributeInterceptor } from './interceptor/update-status-attribute.interceptor';
+import { UpdateAttributeStatusDto } from './dto/update-attribute-status.dto';
+import { UpdateAttributesStatusDto } from './dto/update-attributes-status.dto';
 import { CreateGroupAttributeInterceptor } from './interceptor/create-group-attribute.interceptor';
 import { CreateGroupAttributeDto } from './dto/create-group-attribute.dto';
 import { EditAttributeGroupInterceptor } from './interceptor/edit-group-attribute.interceptor';
 import { EditGroupAttributeDto } from './dto/edit-group-attribute.dto';
+import { UpdateStatusGroupAttributeInterceptor } from './interceptor/update-status-group-attribute.interceptor';
 import { UpdateStatusGroupAttributesInterceptor } from './interceptor/update-status-group-attributes.interceptor';
-import { UpdateStatusGroupAttributesDto } from './dto/update-status-group-attributes.dto';
+import { UpdateAttributeGroupStatusDto } from './dto/update-attribute-group-status.dto';
+import { UpdateAttributeGroupsStatusDto } from './dto/update-attribute-groups-status.dto';
+import type {
+	CreateAttributeRes,
+	CreateGroupAttributeRes,
+	GetAttributesRes,
+	GetAttributesByCategoryRes,
+	GetAttributeRes,
+	GetAttributeGroupRes,
+	GetAttributeValuesRes,
+	CreateAttributeValueRes,
+	DeleteAttributeValueRes,
+	UpdateAttributeRes,
+	UpdateAttributeGroupRes,
+	GetCategoriesByAttributeGroupRes,
+	GetAttributesGroupsRes,
+	UpdateAttributeStatusRes,
+	UpdateAttributesStatusRes,
+	UpdateAttributeGroupStatusRes,
+	UpdateAttributeGroupsStatusRes,
+} from './interfaces/controller.interface';
+import { QueryParamsErrorsPipe } from '@/common/pipes/query-params-errors.pipe';
+import { FindAttributesQueryDto } from './dto/find-attributes.dto';
+import { FindAttributesGroupsQueryDto } from './dto/find-attributes-groups.dto';
 
 @Controller('attribute')
 export class AttributeController {
 	constructor(private attributeService: AttributeService) {}
 
-	@Post('create_attribute')
+	@Post('createAttribute')
 	@UseInterceptors(CreateAttributeInterceptor)
-	create_attribute(@Body() createAttributeDto: CreateAttributeDto, @Req() request) {
-		return this.attributeService.create_attribute(createAttributeDto, request);
+	createAttribute(@Body() dto: CreateAttributeDto, @Req() request): Promise<CreateAttributeRes> {
+		return this.attributeService.createAttribute(dto, request);
 	}
 
-	@Post('create_group_attribute')
+	@Post('createGroupAttribute')
 	@UseInterceptors(CreateGroupAttributeInterceptor)
-	create_group_attribute(@Body() createGroupAttributeDto: CreateGroupAttributeDto, @Req() request) {
-		return this.attributeService.create_group_attribute(createGroupAttributeDto, request);
+	createGroupAttribute(@Body() dto: CreateGroupAttributeDto, @Req() request): Promise<CreateGroupAttributeRes> {
+		return this.attributeService.createGroupAttribute(dto, request);
 	}
 
-	@Get('get_attributes/:id')
-	get_attributes(@Param('id', ValidateUUID) id: string, @Query() query: { filter: string; page: number; limit: number; status: string; sort: string }) {
-		return this.attributeService.get_attributes(id, query);
+	@Get('getAttributes/:id')
+	getAttributes(@Param('id', ValidateUUID) id: string, @Query(new QueryParamsErrorsPipe(FindAttributesQueryDto)) query: unknown): Promise<GetAttributesRes> {
+		return this.attributeService.getAttributes(id, query as FindAttributesQueryDto);
 	}
 
-	@Get('get_attribute_and_categories/:id')
-	get_attribute_and_categories(@Param('id', ValidateUUID) id: string) {
-		return this.attributeService.get_attribute_and_categories(id);
+	@Get('getCategoriesByAttributeGroup/:id')
+	getCategoriesByAttributeGroup(@Param('id', ValidateUUID) id: string): Promise<GetCategoriesByAttributeGroupRes> {
+		return this.attributeService.getCategoriesByAttributeGroup(id);
 	}
 
-	@Get('get_groups_attributes')
-	get_groups_attributes(@Query() query: { filter: string; page: number; limit: number; status: string; categories: string; sort: string }) {
-		return this.attributeService.get_groups_attributes(query);
+	@Get('getAttributesGroups')
+	getAttributesGroups(@Query(new QueryParamsErrorsPipe(FindAttributesGroupsQueryDto)) query: unknown): Promise<GetAttributesGroupsRes> {
+		return this.attributeService.getAttributesGroups(query as FindAttributesGroupsQueryDto);
 	}
 
-	@Put('update_status_attribute/:id')
-	update_status_attribute(@Param('id', ValidateUUID) id: string, @Body() data: { status: boolean }, @Req() request: any) {
-		return this.attributeService.update_status_attribute(id, data.status, request);
+	@Put('updateAttributeStatus/:id')
+	@UseInterceptors(UpdateStatusAttributeInterceptor)
+	updateAttributeStatus(@Param('id', ValidateUUID) id: string, @Body() dto: UpdateAttributeStatusDto, @Req() request): Promise<UpdateAttributeStatusRes> {
+		return this.attributeService.updateAttributeStatus(id, dto, request);
 	}
 
-	@Put('update_status_group_attribute/:id')
-	update_status_group_attribute(@Param('id', ValidateUUID) id: string, @Body() data: { status: boolean }, @Req() request: any) {
-		return this.attributeService.update_status_group_attribute(id, data.status, request);
-	}
-
-	@Get('get_attribute/:id')
-	get_attribute(@Param('id') id, @Req() request: any) {
-		return this.attributeService.get_attribute(id, request);
-	}
-
-	@Get('get_attribute_group/:id')
-	get_attribute_group(@Param('id') id) {
-		return this.attributeService.get_attribute_group(id);
-	}
-
-	@Get('get_values_attribute/:id')
-	get_values_attribute(@Param('id', ValidateUUID) id: string) {
-		return this.attributeService.get_values_attribute(id);
-	}
-
-	@Post('add_value_attribute')
-	@UseInterceptors(CreateAttributeValueInterceptor)
-	add_value_attribute(@Body() createAttributeValueDto: CreateAttributeValueDto, @Req() request: any) {
-		return this.attributeService.add_value_attribute(createAttributeValueDto, request);
-	}
-
-	@Delete('delete_value_attribute/:id')
-	delete_value_attribute(@Param('id', ValidateUUID) id, @Req() request: any) {
-		return this.attributeService.delete_value_attribute(id, request);
-	}
-
-	@Put('update_attribute/:id')
-	@UseInterceptors(EditAttributeInterceptor)
-	update_attribute(@Param('id', ValidateUUID) id: string, @Body() editAttributeDto: EditAttributeDto, @Req() request: any) {
-		return this.attributeService.update_attribute(id, editAttributeDto, request);
-	}
-
-	@Put('update_attribute_group/:id')
-	@UseInterceptors(EditAttributeGroupInterceptor)
-	update_attribute_group(@Param('id', ValidateUUID) id: string, @Body() editGroupAttributeDto: EditGroupAttributeDto, @Req() request: any) {
-		return this.attributeService.update_attribute_group(id, editGroupAttributeDto, request);
-	}
-
-	@Get('get_attributes_by_select')
-	get_attributes_by_select() {
-		return this.attributeService.get_attributes_by_select();
-	}
-
-	@Get('get_attributes_by_category/:id')
-	get_attributes_by_category(@Param('id', ValidateUUID) id: string) {
-		return this.attributeService.get_attributes_by_category(id);
-	}
-
-	@Post('update_status_attributes')
+	@Post('updateAttributesStatus')
 	@UseInterceptors(UpdateStatusAttributesInterceptor)
-	update_status_attributes(@Body() updateStatusAttributesDto: UpdateStatusAttributesDto, @Req() request: any) {
-		return this.attributeService.update_status_attributes(updateStatusAttributesDto, request);
+	updateAttributesStatus(@Body() dto: UpdateAttributesStatusDto, @Req() request): Promise<UpdateAttributesStatusRes> {
+		return this.attributeService.updateAttributesStatus(dto, request);
 	}
 
-	@Post('update_status_group_attributes')
+	@Put('updateAttributeGroupStatus/:id')
+	@UseInterceptors(UpdateStatusGroupAttributeInterceptor)
+	updateAttributeGroupStatus(@Param('id', ValidateUUID) id: string, @Body() dto: UpdateAttributeGroupStatusDto, @Req() request): Promise<UpdateAttributeGroupStatusRes> {
+		return this.attributeService.updateAttributeGroupStatus(id, dto, request);
+	}
+
+	@Post('updateAttributeGroupsStatus')
 	@UseInterceptors(UpdateStatusGroupAttributesInterceptor)
-	update_status_group_attributes(@Body() updateStatusGroupAttributesDto: UpdateStatusGroupAttributesDto, @Req() request: any) {
-		return this.attributeService.update_status_group_attributes(updateStatusGroupAttributesDto, request);
+	updateAttributeGroupsStatus(@Body() dto: UpdateAttributeGroupsStatusDto, @Req() request): Promise<UpdateAttributeGroupsStatusRes> {
+		return this.attributeService.updateAttributeGroupsStatus(dto, request);
+	}
+
+	@Get('getAttribute/:id')
+	getAttribute(@Param('id', ValidateUUID) id: string): Promise<GetAttributeRes> {
+		return this.attributeService.getAttribute(id);
+	}
+
+	@Get('getAttributeGroup/:id')
+	getAttributeGroup(@Param('id', ValidateUUID) id: string): Promise<GetAttributeGroupRes> {
+		return this.attributeService.getAttributeGroup(id);
+	}
+
+	@Get('getAttributeValues/:id')
+	getAttributeValues(@Param('id', ValidateUUID) id: string): Promise<GetAttributeValuesRes> {
+		return this.attributeService.getAttributeValues(id);
+	}
+
+	@Post('createAttributeValue')
+	@UseInterceptors(CreateAttributeValueInterceptor)
+	createAttributeValue(@Body() dto: CreateAttributeValueDto, @Req() request): Promise<CreateAttributeValueRes> {
+		return this.attributeService.createAttributeValue(dto, request);
+	}
+
+	@Delete('deleteAttributeValue/:id')
+	deleteAttributeValue(@Param('id', ValidateUUID) id: string, @Req() request): Promise<DeleteAttributeValueRes> {
+		return this.attributeService.deleteAttributeValue(id, request);
+	}
+
+	@Put('updateAttribute/:id')
+	@UseInterceptors(EditAttributeInterceptor)
+	updateAttribute(@Param('id', ValidateUUID) id: string, @Body() dto: EditAttributeDto, @Req() request): Promise<UpdateAttributeRes> {
+		return this.attributeService.updateAttribute(id, dto, request);
+	}
+
+	@Put('updateAttributeGroup/:id')
+	@UseInterceptors(EditAttributeGroupInterceptor)
+	updateAttributeGroup(@Param('id', ValidateUUID) id: string, @Body() dto: EditGroupAttributeDto, @Req() request): Promise<UpdateAttributeGroupRes> {
+		return this.attributeService.updateAttributeGroup(id, dto, request);
+	}
+
+	@Get('getAttributesByCategory/:id')
+	getAttributesByCategory(@Param('id', ValidateUUID) id: string): Promise<GetAttributesByCategoryRes> {
+		return this.attributeService.getAttributesByCategory(id);
 	}
 }

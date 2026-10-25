@@ -1,15 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { BaseValidationInterceptor } from '@/common/interceptors/base-validation.interceptor';
 import { CreateAttributeDto } from '../dto/create-attribute.dto';
-import { AttributeService } from '../attribute.service';
 import { AttributeValidator } from '../validators/attribute.validator';
+import { isUUID } from 'class-validator';
 
 @Injectable()
 export class CreateAttributeInterceptor extends BaseValidationInterceptor<CreateAttributeDto> {
-	constructor(
-		private readonly attributeService: AttributeService,
-		private readonly attributeValidator: AttributeValidator
-	) {
+	constructor(private readonly attributeValidator: AttributeValidator) {
 		super();
 	}
 
@@ -35,9 +32,10 @@ export class CreateAttributeInterceptor extends BaseValidationInterceptor<Create
 	private async validateFieldsExist(body: any): Promise<{ msm: string; field: string }[]> {
 		const messages: { msm: string; field: string }[] = [];
 
-		if (body.attributeGroupId) {
-			const isAttributeNameNotExists = await this.attributeValidator.validateAttributeNameNotExists(body.name, body.attributeGroupId);
-			if (isAttributeNameNotExists) {
+		if (typeof body.name === 'string' && body.name && isUUID(body.attributeGroupId, '4')) {
+			const isNameExist = await this.attributeValidator.validateAttributeNameNotExists(body.name, body.attributeGroupId);
+
+			if (isNameExist) {
 				messages.push({
 					msm: 'Ya existe un atributo con ese nombre.',
 					field: 'name',

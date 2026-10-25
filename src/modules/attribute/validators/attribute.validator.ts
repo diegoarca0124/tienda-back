@@ -5,6 +5,8 @@ import { Category } from '@/entities/category.entity';
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
+import { isUUID } from 'class-validator';
+import { capitalizeWords } from '@/common/utils/string.util';
 
 @Injectable()
 export class AttributeValidator {
@@ -35,9 +37,28 @@ export class AttributeValidator {
 	}
 
 	async existsAllCategories(categoryIds: string[]): Promise<boolean> {
+		if (!Array.isArray(categoryIds) || !categoryIds.every((id) => isUUID(id, '4'))) return false;
 		const uniqueIds = [...new Set(categoryIds)];
 		const count = await this.categoryRepository.count({ where: { id: In(uniqueIds) } });
 		return count === uniqueIds.length;
+	}
+
+	async existsNameGroupAttribute(name: string, excludeId?: string): Promise<boolean> {
+		const query = this.attributeGroupRepository
+			.createQueryBuilder('attributeGroup')
+			.where('LOWER(TRIM(attributeGroup.name)) = LOWER(TRIM(:name))', { name: capitalizeWords(name) });
+		if (excludeId) query.andWhere('attributeGroup.id != :excludeId', { excludeId });
+		return query.getExists();
+	}
+
+	async existsAttributeNameForUpdate(name: string, id: string): Promise<boolean> {
+		return this.attributeRepository
+			.createQueryBuilder('attribute')
+			.innerJoin(Attribute, 'currentAttribute', 'currentAttribute.attributeGroupId = attribute.attributeGroupId')
+			.where('currentAttribute.id = :id', { id })
+			.andWhere('attribute.id != :id', { id })
+			.andWhere('LOWER(TRIM(attribute.name)) = LOWER(TRIM(:name))', { name: capitalizeWords(name) })
+			.getExists();
 	}
 
 	async existsValueInAttribute(value: string, attributeId: string): Promise<boolean> {

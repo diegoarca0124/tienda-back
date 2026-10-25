@@ -1,15 +1,19 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany, Generated } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany, Generated, Index } from 'typeorm';
 import { Product } from './product.entity';
 
 @Entity('brands')
+// Expression index created by migration; preserve it during schema synchronization.
+@Index('UQ_BRANDS_NAME_NORMALIZED', { synchronize: false })
+@Index('UQ_BRANDS_PREFIX_NORMALIZED', { synchronize: false })
+@Index('UQ_BRANDS_SLUG', ['slug'], { unique: true })
 export class Brand {
 	@PrimaryGeneratedColumn('uuid')
 	id: string;
 
-	@Column({ type: 'varchar', length: 150, unique: true })
+	@Column({ type: 'varchar', length: 150 })
 	name: string;
 
-	@Column({ type: 'varchar', unique: true })
+	@Column({ type: 'varchar' })
 	prefix: string;
 
 	@Column({
@@ -19,7 +23,7 @@ export class Brand {
 	@Generated('increment')
 	code: string;
 
-	@Column({ type: 'varchar', length: 150, unique: true })
+	@Column({ type: 'varchar', length: 150 })
 	slug: string;
 
 	@Column({ type: 'text', nullable: true })
@@ -29,7 +33,7 @@ export class Brand {
 	country: { code: string; flag: string; name: string };
 
 	@Column({ type: 'varchar', length: 255, nullable: true })
-	websiteUrl: string;
+	websiteUrl: string | null;
 
 	@Column({ type: 'varchar', length: 255, nullable: true })
 	logoUrl: string;
