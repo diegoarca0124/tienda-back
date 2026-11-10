@@ -53,6 +53,8 @@ export class Brand {
 	@CreateDateColumn()
 	createdAt: Date;
 
+	totalProducts?: number;
+
 	@OneToMany(() => Product, (product) => product.brand)
 	products: Product[];
 }

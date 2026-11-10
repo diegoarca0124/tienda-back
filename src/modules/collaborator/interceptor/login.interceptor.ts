@@ -1,7 +1,7 @@
 import { BaseValidationInterceptor } from '@/common/interceptors/base-validation.interceptor';
 import { Injectable } from '@nestjs/common';
 import { LoginDto } from '../dto/login.dto';
-import { CollaboratorService } from '../collaborator.service';
+
 import { CollaboratorValidator } from '../validators/collaborator.validator';
 
 @Injectable()

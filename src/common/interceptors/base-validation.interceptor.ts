@@ -4,10 +4,10 @@ import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 
 @Injectable()
-export abstract class BaseValidationInterceptor<T> implements NestInterceptor {
+export abstract class BaseValidationInterceptor<T, CustomMessage = string> implements NestInterceptor {
 	protected abstract getDtoClass(): new () => T;
-	protected abstract validateBody(body: any, request: any): Promise<{ field: string; message: string }[]>;
-	protected abstract validateFiles(files: any): Promise<{ field: string; message: string }[]>;
+	protected abstract validateBody(body: any, request: any): Promise<{ field: string; message: CustomMessage }[]>;
+	protected abstract validateFiles(files: any): Promise<{ field: string; message: CustomMessage }[]>;
 
 	async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
 		const request = context.switchToHttp().getRequest();
@@ -38,7 +38,7 @@ export abstract class BaseValidationInterceptor<T> implements NestInterceptor {
 		const dto: any = plainToInstance(this.getDtoClass(), body);
 		const errors = await validate(dto);
 
-		let groupedErrors: { [key: string]: string[] } = {};
+		let groupedErrors: { [key: string]: (string | CustomMessage)[] } = {};
 
 		// ✅ Errores de class-validator
 		if (errors.length > 0) {

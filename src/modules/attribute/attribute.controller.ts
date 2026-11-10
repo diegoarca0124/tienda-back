@@ -1,3 +1,5 @@
+import { CreateAttributeValuesDto } from './dto/create-attribute-values.dto';
+import { CreateAttributeValuesInterceptor } from './interceptor/create-attribute-values.interceptor';
 import { Body, Controller, Delete, Get, Param, Post, Put, Query, Req, UseGuards, UseInterceptors } from '@nestjs/common';
 import { AttributeService } from './attribute.service';
 import { CreateAttributeInterceptor } from './interceptor/create-attribute.interceptor';
@@ -22,6 +24,8 @@ import { UpdateStatusGroupAttributesInterceptor } from './interceptor/update-sta
 import { UpdateAttributeGroupStatusDto } from './dto/update-attribute-group-status.dto';
 import { UpdateAttributeGroupsStatusDto } from './dto/update-attribute-groups-status.dto';
 import type {
+	AttributeRequest,
+	AttributeSelectItem,
 	CreateAttributeRes,
 	CreateGroupAttributeRes,
 	GetAttributesRes,
@@ -30,6 +34,7 @@ import type {
 	GetAttributeGroupRes,
 	GetAttributeValuesRes,
 	CreateAttributeValueRes,
+	CreateAttributeValuesRes,
 	DeleteAttributeValueRes,
 	UpdateAttributeRes,
 	UpdateAttributeGroupRes,
@@ -50,13 +55,13 @@ export class AttributeController {
 
 	@Post('createAttribute')
 	@UseInterceptors(CreateAttributeInterceptor)
-	createAttribute(@Body() dto: CreateAttributeDto, @Req() request): Promise<CreateAttributeRes> {
+	createAttribute(@Body() dto: CreateAttributeDto, @Req() request: AttributeRequest): Promise<CreateAttributeRes> {
 		return this.attributeService.createAttribute(dto, request);
 	}
 
 	@Post('createGroupAttribute')
 	@UseInterceptors(CreateGroupAttributeInterceptor)
-	createGroupAttribute(@Body() dto: CreateGroupAttributeDto, @Req() request): Promise<CreateGroupAttributeRes> {
+	createGroupAttribute(@Body() dto: CreateGroupAttributeDto, @Req() request: AttributeRequest): Promise<CreateGroupAttributeRes> {
 		return this.attributeService.createGroupAttribute(dto, request);
 	}
 
@@ -77,25 +82,29 @@ export class AttributeController {
 
 	@Put('updateAttributeStatus/:id')
 	@UseInterceptors(UpdateStatusAttributeInterceptor)
-	updateAttributeStatus(@Param('id', ValidateUUID) id: string, @Body() dto: UpdateAttributeStatusDto, @Req() request): Promise<UpdateAttributeStatusRes> {
+	updateAttributeStatus(@Param('id', ValidateUUID) id: string, @Body() dto: UpdateAttributeStatusDto, @Req() request: AttributeRequest): Promise<UpdateAttributeStatusRes> {
 		return this.attributeService.updateAttributeStatus(id, dto, request);
 	}
 
 	@Post('updateAttributesStatus')
 	@UseInterceptors(UpdateStatusAttributesInterceptor)
-	updateAttributesStatus(@Body() dto: UpdateAttributesStatusDto, @Req() request): Promise<UpdateAttributesStatusRes> {
+	updateAttributesStatus(@Body() dto: UpdateAttributesStatusDto, @Req() request: AttributeRequest): Promise<UpdateAttributesStatusRes> {
 		return this.attributeService.updateAttributesStatus(dto, request);
 	}
 
 	@Put('updateAttributeGroupStatus/:id')
 	@UseInterceptors(UpdateStatusGroupAttributeInterceptor)
-	updateAttributeGroupStatus(@Param('id', ValidateUUID) id: string, @Body() dto: UpdateAttributeGroupStatusDto, @Req() request): Promise<UpdateAttributeGroupStatusRes> {
+	updateAttributeGroupStatus(
+		@Param('id', ValidateUUID) id: string,
+		@Body() dto: UpdateAttributeGroupStatusDto,
+		@Req() request: AttributeRequest
+	): Promise<UpdateAttributeGroupStatusRes> {
 		return this.attributeService.updateAttributeGroupStatus(id, dto, request);
 	}
 
 	@Post('updateAttributeGroupsStatus')
 	@UseInterceptors(UpdateStatusGroupAttributesInterceptor)
-	updateAttributeGroupsStatus(@Body() dto: UpdateAttributeGroupsStatusDto, @Req() request): Promise<UpdateAttributeGroupsStatusRes> {
+	updateAttributeGroupsStatus(@Body() dto: UpdateAttributeGroupsStatusDto, @Req() request: AttributeRequest): Promise<UpdateAttributeGroupsStatusRes> {
 		return this.attributeService.updateAttributeGroupsStatus(dto, request);
 	}
 
@@ -116,24 +125,30 @@ export class AttributeController {
 
 	@Post('createAttributeValue')
 	@UseInterceptors(CreateAttributeValueInterceptor)
-	createAttributeValue(@Body() dto: CreateAttributeValueDto, @Req() request): Promise<CreateAttributeValueRes> {
+	createAttributeValue(@Body() dto: CreateAttributeValueDto, @Req() request: AttributeRequest): Promise<CreateAttributeValueRes> {
 		return this.attributeService.createAttributeValue(dto, request);
 	}
 
+	@Post('createAttributeValues')
+	@UseInterceptors(CreateAttributeValuesInterceptor)
+	createAttributeValues(@Body() dto: CreateAttributeValuesDto, @Req() request: AttributeRequest): Promise<CreateAttributeValuesRes> {
+		return this.attributeService.createAttributeValues(dto, request);
+	}
+
 	@Delete('deleteAttributeValue/:id')
-	deleteAttributeValue(@Param('id', ValidateUUID) id: string, @Req() request): Promise<DeleteAttributeValueRes> {
+	deleteAttributeValue(@Param('id', ValidateUUID) id: string, @Req() request: AttributeRequest): Promise<DeleteAttributeValueRes> {
 		return this.attributeService.deleteAttributeValue(id, request);
 	}
 
 	@Put('updateAttribute/:id')
 	@UseInterceptors(EditAttributeInterceptor)
-	updateAttribute(@Param('id', ValidateUUID) id: string, @Body() dto: EditAttributeDto, @Req() request): Promise<UpdateAttributeRes> {
+	updateAttribute(@Param('id', ValidateUUID) id: string, @Body() dto: EditAttributeDto, @Req() request: AttributeRequest): Promise<UpdateAttributeRes> {
 		return this.attributeService.updateAttribute(id, dto, request);
 	}
 
 	@Put('updateAttributeGroup/:id')
 	@UseInterceptors(EditAttributeGroupInterceptor)
-	updateAttributeGroup(@Param('id', ValidateUUID) id: string, @Body() dto: EditGroupAttributeDto, @Req() request): Promise<UpdateAttributeGroupRes> {
+	updateAttributeGroup(@Param('id', ValidateUUID) id: string, @Body() dto: EditGroupAttributeDto, @Req() request: AttributeRequest): Promise<UpdateAttributeGroupRes> {
 		return this.attributeService.updateAttributeGroup(id, dto, request);
 	}
 

@@ -9,19 +9,19 @@ export class EditAttributeDto {
 	@IsDefined({ message: 'El nombre es obligatorio.' })
 	@IsNotEmpty({ message: 'El nombre es obligatorio' })
 	@Transform(({ value }) => (typeof value === 'string' ? capitalizeWords(value) : value))
-	name: string;
+	readonly name: string;
 
-	@Transform(({ value }) => (typeof value === 'string' ? normalizeText(value) || undefined : value))
+	@Transform(({ value }) => (typeof value === 'string' ? normalizeText(value) || null : value))
 	@IsOptional()
 	@MinLength(3, { message: 'La descripción debe tener minimo 3 caracteres.' })
-	@MaxLength(2000, { message: 'La descripción debe tener máximo 2000 caracteres.' })
-	@IsString({ message: 'La descripción debe ser una cadena de caracteres.' })
-	description?: string;
+	@MaxLength(250, { message: 'La descripción debe tener máximo 250 caracteres.' })
+	@IsString({ message: 'La descripción debe ser una cadena de caracteres.' })
+	readonly description?: string | null;
 
-	@Transform(({ value }) => (typeof value === 'string' ? normalizeText(value) || undefined : value))
+	@Transform(({ value }) => (typeof value === 'string' ? normalizeText(value) || null : value))
 	@IsOptional()
 	@MaxLength(100, { message: 'La unidad no puede tener más de 100 caracteres' })
 	@MinLength(2, { message: 'La unidad debe tener al menos 2 caracteres' })
 	@IsString({ message: 'La unidad debe ser una cadena de caracteres' })
-	unit?: string;
+	readonly unit?: string | null;
 }

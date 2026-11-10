@@ -14,7 +14,7 @@ export class Collaborator {
 	@Column({ type: 'varchar', length: 100 })
 	surname: string;
 
-	@Column({ type: 'varchar', length: 100, nullable: true })
+	@Column({ type: 'varchar', length: 201, nullable: true })
 	fullnames: string;
 
 	@Column({ type: 'varchar', length: 100, nullable: true })

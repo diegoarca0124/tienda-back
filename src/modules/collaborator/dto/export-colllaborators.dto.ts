@@ -1,19 +1,5 @@
 import { Type } from 'class-transformer';
-import {
-	ArrayNotEmpty,
-	IsArray,
-	IsBoolean,
-	IsDefined,
-	IsIn,
-	IsNotEmpty,
-	IsNotEmptyObject,
-	IsOptional,
-	IsString,
-	IsUUID,
-	MaxLength,
-	ValidateIf,
-	ValidateNested,
-} from 'class-validator';
+import { ArrayNotEmpty, IsArray, IsBoolean, IsDefined, IsIn, IsNotEmpty, IsString, IsUUID, MaxLength, ValidateIf, ValidateNested } from 'class-validator';
 
 export class ExportFieldDto {
 	@IsString({ message: 'El campo debe ser una cadena de texto.' })
@@ -21,7 +7,7 @@ export class ExportFieldDto {
 	@IsIn(['names', 'surname', 'type_document', 'number_document', 'email', 'phone', 'role', 'createdAt', 'updatedAt', 'statusAt', 'lastDatelogin', 'status', 'prefix'], {
 		message: 'El campo no es válido para exportación.',
 	})
-	field: string;
+	field: 'names' | 'surname' | 'type_document' | 'number_document' | 'email' | 'phone' | 'role' | 'createdAt' | 'updatedAt' | 'statusAt' | 'lastDatelogin' | 'status' | 'prefix';
 
 	@IsBoolean({ message: 'El estado del campo debe ser verdadero o falso.' })
 	checked: boolean;
@@ -32,7 +18,7 @@ export class ExportCollaboratorsDto {
 	@IsNotEmpty({ message: 'El formato no debe estar vacio.' })
 	@IsIn(['xlsx', 'csv'], { message: 'El formato debe ser xlsx o csv.' })
 	@IsDefined({ message: 'El formato es obligatorio.' })
-	format: string;
+	format: 'xlsx' | 'csv';
 
 	@IsBoolean({ message: 'El enmascarado debe ser verdadero o falso.' })
 	@IsDefined({ message: 'El enmascarado es obligatorio.' })
@@ -44,7 +30,7 @@ export class ExportCollaboratorsDto {
 		message: 'El alcance no es válido.',
 	})
 	@IsDefined({ message: 'El alcance es obligatorio.' })
-	scope: string;
+	scope: 'all' | 'selected' | 'page';
 
 	@ValidateIf((o) => o.scope === 'selected' || o.scope === 'page')
 	@IsDefined({ message: 'Debe enviar los IDs.' })

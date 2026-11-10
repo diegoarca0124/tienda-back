@@ -9,7 +9,7 @@ export class EditGroupAttributeDto {
 	@IsNotEmpty({ message: 'El nombre no debe estar vacio.' })
 	@IsDefined({ message: 'El nombre es obligatorio.' })
 	@Transform(({ value }) => (typeof value === 'string' ? capitalizeWords(value) : value))
-	name: string;
+	readonly name: string;
 
 	@MaxLength(250, { message: 'La descripción no puede tener más de 250 caracteres' })
 	@MinLength(2, { message: 'La descripción debe tener al menos 2 caracteres' })
@@ -17,12 +17,12 @@ export class EditGroupAttributeDto {
 	@IsNotEmpty({ message: 'La descripción no debe estar vacia.' })
 	@IsDefined({ message: 'La descripción es obligatoria.' })
 	@Transform(({ value }) => normalizeText(value))
-	description: string;
+	readonly description: string;
 
 	@ArrayUnique((id: unknown) => (typeof id === 'string' ? id.toLowerCase() : id), { message: 'Las categorías no deben repetirse.' })
 	@IsUUID('4', { each: true, message: 'Cada categoría debe ser un UUID válido' })
 	@ArrayNotEmpty({ message: 'Debe seleccionar al menos una categoría' })
 	@IsDefined({ message: 'Las categorías son obligatorias.' })
 	@IsArray({ message: 'Las categorías deben ser un arreglo.' })
-	categories: string[];
+	readonly categories: string[];
 }

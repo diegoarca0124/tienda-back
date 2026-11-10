@@ -1,19 +1,43 @@
-import { Category } from '@/entities/category.entity';
-import { FindCategoriesQueryDto } from '../dto/find-categories.dto';
-import { Subcategory } from '@/entities/subcategory.entity';
-import { Product } from '@/entities/product.entity';
-import { FindCategoryProductsQueryDto } from '../dto/find-category-products.dto';
-import { Brand } from '@/entities/brand.entity';
+export interface CategoryRequest {
+	user: { id: string };
+	requestId: string;
+}
 
 export interface GetCategoriesRes {
-	categories: Category[];
+	categories: {
+		id: string;
+		name: string;
+		code: string;
+		icon: string | null;
+		description: string;
+		prefix: string;
+		color: string | null;
+		isDimensions: boolean;
+		isCharacteristics: boolean;
+		isCondition: boolean;
+		isWarranty: boolean;
+		isCountryOfOrigin: boolean;
+		isMaterial: boolean;
+		isTemperature: boolean;
+		status: boolean;
+		createdAt: Date;
+		totalProducts: number;
+		latestProducts: {
+			id: string;
+			name: string;
+			code: string;
+			cover: string;
+			categoryId: string;
+		}[];
+		moreProducts: number;
+	}[];
 	meta: {
 		totalCategories: number;
 		totalPages: number;
 		currentPage: number;
 		limit: number;
 	};
-	filters: Pick<FindCategoriesQueryDto, 'filter' | 'status' | 'sort' | 'configurations'>;
+	filters: { filter: string; status: 'Todos' | 'Activos' | 'Inactivos'; sort: 'Predeterminado' | 'name:asc' | 'name:desc'; configurations: string[] };
 }
 
 export interface CreateCategoryRes {
@@ -22,37 +46,115 @@ export interface CreateCategoryRes {
 }
 
 export interface UpdateCategoryRes {
-	data: Category;
+	data: {
+		id: string;
+		name: string;
+		code: string;
+		slug: string;
+		icon: string | null;
+		description: string;
+		prefix: string;
+		color: string | null;
+		isDimensions: boolean;
+		isCharacteristics: boolean;
+		isCondition: boolean;
+		isWarranty: boolean;
+		isCountryOfOrigin: boolean;
+		isMaterial: boolean;
+		isTemperature: boolean;
+		status: boolean;
+		createdAt: Date;
+		updatedAt: Date;
+		statusAt: Date | null;
+	};
 	message: string;
 }
 
 export interface UpdateSubcategoryRes {
-	data: Subcategory;
+	data: {
+		id: string;
+		name: string | null;
+		code: string;
+		prefix: string;
+		slug: string | null;
+		icon: string | null;
+		categoryId: string;
+		status: boolean;
+		createdAt: Date;
+		updatedAt: Date;
+		statusAt: Date | null;
+	};
 	message: string;
 }
 
 export interface CreateSubcategoryRes {
-	data: Subcategory;
+	data: string;
 	message: string;
 }
 
 export interface GetCategoryRes {
-	data: Category;
+	data: {
+		id: string;
+		name: string;
+		code: string;
+		slug: string;
+		icon: string | null;
+		description: string;
+		prefix: string;
+		color: string | null;
+		isDimensions: boolean;
+		isCharacteristics: boolean;
+		isCondition: boolean;
+		isWarranty: boolean;
+		isCountryOfOrigin: boolean;
+		isMaterial: boolean;
+		isTemperature: boolean;
+		status: boolean;
+		createdAt: Date;
+		updatedAt: Date;
+		statusAt: Date | null;
+	};
 	message: string;
 }
 
 export interface GetSubcategoriesByCategorySelect {
-	data: Subcategory[];
+	data: {
+		id: string;
+		name: string | null;
+		icon: string | null;
+		prefix: string;
+		code: string;
+		status: boolean;
+		totalProducts: number;
+	}[];
 	message: string;
 }
 
 export interface GetSubcategoriesRes {
-	data: Subcategory[];
+	data: {
+		id: string;
+		name: string | null;
+		code: string;
+		prefix: string;
+		slug: string | null;
+		icon: string | null;
+		categoryId: string;
+		status: boolean;
+		createdAt: Date;
+		updatedAt: Date;
+		statusAt: Date | null;
+	}[];
 	message: string;
 }
 
 export interface GetBrandsByCategoryRes {
-	data: Brand[];
+	data: {
+		id: string;
+		name: string;
+		logoUrl: string | null;
+		status: boolean;
+		websiteUrl: string | null;
+	}[];
 	message: string;
 }
 
@@ -62,7 +164,7 @@ export interface UpdateCategoriesStatusRes {
 }
 
 export interface UpdateSubcategoryStatusRes {
-	data: Subcategory;
+	data: { id: string; name: string | null; status: boolean; statusAt: Date | null };
 	message: string;
 }
 
@@ -72,7 +174,7 @@ export interface UpdateSubcategoriesStatusRes {
 }
 
 export interface UpdateCategoryStatusRes {
-	data: Category;
+	data: { id: string; name: string; status: boolean; statusAt: Date | null };
 	message: string;
 }
 
@@ -80,7 +182,7 @@ export interface MoveSubcategoryRes {
 	message: string;
 	data: {
 		id: string;
-		name: string;
+		name: string | null;
 		categoryId: string;
 		status: boolean;
 		affectedProducts: number;
@@ -88,9 +190,23 @@ export interface MoveSubcategoryRes {
 }
 
 export interface GetCategoriesWithSubcategoriesRes {
-	data: (Pick<Category, 'id' | 'name' | 'icon' | 'color' | 'status'> & {
-		subcategories: Pick<Subcategory, 'id' | 'name' | 'categoryId' | 'status'>[];
-	})[];
+	data: {
+		code: string;
+		id: string;
+		name: string;
+		prefix: string;
+		icon: string | null;
+		color: string | null;
+		status: boolean;
+		subcategories: {
+			code: string;
+			id: string;
+			name: string | null;
+			prefix: string;
+			categoryId: string;
+			status: boolean;
+		}[];
+	}[];
 	message: string;
 }
 
@@ -101,18 +217,118 @@ export interface MoveProductsToSubcategoryRes {
 
 export interface FindCategoryProductsRes {
 	category: string;
-	products: Product[];
+	products: {
+		id: string;
+		name: string;
+		cover: string;
+		status: 'draft' | 'published';
+		visibility: 'public' | 'private';
+		createdAt: Date;
+		priceRegular: string | number;
+		priceDiscount: string | number | null;
+		quality: number;
+		quality_label: string;
+		stockQuantity: number | null;
+		category: { id: string; name: string };
+		subcategory: { id: string; name: string; prefix: string; code: string };
+		brand: { id: string; name: string; logoUrl: string };
+	}[];
 	meta: {
 		totalProducts: number;
 		totalPages: number;
 		currentPage: number;
 		limit: number;
 	};
-	filters: Omit<
-		Pick<FindCategoryProductsQueryDto, 'filter' | 'status' | 'sort' | 'subcategoryIds' | 'brandIds' | 'quality' | 'visibility' | 'minPrice' | 'maxPrice'>,
-		'subcategoryIds' | 'brandIds'
-	> & {
+	filters: {
+		filter: string;
+		status: 'Todos' | 'published' | 'draft';
+		sort: string;
 		subcategoryIds: string;
 		brandIds: string;
+		quality: string;
+		visibility: string;
+		minPrice?: number;
+		maxPrice?: number;
 	};
+}
+
+export interface GetSubcategoryRes {
+	data: {
+		id: string;
+		name: string | null;
+		code: string;
+		prefix: string;
+		slug: string | null;
+		icon: string | null;
+		categoryId: string;
+		status: boolean;
+		createdAt: Date;
+		updatedAt: Date;
+		statusAt: Date | null;
+	};
+	message: string;
+}
+export interface GetCategoriesSelectRes {
+	data: {
+		id: string;
+		name: string;
+		icon: string | null;
+		prefix: string;
+		status: boolean;
+		isDimensions: boolean;
+		isCharacteristics: boolean;
+		isCondition: boolean;
+		isWarranty: boolean;
+		isCountryOfOrigin: boolean;
+		isMaterial: boolean;
+		isTemperature: boolean;
+	}[];
+	message: string;
+}
+export interface GetCategorySubcategorySelectionRes {
+	data: {
+		id: string;
+		name: string;
+		prefix: string;
+		status: boolean;
+		subcategories: {
+			id: string;
+			name: string | null;
+			prefix: string;
+			status: boolean;
+			checked: boolean;
+		}[];
+	}[];
+	message: string;
+}
+export interface CategoryProduct {
+	id: string;
+	name: string;
+	cover: string;
+	status: 'draft' | 'published';
+	visibility: 'public' | 'private';
+	createdAt: Date;
+	priceRegular: string | number;
+	priceDiscount: string | number | null;
+	quality: number;
+	quality_label: string;
+	stockQuantity: number | null;
+	category: { id: string; name: string };
+	subcategory: { id: string; name: string; prefix: string; code: string };
+	brand: { id: string; name: string; logoUrl: string };
+}
+
+export interface MovedSubcategory {
+	id: string;
+	name: string | null;
+	categoryId: string;
+	status: boolean;
+}
+export interface CategoryValidationBody {
+	name?: unknown;
+	icon?: unknown;
+	prefix?: unknown;
+}
+export interface CategoryRouteRequest {
+	params: { id: string };
 }

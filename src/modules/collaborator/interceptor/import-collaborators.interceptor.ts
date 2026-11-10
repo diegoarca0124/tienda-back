@@ -1,3 +1,6 @@
+interface ImportFileRow {
+	[column: string]: unknown;
+}
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { BaseValidationInterceptor } from '@/common/interceptors/base-validation.interceptor';
 import { plainToInstance } from 'class-transformer';
@@ -5,17 +8,47 @@ import { validate } from 'class-validator';
 import { ImportCollaboratorsDto, ValidateImportCollaboratorDto } from '../dto/import-collaborators.dto';
 import { CollaboratorValidator } from '../validators/collaborator.validator';
 
-type RowErrors = Record<string, string[]>;
-type ValidationResult = { field: string; message: any };
-type ImportRowResult = Record<number, RowErrors>;
-type DuplicateField = 'email' | 'phone' | 'number_document';
-type ValidatedRow = {
-	rowErrors: RowErrors;
-	normalizedRow?: Record<string, unknown>;
+interface RowErrors {
+	[field: string]: string[];
+}
+type ImportValidationMessage =
+	| string
+	| string[]
+	| {
+			[row: number]: {
+				[field: string]: string[];
+			};
+	  }[]
+	| number;
+type ValidationResult = {
+	field: string;
+	message:
+		| string
+		| string[]
+		| {
+				[row: number]: {
+					[field: string]: string[];
+				};
+		  }[]
+		| number;
 };
+interface ImportRowResult {
+	[row: number]: {
+		[field: string]: string[];
+	};
+}
+type DuplicateField = 'email' | 'phone' | 'number_document';
+interface ValidatedRow {
+	rowErrors: {
+		[field: string]: string[];
+	};
+	normalizedRow?: {
+		[column: string]: unknown;
+	};
+}
 
 @Injectable()
-export class ImportCollaboratorsInterceptor extends BaseValidationInterceptor<ImportCollaboratorsDto> {
+export class ImportCollaboratorsInterceptor extends BaseValidationInterceptor<ImportCollaboratorsDto, ImportValidationMessage> {
 	constructor(private readonly collaboratorValidator: CollaboratorValidator) {
 		super();
 	}
@@ -83,14 +116,14 @@ export class ImportCollaboratorsInterceptor extends BaseValidationInterceptor<Im
 		const errors: RowErrors = {};
 		if (!['news', 'update', 'upsert'].includes(mode)) return errors;
 		const [emailExists, phoneExists, documentExists] = await Promise.all([
-			dto.email ? this.collaboratorValidator.existsEmailCollaborator(dto.email) : false,
-			dto.phone ? this.collaboratorValidator.existsPhoneCollaborator(dto.phone) : false,
-			dto.number_document ? this.collaboratorValidator.existsDocumentNumberCollaborator(dto.number_document) : false,
+			dto.email ? this.collaboratorValidator.existsEmailCollaborator(dto.email) : null,
+			dto.phone ? this.collaboratorValidator.existsPhoneCollaborator(dto.phone) : null,
+			dto.number_document ? this.collaboratorValidator.existsDocumentNumberCollaborator(dto.number_document) : null,
 		]);
 		const currentCollaborator = mode === 'news' ? null : identifyBy === 'email' ? emailExists : identifyBy === 'number_document' ? documentExists : null;
 		// Las filas que no existen se ignoran en el modo update.
 		if (mode === 'update' && !currentCollaborator) return errors;
-		const belongsToAnotherCollaborator = (owner: { id: string } | null | false) => !!owner && owner.id !== currentCollaborator?.id;
+		const belongsToAnotherCollaborator = (owner: { id: string } | null) => !!owner && owner.id !== currentCollaborator?.id;
 
 		if (belongsToAnotherCollaborator(emailExists)) this.addError(errors, 'email', 'El correo ya se encuentra registrado.');
 		if (belongsToAnotherCollaborator(phoneExists)) this.addError(errors, 'phone', 'El teléfono ya se encuentra registrado.');
@@ -110,7 +143,7 @@ export class ImportCollaboratorsInterceptor extends BaseValidationInterceptor<Im
 		const occurrences = new Map<string, number[]>();
 		data.forEach((row, index) => {
 			if (!row || typeof row !== 'object' || Array.isArray(row)) return;
-			const value = this.normalizeValue((row as Record<string, unknown>)[field]);
+			const value = this.normalizeValue((row as ImportFileRow)[field]);
 			if (!value) return;
 			const indexes = occurrences.get(value) ?? [];
 			indexes.push(index);
@@ -139,7 +172,7 @@ export class ImportCollaboratorsInterceptor extends BaseValidationInterceptor<Im
 
 	private getRowNumber(row: unknown, index: number): string | number {
 		if (!row || typeof row !== 'object' || Array.isArray(row)) return index + 1;
-		const value = (row as Record<string, unknown>).index;
+		const value = (row as ImportFileRow).index;
 		return typeof value === 'string' || typeof value === 'number' ? value : index + 1;
 	}
 

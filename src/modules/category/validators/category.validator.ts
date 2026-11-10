@@ -1,10 +1,10 @@
 import { capitalizeWords } from '@/common/utils/string.util';
 import { Category } from '@/entities/category.entity';
 import { Subcategory } from '@/entities/subcategory.entity';
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import slugify from 'slugify';
-import { In, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class CategoryValidator {
@@ -16,19 +16,19 @@ export class CategoryValidator {
 		private readonly subcategoryRepository: Repository<Subcategory>
 	) {}
 
-	async existsIdCategory(id: string): Promise<any> {
+	async existsIdCategory(id: string): Promise<boolean> {
 		return this.categoryRepository.exists({ where: { id } });
 	}
 
-	async existsNameCategory(name: string): Promise<any> {
+	async existsNameCategory(name: string): Promise<{ id: string } | null> {
 		return this.categoryRepository.createQueryBuilder('category').select(['category.id']).where('LOWER(TRIM(category.name)) = LOWER(TRIM(:name))', { name }).getOne();
 	}
 
-	async existsPrefixCategory(prefix: string): Promise<any> {
+	async existsPrefixCategory(prefix: string): Promise<{ id: string } | null> {
 		return this.categoryRepository.createQueryBuilder('category').select(['category.id']).where('LOWER(TRIM(category.prefix)) = LOWER(TRIM(:prefix))', { prefix }).getOne();
 	}
 
-	async existsNameSubcategory(name: string): Promise<any> {
+	async existsNameSubcategory(name: string): Promise<{ id: string } | null> {
 		return this.subcategoryRepository
 			.createQueryBuilder('subcategory')
 			.select(['subcategory.id'])
@@ -36,7 +36,7 @@ export class CategoryValidator {
 			.getOne();
 	}
 
-	async existsPrefixSubcategory(prefix: string): Promise<any> {
+	async existsPrefixSubcategory(prefix: string): Promise<{ id: string } | null> {
 		return this.subcategoryRepository
 			.createQueryBuilder('subcategory')
 			.select(['subcategory.id', 'subcategory.prefix'])

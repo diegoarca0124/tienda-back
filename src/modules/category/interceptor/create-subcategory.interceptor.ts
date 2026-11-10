@@ -1,7 +1,7 @@
+import type { CategoryValidationBody } from '../interfaces/controller.interface';
 import { Injectable } from '@nestjs/common';
 import { BaseValidationInterceptor } from '@/common/interceptors/base-validation.interceptor';
-import { CreateCategoryDto } from '../dto/create-category.dto';
-import { CategoryService } from '../category.service';
+
 import { CreateSubcategoryDto } from '../dto/create-subcategory.dto';
 import { CategoryValidator } from '../validators/category.validator';
 import { isValidName } from '../utils/is-valid-name.util';
@@ -17,7 +17,7 @@ export class CreateSubcategoryInterceptor extends BaseValidationInterceptor<Crea
 		return CreateSubcategoryDto;
 	}
 
-	protected async validateBody(body: any): Promise<{ field: string; message: string }[]> {
+	protected async validateBody(body: CategoryValidationBody): Promise<{ field: string; message: string }[]> {
 		const customErrors: { field: string; message: string }[] = [];
 
 		const fieldsErrors = await this.validateFieldsExist(body);
@@ -28,14 +28,14 @@ export class CreateSubcategoryInterceptor extends BaseValidationInterceptor<Crea
 		return customErrors;
 	}
 
-	protected async validateFiles(files: any): Promise<{ field: string; message: string }[]> {
+	protected async validateFiles(files: unknown): Promise<{ field: string; message: string }[]> {
 		return [];
 	}
 
-	private async validateFieldsExist(body: any): Promise<{ msm: string; field: string }[]> {
+	private async validateFieldsExist(body: CategoryValidationBody): Promise<{ msm: string; field: string }[]> {
 		const messages: { msm: string; field: string }[] = [];
 
-		if (body.icon) {
+		if (typeof body.icon === 'string' && body.icon) {
 			const result = sanitizeSvg(body.icon);
 
 			if (!result.valid) {
@@ -69,7 +69,7 @@ export class CreateSubcategoryInterceptor extends BaseValidationInterceptor<Crea
 			}
 		}
 
-		if (body.prefix) {
+		if (typeof body.prefix === 'string' && body.prefix) {
 			const isPrefixExist = await this.categoryValidator.existsPrefixSubcategory(body.prefix);
 
 			if (isPrefixExist) {

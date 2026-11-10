@@ -1,17 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { BaseValidationInterceptor } from '@/common/interceptors/base-validation.interceptor';
 import { CreateBrandDto } from '../dto/create-brand.dto';
-import { BrandService } from '../brand.service';
 import { validateUrl } from '@/common/utils/validate-url.util';
 import { BrandValidator } from '../validators/brand.validator';
 import { DEFAULT_IMAGE_UPLOAD_CONFIG } from '@/common/constants/file-upload.constant';
 
 @Injectable()
 export class CreateBrandInterceptor extends BaseValidationInterceptor<CreateBrandDto> {
-	constructor(
-		private readonly brandService: BrandService,
-		private readonly brandValidator: BrandValidator
-	) {
+	constructor(private readonly brandValidator: BrandValidator) {
 		super();
 	}
 

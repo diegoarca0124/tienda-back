@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { Transform } from 'class-transformer';
-import { IsIn, IsInt, IsNumber, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min, ValidateIf } from 'class-validator';
+import { IsIn, IsInt, IsString, Max, MaxLength, Min } from 'class-validator';
 import { ALLOWED_STATUS } from '../constants/allowed-status.constant';
 import { ALLOWED_SORT } from '../constants/allowed-sort.constant';
 

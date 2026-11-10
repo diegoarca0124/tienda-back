@@ -5,15 +5,15 @@ import { IsDefined, IsNotEmpty, IsNotEmptyObject, IsObject, IsOptional, IsString
 export class CountryDto {
 	@IsString({ message: 'El código de país es requerido' })
 	@IsNotEmpty({ message: 'El código de país no puede estar vacío' })
-	code: string;
+	readonly code: string;
 
 	@IsString({ message: 'El nombre de país es requerido' })
 	@IsNotEmpty({ message: 'El nombre de país no puede estar vacío' })
-	name: string;
+	readonly name: string;
 
 	@IsString({ message: 'La bandera es requerida' })
 	@IsNotEmpty({ message: 'La bandera no puede estar vacía' })
-	flag: string;
+	readonly flag: string;
 }
 
 export class EditBrandDto {
@@ -23,7 +23,7 @@ export class EditBrandDto {
 	@IsNotEmpty({ message: 'El nombre no debe estar vacio.' })
 	@IsDefined({ message: 'El nombre es obligatorio.' })
 	@Transform(({ value }) => (typeof value === 'string' ? capitalizeWords(value) : value))
-	name: string;
+	readonly name: string;
 
 	@IsString({ message: 'El prefijo debe ser texto' })
 	@Matches(/^[A-Z]{3}$/, {
@@ -31,7 +31,7 @@ export class EditBrandDto {
 	})
 	@IsNotEmpty({ message: 'El prefijo no debe estar vacio.' })
 	@IsDefined({ message: 'El prefijo es obligatorio.' })
-	prefix: string;
+	readonly prefix: string;
 
 	@ValidateIf((_object, value) => value !== '')
 	@MinLength(3, { message: 'La descripción debe tener minimo 3 caracteres.' })
@@ -41,13 +41,13 @@ export class EditBrandDto {
 	@Transform(({ value }) => (typeof value === 'string' ? normalizeText(value) : value))
 	readonly description: string;
 
-	slug?: string;
+	readonly slug?: string;
 
 	@IsObject({ message: 'El país debe ser un objeto válido' })
 	@ValidateNested()
 	@Type(() => CountryDto)
 	@IsNotEmptyObject({}, { message: 'El país no puede ser nulo' })
-	country: CountryDto;
+	readonly country: CountryDto;
 
 	@IsOptional()
 	@Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
@@ -58,11 +58,11 @@ export class EditBrandDto {
 	readonly websiteUrl?: string | null;
 
 	@IsOptional()
-	logoUrl?: string;
+	readonly logoUrl?: string;
 
 	@IsOptional()
-	bannerUrl?: string;
+	readonly bannerUrl?: string;
 
 	@IsOptional()
-	updatedAt?: Date;
+	readonly updatedAt?: Date;
 }

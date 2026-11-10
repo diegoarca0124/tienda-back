@@ -1,5 +1,5 @@
 import { TransformBoolean } from '@/common/decorators/transform-boolean.decorator';
-import { ArrayMaxSize, ArrayNotEmpty, IsArray, IsBoolean, IsDefined, IsNotEmpty, IsUUID } from 'class-validator';
+import { ArrayMaxSize, ArrayNotEmpty, IsArray, IsBoolean, IsDefined, IsUUID } from 'class-validator';
 
 export class UpdateCollaboratorsStatusDto {
 	@IsDefined({ message: 'Los colaboradores son obligatorios.' })

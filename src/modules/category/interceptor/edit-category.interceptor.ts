@@ -1,7 +1,8 @@
+import { ValidateUUID } from '@/common/pipes/validate-uuid.pipe';
+import type { CategoryValidationBody, CategoryRouteRequest } from '../interfaces/controller.interface';
 import { Injectable } from '@nestjs/common';
 import { BaseValidationInterceptor } from '@/common/interceptors/base-validation.interceptor';
-import { CreateCategoryDto } from '../dto/create-category.dto';
-import { CategoryService } from '../category.service';
+
 import { sanitizeSvg } from '@/common/utils/validate-svg.util';
 import { EditCategoryDto } from '../dto/edit-category.dto';
 import { CategoryValidator } from '../validators/category.validator';
@@ -17,7 +18,7 @@ export class EditCategoryInterceptor extends BaseValidationInterceptor<EditCateg
 		return EditCategoryDto;
 	}
 
-	protected async validateBody(body: any, request: any): Promise<{ field: string; message: string }[]> {
+	protected async validateBody(body: CategoryValidationBody, request: CategoryRouteRequest): Promise<{ field: string; message: string }[]> {
 		const customErrors: { field: string; message: string }[] = [];
 
 		const fieldsErrors = await this.validateFieldsExist(body, request);
@@ -28,15 +29,15 @@ export class EditCategoryInterceptor extends BaseValidationInterceptor<EditCateg
 		return customErrors;
 	}
 
-	protected async validateFiles(files: any): Promise<{ field: string; message: string }[]> {
+	protected async validateFiles(files: unknown): Promise<{ field: string; message: string }[]> {
 		return [];
 	}
 
-	private async validateFieldsExist(body: any, request: any): Promise<{ msm: string; field: string }[]> {
+	private async validateFieldsExist(body: CategoryValidationBody, request: CategoryRouteRequest): Promise<{ msm: string; field: string }[]> {
 		const messages: { msm: string; field: string }[] = [];
-		const categoryId = request.params.id;
+		const categoryId = await new ValidateUUID().transform(request.params.id, { type: 'param', data: 'id' });
 
-		if (body.icon) {
+		if (typeof body.icon === 'string' && body.icon) {
 			const result = sanitizeSvg(body.icon);
 
 			if (!result.valid) {
@@ -70,7 +71,7 @@ export class EditCategoryInterceptor extends BaseValidationInterceptor<EditCateg
 			}
 		}
 
-		if (body.prefix) {
+		if (typeof body.prefix === 'string' && body.prefix) {
 			const isPrefixExist = await this.categoryValidator.existsPrefixCategory(body.prefix);
 
 			if (isPrefixExist && isPrefixExist.id != categoryId) {

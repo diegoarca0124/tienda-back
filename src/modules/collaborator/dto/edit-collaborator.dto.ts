@@ -1,6 +1,6 @@
 import { capitalizeWords, normalizeText } from '@/common/utils/string.util';
-import { Transform, Type } from 'class-transformer';
-import { IsDefined, IsEmail, IsIn, IsNotEmpty, IsNotEmptyObject, IsObject, IsOptional, IsString, Matches, MaxLength, MinLength, ValidateIf, ValidateNested } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsDefined, IsEmail, IsIn, IsNotEmpty, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 import { IsValidDocumentNumber } from '../validators/valid-document-number.validator';
 import { ALLOWED_DOCUMENT } from '../constants/allowed-document.constant';
 
@@ -39,7 +39,7 @@ export class EditCollaboratorDto {
 	@IsOptional()
 	readonly fullnames?: string;
 
-	@Transform(({ value }) => (typeof value === 'string' ? normalizeText(value) : value))
+	@Transform(({ value }) => (typeof value === 'string' ? normalizeText(value).toLowerCase() : value))
 	@MaxLength(50, { message: 'El correo debe tener máximo 50 caracteres.' })
 	@IsEmail({}, { message: 'El correo no tiene un formato correcto.' })
 	@IsNotEmpty({ message: 'El correo no debe estar vacio.' })

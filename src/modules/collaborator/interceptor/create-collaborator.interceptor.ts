@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CreateCollaboratorDto } from '../dto/create-collaborator.dto';
-import { CollaboratorService } from '../collaborator.service';
+
 import { BaseValidationInterceptor } from '@/common/interceptors/base-validation.interceptor';
 import { CollaboratorValidator } from '../validators/collaborator.validator';
 

@@ -12,7 +12,7 @@ import { CreateCollaboratorDto } from './dto/create-collaborator.dto';
 import { hashPassword } from '@/common/utils/hash.util';
 import { InjectRepository } from '@nestjs/typeorm/dist/common/typeorm.decorators';
 import { Collaborator } from '@/entities/collaborator.entity';
-import { In, QueryFailedError, Repository } from 'typeorm';
+import { In, Raw, Repository } from 'typeorm';
 import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcryptjs';
 import { EditCollaboratorDto } from './dto/edit-collaborator.dto';
@@ -30,6 +30,8 @@ import { ALLOWED_EXPORT } from './constants/allowed-export.constant';
 import { exportCollaboratorsFile } from './utils/export-collaborators-file.util';
 import { rethrowCollaboratorUniqueViolation } from './utils/index-messages.util';
 import {
+	CollaboratorRequest,
+	NormalizedImportedCollaborator,
 	CreateCollaboratorRes,
 	ExportCollaboratorsRes,
 	GetCollaboratorRes,
@@ -53,7 +55,7 @@ export class CollaboratorService {
 		private kibanaService: KibanaService
 	) {}
 
-	async createCollaborator(dto: CreateCollaboratorDto, request: any): Promise<CreateCollaboratorRes> {
+	async createCollaborator(dto: CreateCollaboratorDto, request: CollaboratorRequest): Promise<CreateCollaboratorRes> {
 		try {
 			const result = await this.collaboratorRepository
 				.createQueryBuilder()
@@ -62,6 +64,7 @@ export class CollaboratorService {
 				.values({
 					...dto,
 					fullnames: `${dto.names} ${dto.surname}`,
+					status: true,
 					password: await hashPassword(dto.password),
 				})
 				.returning(['id'])
@@ -78,7 +81,7 @@ export class CollaboratorService {
 			this.kibanaService.audit({
 				action: 'createCollaborator',
 				performedBy: request.user.id,
-				targetId: '',
+				targetId: id,
 				requestBody: JSON.stringify(safeData),
 				response: JSON.stringify({ id }),
 				requestId: request.requestId,
@@ -108,21 +111,21 @@ export class CollaboratorService {
 					role: true,
 					status: true,
 				},
-				where: { email },
+				where: { email: Raw((column) => `LOWER(TRIM(${column})) = :email`, { email: email.trim().toLowerCase() }) },
 			});
 
 			if (!collaborator) {
-				throw new UnauthorizedException('Correo o contraseña incorrectos');
-			}
-
-			if (!collaborator.status) {
-				throw new ForbiddenException('Tu cuenta se encuentra inactiva.');
+				throw new UnauthorizedException('Correo o contraseña incorrectos.');
 			}
 
 			const isValidPassword = await bcrypt.compare(password, collaborator.password);
 
 			if (!isValidPassword) {
-				throw new UnauthorizedException('Correo o contraseña incorrecto.');
+				throw new UnauthorizedException('Correo o contraseña incorrectos.');
+			}
+
+			if (!collaborator.status) {
+				throw new ForbiddenException('Tu cuenta se encuentra inactiva.');
 			}
 
 			const accessToken = await this.authService.generateToken(collaborator);
@@ -248,7 +251,7 @@ export class CollaboratorService {
 		}
 	}
 
-	async updateCollaborator(id: string, dto: EditCollaboratorDto, request: any): Promise<UpdateCollaboratorRes> {
+	async updateCollaborator(id: string, dto: EditCollaboratorDto, request: CollaboratorRequest): Promise<UpdateCollaboratorRes> {
 		const exists = await this.collaboratorRepository.exists({
 			where: { id },
 		});
@@ -322,7 +325,7 @@ export class CollaboratorService {
 		}
 	}
 
-	async updateCollaboratorStatus(id: string, dto: UpdateCollaboratorStatusDto, request: any): Promise<UpdateCollaboratorStatusRes> {
+	async updateCollaboratorStatus(id: string, dto: UpdateCollaboratorStatusDto, request: CollaboratorRequest): Promise<UpdateCollaboratorStatusRes> {
 		try {
 			const exists = await this.collaboratorRepository.exists({ where: { id } });
 
@@ -384,7 +387,7 @@ export class CollaboratorService {
 		}
 	}
 
-	async updateCollaboratorsStatus(dto: UpdateCollaboratorsStatusDto, request: any): Promise<UpdateCollaboratorsStatusRes> {
+	async updateCollaboratorsStatus(dto: UpdateCollaboratorsStatusDto, request: CollaboratorRequest): Promise<UpdateCollaboratorsStatusRes> {
 		try {
 			const ids = [...new Set(dto.ids)];
 
@@ -448,7 +451,7 @@ export class CollaboratorService {
 		}
 	}
 
-	async revokeCollaboratorSessions(id: string, request: any): Promise<RevokeCollaboratorSessionsRes> {
+	async revokeCollaboratorSessions(id: string, request: CollaboratorRequest): Promise<RevokeCollaboratorSessionsRes> {
 		const exists = await this.collaboratorRepository.exists({ where: { id } });
 		if (!exists) {
 			throw new NotFoundException('No se encontró el colaborador.');
@@ -480,7 +483,7 @@ export class CollaboratorService {
 		};
 	}
 
-	async exportCollaborators(dto: ExportCollaboratorsDto, request: any): Promise<ExportCollaboratorsRes> {
+	async exportCollaborators(dto: ExportCollaboratorsDto, request: CollaboratorRequest): Promise<ExportCollaboratorsRes> {
 		let exportedFile: ExportCollaboratorsRes | undefined;
 		try {
 			const allowedFields = new Set(ALLOWED_EXPORT);
@@ -553,7 +556,7 @@ export class CollaboratorService {
 						if (collaborators.length < batchSize) break;
 					}
 				}
-				exportedFile = await exportCollaboratorsFile(fields, dto.format as 'xlsx' | 'csv', rows());
+				exportedFile = await exportCollaboratorsFile(fields, dto.format, rows());
 				return exportedFile;
 			});
 
@@ -574,14 +577,15 @@ export class CollaboratorService {
 		}
 	}
 
-	async importCollaborators(dto: ImportCollaboratorsDto, request: any): Promise<ImportCollaboratorsRes> {
+	async importCollaborators(dto: ImportCollaboratorsDto, request: CollaboratorRequest): Promise<ImportCollaboratorsRes> {
 		try {
 			const { data, mode, identifyBy } = dto;
 			const defaultPassword = await hashPassword('123456');
-			const cleanData: Record<string, any>[] = data.map((row) => {
-				const { index, ...item } = row as Record<string, any> & { index?: unknown };
+			const cleanData = data.map((row) => {
+				const { index, ...item } = row as NormalizedImportedCollaborator;
 				return {
 					...item,
+					email: item.email.trim().toLowerCase(),
 					fullnames: `${item.names} ${item.surname}`,
 					password: defaultPassword,
 				};
@@ -589,11 +593,11 @@ export class CollaboratorService {
 			const identifyValues = cleanData.map((item) => item[identifyBy]).filter(Boolean);
 			const existingCollaborators = await this.collaboratorRepository.find({
 				where: {
-					[identifyBy]: In(identifyValues),
+					[identifyBy]: identifyBy === 'email' ? Raw((column) => `LOWER(TRIM(${column})) IN (:...emails)`, { emails: identifyValues }) : In(identifyValues),
 				},
 			});
-			const existingMap = new Map(existingCollaborators.map((item) => [item[identifyBy], item]));
-			const toCreate: Array<any> = [];
+			const existingMap = new Map(existingCollaborators.map((item) => [identifyBy === 'email' ? item.email.trim().toLowerCase() : item.number_document, item]));
+			const toCreate: Collaborator[] = [];
 			const toUpdate: Collaborator[] = [];
 			const inactiveCollaboratorIds = new Set<string>();
 			for (const item of cleanData) {
@@ -627,7 +631,21 @@ export class CollaboratorService {
 						await manager.save(Collaborator, toCreate);
 					}
 					if (toUpdate.length > 0) {
-						await manager.save(Collaborator, toUpdate);
+						for (const item of toUpdate) {
+							await manager.update(Collaborator, item.id, {
+								names: item.names,
+								surname: item.surname,
+								fullnames: item.fullnames,
+								email: item.email,
+								type_document: item.type_document,
+								number_document: item.number_document,
+								prefix: item.prefix,
+								phone: item.phone,
+								role: item.role,
+								status: item.status,
+								statusAt: item.statusAt,
+							});
+						}
 					}
 				});
 			}

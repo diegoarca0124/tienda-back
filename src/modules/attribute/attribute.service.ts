@@ -1,3 +1,4 @@
+import { CreateAttributeValuesDto } from './dto/create-attribute-values.dto';
 import { Attribute } from '@/entities/attribute.entity';
 import { Category } from '@/entities/category.entity';
 import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
@@ -21,6 +22,8 @@ import { UpdateAttributeGroupsStatusDto } from './dto/update-attribute-groups-st
 import { CreateAttributeDto } from './dto/create-attribute.dto';
 import { AttributeValidator } from './validators/attribute.validator';
 import type {
+	AttributeRequest,
+	AttributeSelectItem,
 	CreateAttributeRes,
 	CreateGroupAttributeRes,
 	GetAttributesRes,
@@ -29,6 +32,7 @@ import type {
 	GetAttributeGroupRes,
 	GetAttributeValuesRes,
 	CreateAttributeValueRes,
+	CreateAttributeValuesRes,
 	DeleteAttributeValueRes,
 	UpdateAttributeRes,
 	UpdateAttributeGroupRes,
@@ -40,7 +44,6 @@ import type {
 	UpdateAttributeGroupsStatusRes,
 } from './interfaces/controller.interface';
 import { rethrowAttributeUniqueViolation } from './utils/index-messages.util';
-import { plainToInstance } from 'class-transformer';
 import { FindAttributesQueryDto } from './dto/find-attributes.dto';
 import { FindAttributesBuilder } from './builders/find-attributes.builder';
 import { FindAttributesGroupsQueryDto } from './dto/find-attributes-groups.dto';
@@ -48,7 +51,7 @@ import { FindAttributesGroupsBuilder } from './builders/find-attributes-groups.b
 
 @Injectable()
 export class AttributeService {
-	private readonly logger = new Logger('AuthService');
+	private readonly logger = new Logger(AttributeService.name);
 
 	constructor(
 		@InjectRepository(Category) private categoryRepository: Repository<Category>,
@@ -61,9 +64,8 @@ export class AttributeService {
 		private readonly attributeValidator: AttributeValidator
 	) {}
 
-	async createAttribute(dto: CreateAttributeDto, request: any): Promise<CreateAttributeRes> {
+	async createAttribute(dto: CreateAttributeDto, request: AttributeRequest): Promise<CreateAttributeRes> {
 		try {
-			dto = plainToInstance(CreateAttributeDto, dto);
 			const groupExists = await this.attributeValidator.existsAttributeGroup(dto.attributeGroupId);
 			if (!groupExists) {
 				throw new NotFoundException('El grupo de atributos seleccionado no existe.');
@@ -120,13 +122,13 @@ export class AttributeService {
 			};
 		} catch (err: unknown) {
 			rethrowAttributeUniqueViolation(err);
-			throw err;
+			if (err) throw err;
+			throw new InternalServerErrorException('Ocurrio un problema en servidor.');
 		}
 	}
 
-	async createGroupAttribute(dto: CreateGroupAttributeDto, request: any): Promise<CreateGroupAttributeRes> {
+	async createGroupAttribute(dto: CreateGroupAttributeDto, request: AttributeRequest): Promise<CreateGroupAttributeRes> {
 		try {
-			dto = plainToInstance(CreateGroupAttributeDto, dto);
 			const categoriesIds = [...new Set(dto.categories)];
 
 			const id = await this.dataSource.transaction(async (manager) => {
@@ -177,7 +179,8 @@ export class AttributeService {
 			};
 		} catch (err: unknown) {
 			rethrowAttributeUniqueViolation(err);
-			throw err;
+			if (err) throw err;
+			throw new InternalServerErrorException('Ocurrio un problema en servidor.');
 		}
 	}
 
@@ -249,7 +252,7 @@ export class AttributeService {
 				})
 				.orderBy('category.name', 'ASC')
 				.addOrderBy('category.id', 'ASC')
-				.getRawMany<Pick<Category, 'id' | 'name'>>();
+				.getRawMany<{ id: string; name: string }>();
 
 			return {
 				data: {
@@ -317,7 +320,7 @@ export class AttributeService {
 		}
 	}
 
-	async updateAttributeStatus(id: string, dto: UpdateAttributeStatusDto, request: any): Promise<UpdateAttributeStatusRes> {
+	async updateAttributeStatus(id: string, dto: UpdateAttributeStatusDto, request: AttributeRequest): Promise<UpdateAttributeStatusRes> {
 		const result = await this.attributeRepository
 			.createQueryBuilder()
 			.update(Attribute)
@@ -327,18 +330,12 @@ export class AttributeService {
 			.returning(['id', 'status', 'name'])
 			.execute();
 
-		if (!result.affected) {
-			const exists = await this.attributeRepository.exists({ where: { id } });
-			if (!exists) {
-				throw new NotFoundException('No se encontró el atributo.');
-			}
-			throw new BadRequestException(dto.status ? 'El atributo ya se encuentra activo.' : 'El atributo ya se encuentra inactivo.');
-		}
-
-		if (!result.raw?.length) {
+		if (result.affected && !result.raw?.length) {
 			throw new InternalServerErrorException('No se pudo recuperar el registro actualizado.');
 		}
-		const updatedAttribute = result.raw[0];
+		const updatedAttribute = result.affected ? result.raw[0] : await this.attributeRepository.findOne({ select: { id: true, name: true, status: true }, where: { id } });
+		if (!updatedAttribute) throw new NotFoundException('No se encontró el registro.');
+		if (updatedAttribute.status !== dto.status) throw new ConflictException('El estado cambió durante la operación. Intenta nuevamente.');
 
 		this.kibanaService.audit({
 			action: 'updateAttributeStatus',
@@ -352,8 +349,9 @@ export class AttributeService {
 		return { message: 'Registro actualizado correctamente.', data: updatedAttribute };
 	}
 
-	async updateAttributesStatus(dto: UpdateAttributesStatusDto, request: any): Promise<UpdateAttributesStatusRes> {
+	async updateAttributesStatus(dto: UpdateAttributesStatusDto, request: AttributeRequest): Promise<UpdateAttributesStatusRes> {
 		const ids = [...new Set(dto.ids)];
+		if (!ids.length) throw new BadRequestException('Debe seleccionar al menos un registro.');
 		const result = await this.attributeRepository
 			.createQueryBuilder()
 			.update(Attribute)
@@ -363,18 +361,13 @@ export class AttributeService {
 			.returning(['id'])
 			.execute();
 
-		if (!result.affected) {
-			const existingAttributes = await this.attributeRepository.count({ where: { id: In(ids) } });
-			if (existingAttributes === 0) {
-				throw new NotFoundException('No se encontraron atributos.');
-			}
-			throw new BadRequestException(dto.status ? 'Los atributos seleccionados ya se encuentran activos.' : 'Los atributos seleccionados ya se encuentran inactivos.');
-		}
-
-		if (!result.raw?.length) {
+		if (result.affected && !result.raw?.length) {
 			throw new InternalServerErrorException('No se pudo recuperar el registro actualizado.');
 		}
-		const updatedIds: string[] = result.raw.map((item: { id: string }) => item.id);
+		const records = await this.attributeRepository.find({ select: { id: true, status: true }, where: { id: In(ids) } });
+		if (!records.length) throw new NotFoundException('No se encontraron registros.');
+		if (records.some((record) => record.status !== dto.status)) throw new ConflictException('El estado cambió durante la operación. Intenta nuevamente.');
+		const updatedIds = records.map((record) => record.id);
 
 		this.kibanaService.audit({
 			action: 'updateAttributesStatus',
@@ -388,7 +381,7 @@ export class AttributeService {
 		return { message: 'Registros actualizados correctamente.', data: updatedIds };
 	}
 
-	async updateAttributeGroupStatus(id: string, dto: UpdateAttributeGroupStatusDto, request: any): Promise<UpdateAttributeGroupStatusRes> {
+	async updateAttributeGroupStatus(id: string, dto: UpdateAttributeGroupStatusDto, request: AttributeRequest): Promise<UpdateAttributeGroupStatusRes> {
 		const result = await this.attributeGroupRepository
 			.createQueryBuilder()
 			.update(AttributeGroup)
@@ -398,18 +391,14 @@ export class AttributeService {
 			.returning(['id', 'status', 'name'])
 			.execute();
 
-		if (!result.affected) {
-			const exists = await this.attributeGroupRepository.exists({ where: { id } });
-			if (!exists) {
-				throw new NotFoundException('No se encontró el grupo de atributos.');
-			}
-			throw new BadRequestException(dto.status ? 'El grupo de atributos ya se encuentra activo.' : 'El grupo de atributos ya se encuentra inactivo.');
-		}
-
-		if (!result.raw?.length) {
+		if (result.affected && !result.raw?.length) {
 			throw new InternalServerErrorException('No se pudo recuperar el registro actualizado.');
 		}
-		const updatedAttributeGroup = result.raw[0];
+		const updatedAttributeGroup = result.affected
+			? result.raw[0]
+			: await this.attributeGroupRepository.findOne({ select: { id: true, name: true, status: true }, where: { id } });
+		if (!updatedAttributeGroup) throw new NotFoundException('No se encontró el registro.');
+		if (updatedAttributeGroup.status !== dto.status) throw new ConflictException('El estado cambió durante la operación. Intenta nuevamente.');
 
 		this.kibanaService.audit({
 			action: 'updateAttributeGroupStatus',
@@ -423,8 +412,9 @@ export class AttributeService {
 		return { message: 'Registro actualizado correctamente.', data: updatedAttributeGroup };
 	}
 
-	async updateAttributeGroupsStatus(dto: UpdateAttributeGroupsStatusDto, request: any): Promise<UpdateAttributeGroupsStatusRes> {
+	async updateAttributeGroupsStatus(dto: UpdateAttributeGroupsStatusDto, request: AttributeRequest): Promise<UpdateAttributeGroupsStatusRes> {
 		const ids = [...new Set(dto.ids)];
+		if (!ids.length) throw new BadRequestException('Debe seleccionar al menos un registro.');
 		const result = await this.attributeGroupRepository
 			.createQueryBuilder()
 			.update(AttributeGroup)
@@ -434,18 +424,13 @@ export class AttributeService {
 			.returning(['id'])
 			.execute();
 
-		if (!result.affected) {
-			const existingAttributeGroups = await this.attributeGroupRepository.count({ where: { id: In(ids) } });
-			if (existingAttributeGroups === 0) {
-				throw new NotFoundException('No se encontraron grupos de atributos.');
-			}
-			throw new BadRequestException(dto.status ? 'Los grupos de atributos seleccionados ya se encuentran activos.' : 'Los grupos de atributos seleccionados ya se encuentran inactivos.');
-		}
-
-		if (!result.raw?.length) {
+		if (result.affected && !result.raw?.length) {
 			throw new InternalServerErrorException('No se pudo recuperar el registro actualizado.');
 		}
-		const updatedIds: string[] = result.raw.map((item: { id: string }) => item.id);
+		const records = await this.attributeGroupRepository.find({ select: { id: true, status: true }, where: { id: In(ids) } });
+		if (!records.length) throw new NotFoundException('No se encontraron registros.');
+		if (records.some((record) => record.status !== dto.status)) throw new ConflictException('El estado cambió durante la operación. Intenta nuevamente.');
+		const updatedIds = records.map((record) => record.id);
 
 		this.kibanaService.audit({
 			action: 'updateAttributeGroupsStatus',
@@ -463,7 +448,7 @@ export class AttributeService {
 		try {
 			const attribute = await this.attributeRepository
 				.createQueryBuilder('attribute')
-				.select(['attribute.id', 'attribute.name', 'attribute.description', 'attribute.unit'])
+				.select(['attribute.id', 'attribute.name', 'attribute.status', 'attribute.description', 'attribute.unit'])
 				.where('attribute.id = :id', { id })
 				.getOne();
 
@@ -474,7 +459,7 @@ export class AttributeService {
 				data: attribute,
 				message: 'Registro obtenido correctamente.',
 			};
-		} catch (err: any) {
+		} catch (err: unknown) {
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
@@ -484,16 +469,21 @@ export class AttributeService {
 		try {
 			const attributeGroup = await this.attributeGroupRepository
 				.createQueryBuilder('attributeGroup')
+				.leftJoin('attributeGroup.attributeCategories', 'attributeCategory')
+				.leftJoin('attributeCategory.category', 'category')
 				.select([
 					'attributeGroup.id',
 					'attributeGroup.name',
 					'attributeGroup.description',
+					'attributeGroup.status',
 					'attributeGroup.createdAt',
 					'attributeGroup.updatedAt',
 					'attributeGroup.statusAt',
+					'attributeCategory.id',
+					'attributeCategory.categoryId',
+					'category.id',
+					'category.name',
 				])
-				.leftJoinAndSelect('attributeGroup.attributeCategories', 'attributeCategory')
-				.leftJoinAndSelect('attributeCategory.category', 'category')
 				.where('attributeGroup.id = :id', { id })
 				.getOne();
 
@@ -508,7 +498,7 @@ export class AttributeService {
 				},
 				message: 'Registro obtenido correctamente.',
 			};
-		} catch (err: any) {
+		} catch (err: unknown) {
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
@@ -536,15 +526,14 @@ export class AttributeService {
 				data: attributeValues,
 				message: 'Registros obtenidos correctamente.',
 			};
-		} catch (err: any) {
+		} catch (err: unknown) {
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
 	}
 
-	async createAttributeValue(dto: CreateAttributeValueDto, request: any): Promise<CreateAttributeValueRes> {
+	async createAttributeValue(dto: CreateAttributeValueDto, request: AttributeRequest): Promise<CreateAttributeValueRes> {
 		try {
-			dto = plainToInstance(CreateAttributeValueDto, dto);
 			const existsAttribute = await this.attributeRepository.exists({
 				where: {
 					id: dto.attributeId,
@@ -587,13 +576,44 @@ export class AttributeService {
 			};
 		} catch (err: unknown) {
 			rethrowAttributeUniqueViolation(err);
-			throw err;
+			if (err) throw err;
+			throw new InternalServerErrorException('Ocurrio un problema en servidor.');
 		}
 	}
 
-	async updateAttribute(id: string, dto: EditAttributeDto, request: any): Promise<UpdateAttributeRes> {
+	async createAttributeValues(dto: CreateAttributeValuesDto, request: AttributeRequest): Promise<CreateAttributeValuesRes> {
 		try {
-			dto = plainToInstance(EditAttributeDto, dto);
+			const values = await this.dataSource.transaction(async (manager) => {
+				const exists = await manager.getRepository(Attribute).exists({ where: { id: dto.attributeId } });
+				if (!exists) throw new NotFoundException('No se encontró el atributo.');
+				const result = await manager
+					.createQueryBuilder()
+					.insert()
+					.into(AttributeValue)
+					.values(dto.values.map((value) => ({ attributeId: dto.attributeId, value })))
+					.returning(['id', 'value', 'status', 'attributeId'])
+					.execute();
+				if (result.raw?.length !== dto.values.length) throw new InternalServerErrorException('No se pudieron registrar todos los valores.');
+				return result.raw as CreateAttributeValuesRes['data'];
+			});
+			this.kibanaService.audit({
+				action: 'createAttributeValues',
+				performedBy: request.user.id,
+				targetId: dto.attributeId,
+				requestBody: JSON.stringify(dto),
+				response: JSON.stringify(values),
+				requestId: request.requestId,
+			});
+			return { data: values, message: 'Valores registrados correctamente.' };
+		} catch (error: unknown) {
+			rethrowAttributeUniqueViolation(error);
+			if (error) throw error;
+			throw new InternalServerErrorException('Ocurrio un problema en servidor.');
+		}
+	}
+
+	async updateAttribute(id: string, dto: EditAttributeDto, request: AttributeRequest): Promise<UpdateAttributeRes> {
+		try {
 			const exists = await this.attributeRepository.exists({
 				where: { id },
 			});
@@ -644,11 +664,12 @@ export class AttributeService {
 			};
 		} catch (err: unknown) {
 			rethrowAttributeUniqueViolation(err);
-			throw err;
+			if (err) throw err;
+			throw new InternalServerErrorException('Ocurrio un problema en servidor.');
 		}
 	}
 
-	async deleteAttributeValue(id: string, request: any): Promise<DeleteAttributeValueRes> {
+	async deleteAttributeValue(id: string, request: AttributeRequest): Promise<DeleteAttributeValueRes> {
 		try {
 			const result = await this.attributeValuesRepository.delete(id);
 
@@ -676,9 +697,8 @@ export class AttributeService {
 		}
 	}
 
-	async updateAttributeGroup(id: string, dto: EditGroupAttributeDto, request: any): Promise<UpdateAttributeGroupRes> {
+	async updateAttributeGroup(id: string, dto: EditGroupAttributeDto, request: AttributeRequest): Promise<UpdateAttributeGroupRes> {
 		try {
-			dto = plainToInstance(EditGroupAttributeDto, dto);
 			const exists = await this.attributeGroupRepository.exists({
 				where: { id },
 			});
@@ -746,6 +766,9 @@ export class AttributeService {
 						'attributeGroup.status',
 						'attributeGroup.name',
 						'attributeGroup.description',
+						'attributeGroup.createdAt',
+						'attributeGroup.updatedAt',
+						'attributeGroup.statusAt',
 
 						'attributeCategory.id',
 						'attributeCategory.categoryId',
@@ -777,15 +800,16 @@ export class AttributeService {
 
 			return {
 				message: 'Registro actualizado correctamente.',
-				data: attributeGroup,
+				data: { ...attributeGroup, categories: attributeGroup.attributeCategories.map((item) => item.categoryId) },
 			};
 		} catch (err: unknown) {
 			rethrowAttributeUniqueViolation(err);
-			throw err;
+			if (err) throw err;
+			throw new InternalServerErrorException('Ocurrio un problema en servidor.');
 		}
 	}
 
-	async get_attributes_by_select() {
+	async get_attributes_by_select(): Promise<AttributeSelectItem[]> {
 		try {
 			const attributes = await this.attributeRepository
 				.createQueryBuilder('attribute')
@@ -794,7 +818,7 @@ export class AttributeService {
 				.orderBy('attribute.name', 'ASC')
 				.getMany();
 			return attributes;
-		} catch (err: any) {
+		} catch (err: unknown) {
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}

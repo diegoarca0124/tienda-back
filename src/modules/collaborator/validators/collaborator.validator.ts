@@ -1,7 +1,7 @@
 import { Collaborator } from '@/entities/collaborator.entity';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class CollaboratorValidator {
@@ -10,11 +10,11 @@ export class CollaboratorValidator {
 		private readonly collaboratorRepository: Repository<Collaborator>
 	) {}
 
-	async existsIdCollaborator(id: string): Promise<any> {
+	async existsIdCollaborator(id: string): Promise<boolean> {
 		return this.collaboratorRepository.exists({ where: { id } });
 	}
 
-	async existsEmailCollaborator(email): Promise<any> {
+	async existsEmailCollaborator(email: string): Promise<{ id: string } | null> {
 		return this.collaboratorRepository
 			.createQueryBuilder('collaborator')
 			.select(['collaborator.id'])
@@ -22,7 +22,7 @@ export class CollaboratorValidator {
 			.getOne();
 	}
 
-	async existsDocumentNumberCollaborator(number_document): Promise<any> {
+	async existsDocumentNumberCollaborator(number_document: string): Promise<{ id: string } | null> {
 		return this.collaboratorRepository
 			.createQueryBuilder('collaborator')
 			.select(['collaborator.id'])
@@ -30,7 +30,7 @@ export class CollaboratorValidator {
 			.getOne();
 	}
 
-	async existsPhoneCollaborator(phone): Promise<any> {
+	async existsPhoneCollaborator(phone: string): Promise<{ id: string } | null> {
 		return this.collaboratorRepository
 			.createQueryBuilder('collaborator')
 			.select(['collaborator.id'])

@@ -14,13 +14,13 @@ export class Attribute {
 	name: string;
 
 	@Column({ type: 'varchar', length: 250, nullable: true })
-	description: string;
+	description: string | null;
 
 	@Column({ nullable: true })
 	attributeGroupId: string;
 
 	@Column({ type: 'text', nullable: true })
-	unit: string;
+	unit: string | null;
 
 	@Column({ type: 'boolean', default: false })
 	status: boolean;

@@ -1,7 +1,8 @@
+import type { CategoryValidationBody } from '../interfaces/controller.interface';
 import { Injectable } from '@nestjs/common';
 import { BaseValidationInterceptor } from '@/common/interceptors/base-validation.interceptor';
 import { CreateCategoryDto } from '../dto/create-category.dto';
-import { CategoryService } from '../category.service';
+
 import { sanitizeSvg } from '@/common/utils/validate-svg.util';
 import { CategoryValidator } from '../validators/category.validator';
 import { isValidName } from '../utils/is-valid-name.util';
@@ -16,7 +17,7 @@ export class CreateCategoryInterceptor extends BaseValidationInterceptor<CreateC
 		return CreateCategoryDto;
 	}
 
-	protected async validateBody(body: any): Promise<{ field: string; message: string }[]> {
+	protected async validateBody(body: CategoryValidationBody): Promise<{ field: string; message: string }[]> {
 		const customErrors: { field: string; message: string }[] = [];
 
 		const fieldsErrors = await this.validateFieldsExist(body);
@@ -27,14 +28,14 @@ export class CreateCategoryInterceptor extends BaseValidationInterceptor<CreateC
 		return customErrors;
 	}
 
-	protected async validateFiles(files: any): Promise<{ field: string; message: string }[]> {
+	protected async validateFiles(files: unknown): Promise<{ field: string; message: string }[]> {
 		return [];
 	}
 
-	private async validateFieldsExist(body: any): Promise<{ msm: string; field: string }[]> {
+	private async validateFieldsExist(body: CategoryValidationBody): Promise<{ msm: string; field: string }[]> {
 		const messages: { msm: string; field: string }[] = [];
 
-		if (body.icon) {
+		if (typeof body.icon === 'string' && body.icon) {
 			const result = sanitizeSvg(body.icon);
 			if (!result.valid) {
 				messages.push({
@@ -67,7 +68,7 @@ export class CreateCategoryInterceptor extends BaseValidationInterceptor<CreateC
 			}
 		}
 
-		if (body.prefix) {
+		if (typeof body.prefix === 'string' && body.prefix) {
 			const isPrefixExist = await this.categoryValidator.existsPrefixCategory(body.prefix);
 
 			if (isPrefixExist) {

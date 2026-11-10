@@ -1,6 +1,6 @@
 import { ConflictException } from '@nestjs/common';
 
-const messages: Record<string, string> = {
+const messages: { [constraint: string]: string } = {
 	UQ_ATTRIBUTE_GROUPS_NAME_NORMALIZED: 'Ya existe un grupo de atributos con ese nombre.',
 	UQ_cbf1498cdad86915f4906d2da6b: 'Ya existe un grupo de atributos con ese nombre.',
 	UQ_ATTRIBUTES_GROUP_NAME_NORMALIZED: 'Ya existe un atributo con ese nombre en el grupo seleccionado.',

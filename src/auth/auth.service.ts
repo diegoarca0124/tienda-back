@@ -57,7 +57,7 @@ export class AuthService {
 			if (jti) await this.revokeToken(jti, exp);
 		}
 
-		await this.redisTokenService.del(key);
+		await this.redisTokenService.removeSetMembers(key, activeTokens);
 		return activeTokens.length;
 	}
 }

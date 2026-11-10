@@ -1,4 +1,4 @@
-import { BadRequestException, HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { Category } from '@/entities/category.entity';
 import { Brand } from '@/entities/brand.entity';
@@ -14,7 +14,7 @@ import { Product } from '@/entities/product.entity';
 import { UpdateCatSubcatProductsDto } from './dto/update-catsubcat-products.dto';
 import { MoveSubcategoryDto } from './dto/move-subcategory.dto';
 import { KibanaService } from '@/common/services/kibana/kibana.service';
-import { getPagination } from '@/common/utils/get-pagination.util';
+
 import { escapeLikePattern } from '@/common/utils/escape-like-pattern.util';
 import { CategoryValidator } from './validators/category.validator';
 import { getQualityLabel } from './utils/calculate-total.util';
@@ -25,6 +25,12 @@ import { FindCategoriesBuilder } from './builders/find-categories.builder';
 import { UpdateCategoryStatusDto } from './dto/update-category-status.dto';
 import { UpdatCategoriesStatusDto } from './dto/update-categories-status.dto';
 import {
+	MovedSubcategory,
+	CategoryProduct,
+	CategoryRequest,
+	GetSubcategoryRes,
+	GetCategoriesSelectRes,
+	GetCategorySubcategorySelectionRes,
 	CreateCategoryRes,
 	CreateSubcategoryRes,
 	FindCategoryProductsRes,
@@ -66,7 +72,7 @@ export class CategoryService {
 		private categoryValidator: CategoryValidator
 	) {}
 
-	async createCategory(dto: CreateCategoryDto, request: any): Promise<CreateCategoryRes> {
+	async createCategory(dto: CreateCategoryDto, request: CategoryRequest): Promise<CreateCategoryRes> {
 		try {
 			const result = await this.categoryRepository
 				.createQueryBuilder()
@@ -74,6 +80,7 @@ export class CategoryService {
 				.into(Category)
 				.values({
 					...dto,
+					status: true,
 					slug: slugify(dto.name, {
 						lower: true,
 						strict: true,
@@ -92,7 +99,7 @@ export class CategoryService {
 			this.kibanaService.audit({
 				action: 'createCategory',
 				performedBy: request.user.id,
-				targetId: '',
+				targetId: id,
 				requestBody: JSON.stringify(dto),
 				response: JSON.stringify({ id }),
 				requestId: request.requestId,
@@ -102,7 +109,7 @@ export class CategoryService {
 				message: 'Registro creado correctamente.',
 				data: id,
 			};
-		} catch (err: any) {
+		} catch (err: unknown) {
 			rethrowCategoryUniqueViolation(err);
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
@@ -177,13 +184,14 @@ export class CategoryService {
 						)
 					: [];
 
-			const categoriesWithProducts = categories.map((category: any) => {
+			const categoriesWithProducts = categories.map((category) => {
 				const latestProducts = products.filter((product) => product.categoryId === category.id).slice(0, 4);
 
 				return {
 					...category,
+					totalProducts: Number(Reflect.get(category, 'totalProducts') ?? 0),
 					latestProducts,
-					moreProducts: Math.max((category.totalProducts ?? 0) - latestProducts.length, 0),
+					moreProducts: Math.max(Number(Reflect.get(category, 'totalProducts') ?? 0) - latestProducts.length, 0),
 				};
 			});
 
@@ -208,7 +216,7 @@ export class CategoryService {
 		}
 	}
 
-	async updateCategoryStatus(id: string, dto: UpdateCategoryStatusDto, request: any): Promise<UpdateCategoryStatusRes> {
+	async updateCategoryStatus(id: string, dto: UpdateCategoryStatusDto, request: CategoryRequest): Promise<UpdateCategoryStatusRes> {
 		const { updatedCategory, affectedSubcategories, affectedProducts } = await this.dataSource.transaction(async (manager) => {
 			const categoryResult = await manager
 				.createQueryBuilder()
@@ -219,20 +227,17 @@ export class CategoryService {
 				})
 				.where('id = :id', { id })
 				.andWhere('status IS DISTINCT FROM :status', { status: dto.status })
-				.returning(['id', 'status', 'name'])
+				.returning(['id', 'status', 'name', 'statusAt'])
 				.execute();
 
+			let updatedCategory = categoryResult.raw[0];
 			if (!categoryResult.affected) {
-				const categoryExists = await manager.exists(Category, {
-					where: { id },
-				});
-
-				if (!categoryExists) {
-					throw new NotFoundException('No se encontró la categoría.');
-				}
-
-				throw new BadRequestException(dto.status ? 'La categoría ya se encuentra activa.' : 'La categoría ya se encuentra inactiva.');
+				const existingCategory = await manager.findOne(Category, { where: { id }, select: { id: true, name: true, status: true, statusAt: true } });
+				if (!existingCategory) throw new NotFoundException('No se encontró la categoría.');
+				if (existingCategory.status !== dto.status) throw new ConflictException('El estado cambió durante la operación. Intenta nuevamente.');
+				updatedCategory = existingCategory;
 			}
+			if (!updatedCategory) throw new InternalServerErrorException('No se pudo recuperar el registro actualizado.');
 
 			let affectedSubcategories = 0;
 			let affectedProducts = 0;
@@ -265,7 +270,7 @@ export class CategoryService {
 			}
 
 			return {
-				updatedCategory: categoryResult.raw[0],
+				updatedCategory,
 				affectedSubcategories,
 				affectedProducts,
 			};
@@ -290,7 +295,7 @@ export class CategoryService {
 		};
 	}
 
-	async updateCategoriesStatus(dto: UpdatCategoriesStatusDto, request: any): Promise<UpdateCategoriesStatusRes> {
+	async updateCategoriesStatus(dto: UpdatCategoriesStatusDto, request: CategoryRequest): Promise<UpdateCategoriesStatusRes> {
 		const ids = [...new Set(dto.ids)];
 
 		const { updatedIds, affectedSubcategories, affectedProducts } = await this.dataSource.transaction(async (manager) => {
@@ -306,21 +311,11 @@ export class CategoryService {
 				.returning(['id'])
 				.execute();
 
-			if (!categoriesResult.affected) {
-				const existingCategories = await manager.count(Category, {
-					where: {
-						id: In(ids),
-					},
-				});
-
-				if (existingCategories === 0) {
-					throw new NotFoundException('No se encontraron categorías.');
-				}
-
-				throw new BadRequestException(dto.status ? 'Las categorías seleccionadas ya se encuentran activas.' : 'Las categorías seleccionadas ya se encuentran inactivas.');
-			}
-
-			const updatedIds: string[] = categoriesResult.raw.map((item: { id: string }) => item.id);
+			if (categoriesResult.affected && !categoriesResult.raw?.length) throw new InternalServerErrorException('No se pudo recuperar el registro actualizado.');
+			const selectedCategories = await manager.find(Category, { where: { id: In(ids) }, select: { id: true, status: true } });
+			if (!selectedCategories.length) throw new NotFoundException('No se encontraron categorías.');
+			if (selectedCategories.some((category) => category.status !== dto.status)) throw new ConflictException('El estado cambió durante la operación. Intenta nuevamente.');
+			const updatedIds = selectedCategories.map((category) => category.id);
 			let affectedSubcategories = 0;
 			let affectedProducts = 0;
 
@@ -390,6 +385,8 @@ export class CategoryService {
 					'category.code',
 					'category.color',
 					'category.description',
+					'category.status',
+					'category.slug',
 					'category.isDimensions',
 					'category.isCharacteristics',
 					'category.isCondition',
@@ -412,22 +409,16 @@ export class CategoryService {
 				data: category,
 				message: 'Registro obtenido correctamente.',
 			};
-		} catch (err: any) {
+		} catch (err: unknown) {
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
 	}
 
-	async updateCategory(id: string, dto: EditCategoryDto, request: any): Promise<UpdateCategoryRes> {
-		const currentCategory = await this.categoryRepository.findOne({
-			select: {
-				id: true,
-				name: true,
-			},
-			where: { id },
-		});
+	async updateCategory(id: string, dto: EditCategoryDto, request: CategoryRequest): Promise<UpdateCategoryRes> {
+		const exists = await this.categoryRepository.exists({ where: { id } });
 
-		if (!currentCategory) {
+		if (!exists) {
 			throw new NotFoundException('No se encontró el registro.');
 		}
 
@@ -457,6 +448,7 @@ export class CategoryService {
 					'code',
 					'color',
 					'description',
+					'status',
 					'isDimensions',
 					'isCharacteristics',
 					'isCondition',
@@ -470,15 +462,18 @@ export class CategoryService {
 				])
 				.execute();
 
+			if (!result.affected || !result.raw?.length) {
+				throw new InternalServerErrorException('No se pudo recuperar el registro actualizado.');
+			}
 			this.kibanaService.audit({
-				action: 'update_category',
+				action: 'updateCategory',
 				performedBy: request.user.id,
 				targetId: id,
 				requestBody: JSON.stringify(dto),
 				response: JSON.stringify(result.raw[0]),
 				requestId: request.requestId,
 			});
-		} catch (err: any) {
+		} catch (err: unknown) {
 			rethrowCategoryUniqueViolation(err);
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
@@ -490,9 +485,9 @@ export class CategoryService {
 		};
 	}
 
-	async createSubcategory(dto: CreateSubcategoryDto, request: any): Promise<CreateSubcategoryRes> {
+	async createSubcategory(dto: CreateSubcategoryDto, request: CategoryRequest): Promise<CreateSubcategoryRes> {
 		try {
-			const exist = await this.categoryValidator.existsIdCategory(dto.categoryId!);
+			const exist = await this.categoryValidator.existsIdCategory(dto.categoryId);
 
 			if (!exist) {
 				throw new NotFoundException('La categoría seleccionada no existe.');
@@ -504,39 +499,46 @@ export class CategoryService {
 				.into(Subcategory)
 				.values({
 					...dto,
+					status: true,
 					slug: slugify(dto.name, {
 						lower: true,
 						strict: true,
 						trim: true,
 					}),
 				})
-				.returning('*')
+				.returning(['id'])
 				.execute();
 
-			const saveData = result.raw[0];
+			const id = result.raw[0]?.id;
 
-			if (!saveData) {
-				throw new InternalServerErrorException('No se pudo registrar la marca.');
+			if (!id) {
+				throw new InternalServerErrorException('No se pudo registrar la subcategoría.');
 			}
 
 			this.kibanaService.audit({
-				action: 'create_subcategory',
+				action: 'createSubcategory',
 				performedBy: request.user.id,
-				targetId: '',
+				targetId: id,
 				requestBody: JSON.stringify(dto),
-				response: JSON.stringify(saveData),
+				response: JSON.stringify({ id }),
 				requestId: request.requestId,
 			});
 
 			return {
 				message: 'Registro creado correctamente.',
-				data: saveData,
+				data: id,
 			};
-		} catch (err: any) {
+		} catch (err: unknown) {
 			rethrowCategoryUniqueViolation(err);
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
+	}
+
+	async getSubcategory(id: string): Promise<GetSubcategoryRes> {
+		const subcategory = await this.subcategoryRepository.findOne({ where: { id } });
+		if (!subcategory) throw new NotFoundException('No se encontró la subcategoría.');
+		return { data: subcategory, message: 'Registro obtenido correctamente.' };
 	}
 
 	async getSubcategories(id: string, filter: string = ''): Promise<GetSubcategoriesRes> {
@@ -563,13 +565,13 @@ export class CategoryService {
 				data: subcategories,
 				message: 'Registros obtenido correctamente.',
 			};
-		} catch (err: any) {
+		} catch (err: unknown) {
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
 	}
 
-	async updateSubcategoryStatus(id: string, dto: UpdateSubcategoryStatusDto, request: any): Promise<UpdateSubcategoryStatusRes> {
+	async updateSubcategoryStatus(id: string, dto: UpdateSubcategoryStatusDto, request: CategoryRequest): Promise<UpdateSubcategoryStatusRes> {
 		const { updatedSubcategory, affectedProducts } = await this.dataSource.transaction(async (manager) => {
 			let categoryId: string | undefined;
 
@@ -622,14 +624,18 @@ export class CategoryService {
 				subcategoryQuery.andWhere('categoryId = :categoryId', { categoryId });
 			}
 
-			const subcategoryResult = await subcategoryQuery.returning(['id', 'status', 'name']).execute();
+			const subcategoryResult = await subcategoryQuery.returning(['id', 'status', 'name', 'statusAt']).execute();
 
+			let updatedSubcategory = subcategoryResult.raw[0];
 			if (!subcategoryResult.affected) {
 				const existingSubcategory = await manager.findOne(Subcategory, {
 					where: { id },
 					select: {
 						id: true,
 						categoryId: true,
+						name: true,
+						status: true,
+						statusAt: true,
 					},
 				});
 
@@ -641,8 +647,10 @@ export class CategoryService {
 					throw new BadRequestException('La categoría asignada cambió durante la operación. Inténtalo nuevamente.');
 				}
 
-				throw new BadRequestException(dto.status ? 'La subcategoría ya se encuentra activa.' : 'La subcategoría ya se encuentra inactiva.');
+				if (existingSubcategory.status !== dto.status) throw new ConflictException('El estado cambió durante la operación. Intenta nuevamente.');
+				updatedSubcategory = { id: existingSubcategory.id, name: existingSubcategory.name, status: existingSubcategory.status, statusAt: existingSubcategory.statusAt };
 			}
+			if (!updatedSubcategory) throw new InternalServerErrorException('No se pudo recuperar el registro actualizado.');
 
 			let affectedProducts = 0;
 
@@ -662,13 +670,13 @@ export class CategoryService {
 			}
 
 			return {
-				updatedSubcategory: subcategoryResult.raw[0],
+				updatedSubcategory,
 				affectedProducts,
 			};
 		});
 
 		this.kibanaService.audit({
-			action: 'update_status_subcategory',
+			action: 'updateSubcategoryStatus',
 			performedBy: request.user.id,
 			targetId: id,
 			requestBody: JSON.stringify({ status: dto.status }),
@@ -685,15 +693,12 @@ export class CategoryService {
 		};
 	}
 
-	async updateSubcategory(id: string, dto: EditSubcategoryDto, request: any): Promise<UpdateSubcategoryRes> {
+	async updateSubcategory(id: string, dto: EditSubcategoryDto, request: CategoryRequest): Promise<UpdateSubcategoryRes> {
 		try {
-			const currentSubcategory = await this.subcategoryRepository.findOne({
-				select: { id: true, name: true },
-				where: { id },
-			});
+			const exists = await this.subcategoryRepository.exists({ where: { id } });
 
-			if (!currentSubcategory) {
-				throw new NotFoundException('No se encontró la categoría asignada.');
+			if (!exists) {
+				throw new NotFoundException('No se encontr\u00f3 el registro.');
 			}
 
 			const updateData = {
@@ -706,7 +711,13 @@ export class CategoryService {
 				updatedAt: () => 'CURRENT_TIMESTAMP',
 			};
 
-			const result = await this.subcategoryRepository.createQueryBuilder().update(Subcategory).set(updateData).where('id = :id', { id }).returning('*').execute();
+			const result = await this.subcategoryRepository
+				.createQueryBuilder()
+				.update(Subcategory)
+				.set(updateData)
+				.where('id = :id', { id })
+				.returning(['id', 'name', 'code', 'prefix', 'slug', 'icon', 'categoryId', 'status', 'createdAt', 'updatedAt', 'statusAt'])
+				.execute();
 
 			if (!result.affected) {
 				throw new InternalServerErrorException('No se pudo actualizar el registro.');
@@ -717,7 +728,7 @@ export class CategoryService {
 			}
 
 			this.kibanaService.audit({
-				action: 'update_subcategory',
+				action: 'updateSubcategory',
 				performedBy: request.user.id,
 				targetId: id,
 				requestBody: JSON.stringify(dto),
@@ -729,14 +740,14 @@ export class CategoryService {
 				message: 'Registro actualizado correctamente.',
 				data: result.raw[0],
 			};
-		} catch (err: any) {
+		} catch (err: unknown) {
 			rethrowCategoryUniqueViolation(err);
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
 	}
 
-	async updateSubcategoriesStatus(dto: UpdateSubcategoriesStatusDto, request: any): Promise<UpdateSubcategoriesStatusRes> {
+	async updateSubcategoriesStatus(dto: UpdateSubcategoriesStatusDto, request: CategoryRequest): Promise<UpdateSubcategoriesStatusRes> {
 		const ids = [...new Set(dto.ids)];
 
 		const { updatedIds, affectedProducts } = await this.dataSource.transaction(async (manager) => {
@@ -792,21 +803,12 @@ export class CategoryService {
 				.returning(['id'])
 				.execute();
 
-			if (!subcategoriesResult.affected) {
-				const existingSubcategories = await manager.count(Subcategory, {
-					where: { id: In(ids) },
-				});
-
-				if (existingSubcategories === 0) {
-					throw new NotFoundException('No se encontraron subcategorías.');
-				}
-
-				throw new BadRequestException(
-					dto.status ? 'Las subcategorías seleccionadas ya se encuentran activas.' : 'Las subcategorías seleccionadas ya se encuentran inactivas.'
-				);
-			}
-
-			const updatedIds: string[] = subcategoriesResult.raw.map((item: { id: string }) => item.id);
+			if (subcategoriesResult.affected && !subcategoriesResult.raw?.length) throw new InternalServerErrorException('No se pudo recuperar el registro actualizado.');
+			const selectedSubcategories = await manager.find(Subcategory, { where: { id: In(ids) }, select: { id: true, status: true } });
+			if (!selectedSubcategories.length) throw new NotFoundException('No se encontraron subcategorías.');
+			if (selectedSubcategories.some((subcategory) => subcategory.status !== dto.status))
+				throw new ConflictException('El estado cambió durante la operación. Intenta nuevamente.');
+			const updatedIds = selectedSubcategories.map((subcategory) => subcategory.id);
 			let affectedProducts = 0;
 
 			if (!dto.status) {
@@ -828,7 +830,7 @@ export class CategoryService {
 		});
 
 		this.kibanaService.audit({
-			action: 'update_status_subcategories',
+			action: 'updateSubcategoriesStatus',
 			performedBy: request.user.id,
 			targetId: updatedIds,
 			requestBody: JSON.stringify(dto),
@@ -869,7 +871,7 @@ export class CategoryService {
 				data: brands,
 				message: 'Registros obtenidos correctamente.',
 			};
-		} catch (err: any) {
+		} catch (err: unknown) {
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
@@ -928,16 +930,18 @@ export class CategoryService {
 			const totalPages = Math.ceil(totalProducts / query.limit);
 			const currentPage = totalPages === 0 ? 1 : Math.min(query.page, totalPages);
 			const skip = (currentPage - 1) * query.limit;
-			let products = await queryBuilder.skip(skip).take(query.limit).getMany();
+			const products = await queryBuilder.skip(skip).take(query.limit).getMany();
 
-			products = products.map((product) => ({
+			const productsWithQuality = products.map((product): CategoryProduct => ({
 				...product,
 				quality_label: getQualityLabel(product.quality),
+				status: product.status as 'draft' | 'published',
+				visibility: product.visibility as 'public' | 'private',
 			}));
 
 			return {
 				category: category.name,
-				products,
+				products: productsWithQuality,
 				meta: {
 					totalProducts,
 					totalPages,
@@ -969,6 +973,7 @@ export class CategoryService {
 			.select([
 				'category.id',
 				'category.prefix',
+				'category.code',
 				'category.name',
 				'category.color',
 				'category.icon',
@@ -976,6 +981,7 @@ export class CategoryService {
 				'subcategory.id',
 				'subcategory.name',
 				'subcategory.prefix',
+				'subcategory.code',
 				'subcategory.status',
 				'subcategory.categoryId',
 			])
@@ -989,7 +995,7 @@ export class CategoryService {
 		};
 	}
 
-	async get_categories_by_select() {
+	async get_categories_by_select(): Promise<GetCategoriesSelectRes> {
 		try {
 			const categories = await this.categoryRepository
 				.createQueryBuilder('category')
@@ -1013,7 +1019,7 @@ export class CategoryService {
 				data: categories,
 				message: 'Registro obtenido correctamente.',
 			};
-		} catch (err: any) {
+		} catch (err: unknown) {
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
@@ -1039,16 +1045,16 @@ export class CategoryService {
 				.orderBy('subcategory.name', 'ASC')
 				.getMany();
 			return {
-				data: subcategories,
+				data: subcategories.map((subcategory) => ({ ...subcategory, totalProducts: Number(Reflect.get(subcategory, 'totalProducts') ?? 0) })),
 				message: 'Registro obtenido correctamente.',
 			};
-		} catch (err: any) {
+		} catch (err: unknown) {
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
 	}
 
-	async get_subcat_by_select() {
+	async get_subcat_by_select(): Promise<GetCategorySubcategorySelectionRes> {
 		try {
 			const categories = await this.categoryRepository
 				.createQueryBuilder('category')
@@ -1068,13 +1074,13 @@ export class CategoryService {
 				})),
 				message: 'Registro obtenido correctamente.',
 			};
-		} catch (err: any) {
+		} catch (err: unknown) {
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
 	}
 
-	async moveProductsToSubcategory(dto: UpdateCatSubcatProductsDto, request: any): Promise<MoveProductsToSubcategoryRes> {
+	async moveProductsToSubcategory(dto: UpdateCatSubcatProductsDto, request: CategoryRequest): Promise<MoveProductsToSubcategoryRes> {
 		if (!dto.products?.length) {
 			throw new BadRequestException('Debe seleccionar al menos un producto.');
 		}
@@ -1152,7 +1158,7 @@ export class CategoryService {
 
 		try {
 			await this.kibanaService.audit({
-				action: 'move_products_to_subcategory',
+				action: 'moveProductsToSubcategory',
 				performedBy: request.user.id,
 				targetId: dto.subcategoryId,
 				requestBody: JSON.stringify({
@@ -1174,10 +1180,10 @@ export class CategoryService {
 		};
 	}
 
-	async moveSubcategory(subcategoryId: string, dto: MoveSubcategoryDto, request: any): Promise<MoveSubcategoryRes> {
+	async moveSubcategory(subcategoryId: string, dto: MoveSubcategoryDto, request: CategoryRequest): Promise<MoveSubcategoryRes> {
 		const queryRunner = this.dataSource.createQueryRunner();
 
-		let movedSubcategory: Pick<Subcategory, 'id' | 'name' | 'categoryId' | 'status'> | undefined;
+		let movedSubcategory: MovedSubcategory | undefined;
 
 		let affectedProducts = 0;
 
@@ -1283,7 +1289,7 @@ export class CategoryService {
 
 		try {
 			this.kibanaService.audit({
-				action: 'move_subcategory',
+				action: 'moveSubcategory',
 				performedBy: request.user.id,
 				targetId: subcategoryId,
 				requestBody: JSON.stringify(dto),

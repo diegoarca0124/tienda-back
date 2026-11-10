@@ -1,27 +1,10 @@
-import type { Attribute } from '@/entities/attribute.entity';
-import type { AttributeValue } from '@/entities/attribute-value.entity';
-import type { AttributeGroup } from '@/entities/attribute-group.entity';
-import type { Category } from '@/entities/category.entity';
-import type { FindAttributesQueryDto } from '../dto/find-attributes.dto';
-import type { FindAttributesGroupsQueryDto } from '../dto/find-attributes-groups.dto';
+export interface AttributeRequest {
+	user: { id: string };
+	requestId: string;
+}
 
 export interface CreateAttributeRes {
 	data: string;
-	message: string;
-}
-
-export interface GetAttributeValuesRes {
-	data: Pick<AttributeValue, 'id' | 'value'>[];
-	message: string;
-}
-
-export interface CreateAttributeValueRes {
-	data: Pick<AttributeValue, 'id' | 'value' | 'status' | 'attributeId'>;
-	message: string;
-}
-
-export interface DeleteAttributeValueRes {
-	data: boolean;
 	message: string;
 }
 
@@ -30,59 +13,95 @@ export interface CreateGroupAttributeRes {
 	message: string;
 }
 
+export interface GetAttributeValuesRes {
+	data: { id: string; value: string }[];
+	message: string;
+}
+
+export interface CreateAttributeValueRes {
+	data: { id: string; value: string; status: boolean; attributeId: string };
+	message: string;
+}
+
+export interface CreateAttributeValuesRes {
+	data: { id: string; value: string; status: boolean; attributeId: string }[];
+	message: string;
+}
+
+export interface DeleteAttributeValueRes {
+	data: boolean;
+	message: string;
+}
+
 export interface GetAttributeRes {
-	data: Pick<Attribute, 'id' | 'name' | 'description' | 'unit'>;
+	data: { id: string; name: string; status: boolean; unit: string | null; description: string | null };
+	message: string;
+}
+
+export interface UpdateAttributeRes {
+	data: { id: string; name: string; status: boolean; unit: string | null; description: string | null };
 	message: string;
 }
 
 export interface GetAttributeGroupRes {
-	data: Pick<AttributeGroup, 'id' | 'name' | 'description' | 'createdAt' | 'updatedAt' | 'statusAt' | 'attributeCategories'> & {
+	data: {
+		id: string;
+		name: string;
+		status: boolean;
+		description: string;
+		createdAt: Date;
+		updatedAt: Date;
+		statusAt: Date | null;
 		categories: string[];
+		attributeCategories: { id: string; categoryId: string; category: { id: string; name: string } }[];
 	};
 	message: string;
 }
 
-export interface AttributeListItem extends Pick<Attribute, 'id' | 'name' | 'status'> {
-	valuesCount: number;
-	attributeValues: string[];
+export interface UpdateAttributeGroupRes {
+	data: {
+		id: string;
+		name: string;
+		description: string;
+		createdAt: Date;
+		updatedAt: Date;
+		statusAt: Date | null;
+		categories: string[];
+		status: boolean;
+		attributeCategories: { id: string; categoryId: string; category: { id: string; name: string } }[];
+	};
+	message: string;
 }
 
 export interface GetAttributesRes {
-	attributes: AttributeListItem[];
-	meta: {
-		totalAttributes: number;
-		totalPages: number;
-		currentPage: number;
-		limit: number;
-	};
-	filters: Pick<FindAttributesQueryDto, 'filter' | 'status' | 'sort'>;
-}
-
-export interface GetCategoriesByAttributeGroupRes {
-	data: {
-		attributeGroup: Pick<AttributeGroup, 'id' | 'name'>;
-		categories: Pick<Category, 'id' | 'name'>[];
-	};
-	message: string;
-}
-
-export interface AttributeGroupListItem extends Pick<AttributeGroup, 'id' | 'name' | 'description' | 'status' | 'createdAt'> {
-	categories: Pick<Category, 'id' | 'name'>[];
+	attributes: { id: string; name: string; status: boolean; valuesCount: number; attributeValues: string[] }[];
+	meta: { totalAttributes: number; totalPages: number; currentPage: number; limit: number };
+	filters: { filter: string; status: 'Todos' | 'Activos' | 'Inactivos'; sort: 'Predeterminado' | 'name:asc' | 'name:desc' | 'createdAt:asc' | 'createdAt:desc' };
 }
 
 export interface GetAttributesGroupsRes {
-	attributeGroups: AttributeGroupListItem[];
-	meta: {
-		totalAttributesGroups: number;
-		totalPages: number;
-		currentPage: number;
-		limit: number;
+	attributeGroups: { id: string; name: string; description: string; status: boolean; createdAt: Date; categories: { id: string; name: string }[] }[];
+	meta: { totalAttributesGroups: number; totalPages: number; currentPage: number; limit: number };
+	filters: {
+		filter: string;
+		status: 'Todos' | 'Activos' | 'Inactivos';
+		sort: 'Predeterminado' | 'name:asc' | 'name:desc' | 'createdAt:asc' | 'createdAt:desc';
+		categories: string;
 	};
-	filters: Pick<FindAttributesGroupsQueryDto, 'filter' | 'status' | 'sort' | 'categories'>;
+}
+
+export interface GetCategoriesByAttributeGroupRes {
+	data: { attributeGroup: { id: string; name: string }; categories: { id: string; name: string }[] };
+	message: string;
 }
 
 export interface UpdateAttributeStatusRes {
-	data: Pick<Attribute, 'id' | 'name' | 'status'>;
+	data: { id: string; name: string; status: boolean };
+	message: string;
+}
+
+export interface UpdateAttributeGroupStatusRes {
+	data: { id: string; name: string; status: boolean };
 	message: string;
 }
 
@@ -91,38 +110,23 @@ export interface UpdateAttributesStatusRes {
 	message: string;
 }
 
-export interface UpdateAttributeGroupStatusRes {
-	data: Pick<AttributeGroup, 'id' | 'name' | 'status'>;
-	message: string;
-}
-
 export interface UpdateAttributeGroupsStatusRes {
 	data: string[];
 	message: string;
 }
 
-export interface UpdateAttributeRes {
-	data: Pick<Attribute, 'id' | 'status' | 'name' | 'unit' | 'description'>;
-	message: string;
-}
-
-export interface UpdateAttributeGroupRes {
-	data: Pick<AttributeGroup, 'id' | 'status' | 'name' | 'description' | 'attributeCategories'>;
-	message: string;
-}
-
-export interface CategoryAttributeItem extends Pick<Attribute, 'id' | 'name'> {
-	isFeatured: boolean;
-	attributeValueId: string | null;
-	attributeValues: Pick<AttributeValue, 'id' | 'value'>[];
-}
-
-export interface CategoryAttributeGroupItem extends Pick<AttributeGroup, 'id' | 'name'> {
-	attributes: CategoryAttributeItem[];
-}
-
 export interface GetAttributesByCategoryRes {
-	data: CategoryAttributeGroupItem[];
+	data: {
+		id: string;
+		name: string;
+		attributes: { id: string; name: string; isFeatured: boolean; attributeValueId: string | null; attributeValues: { id: string; value: string }[] }[];
+	}[];
 	totalGroups: number;
 	message: string;
+}
+
+export interface AttributeSelectItem {
+	id: string;
+	name: string;
+	status: boolean;
 }

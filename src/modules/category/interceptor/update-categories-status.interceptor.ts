@@ -12,7 +12,7 @@ export class UpdateStatusCategoriesInterceptor extends BaseValidationInterceptor
 		return UpdatCategoriesStatusDto;
 	}
 
-	protected async validateBody(body: any): Promise<{ field: string; message: string }[]> {
+	protected async validateBody(body: unknown): Promise<{ field: string; message: string }[]> {
 		const customErrors: { field: string; message: string }[] = [];
 
 		const fieldsErrors = await this.validateFieldsExist(body);
@@ -23,11 +23,11 @@ export class UpdateStatusCategoriesInterceptor extends BaseValidationInterceptor
 		return customErrors;
 	}
 
-	protected async validateFiles(files: any): Promise<{ field: string; message: string }[]> {
+	protected async validateFiles(files: unknown): Promise<{ field: string; message: string }[]> {
 		return [];
 	}
 
-	private async validateFieldsExist(body: any): Promise<{ msm: string; field: string }[]> {
+	private async validateFieldsExist(body: unknown): Promise<{ msm: string; field: string }[]> {
 		return [];
 	}
 }

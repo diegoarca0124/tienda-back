@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { Transform } from 'class-transformer';
-import { ArrayNotEmpty, ArrayUnique, IsArray, IsIn, IsInt, IsNumber, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min, ValidateIf } from 'class-validator';
+import { ArrayNotEmpty, ArrayUnique, IsArray, IsIn, IsInt, IsString, Max, MaxLength, Min } from 'class-validator';
 import { ALLOWED_STATUS } from '../constants/allowed-status.constant';
 import { ALLOWED_SORT } from '../constants/allowed-sort.constant';
 import { ALLOWED_CONFIGURATION, AllowedConfiguration } from '../constants/allowed-configurations.constant';
@@ -73,7 +73,6 @@ export class FindCategoriesQueryDto {
 		if (configurations.includes('Predeterminado') && configurations.length > 1) {
 			throw new BadRequestException('Predeterminado no puede combinarse con otras configuraciones.');
 		}
-		console.log('configurations', configurations);
 
 		return configurations;
 	})

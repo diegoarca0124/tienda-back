@@ -39,7 +39,7 @@ export class CreateCollaboratorDto {
 	@IsOptional()
 	readonly fullnames?: string;
 
-	@Transform(({ value }) => (typeof value === 'string' ? normalizeText(value) : value))
+	@Transform(({ value }) => (typeof value === 'string' ? normalizeText(value).toLowerCase() : value))
 	@MaxLength(50, { message: 'El correo debe tener máximo 50 caracteres.' })
 	@IsEmail({}, { message: 'El correo no tiene un formato correcto.' })
 	@IsNotEmpty({ message: 'El correo no debe estar vacio.' })

@@ -51,6 +51,10 @@ export class RedisTokenService {
 		return this.client.smembers(key);
 	}
 
+	async removeSetMembers(key: string, members: string[]): Promise<void> {
+		if (members.length > 0) await this.client.srem(key, ...members);
+	}
+
 	async del(key: string) {
 		return this.client.del(key);
 	}

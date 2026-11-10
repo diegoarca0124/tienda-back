@@ -1,0 +1,1 @@
+export const ATTRIBUTE_VALUE_MAX_LENGTH = 100;

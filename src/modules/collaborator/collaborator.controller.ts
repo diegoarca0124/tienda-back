@@ -1,7 +1,7 @@
-import { Body, Controller, Post, Req, UseInterceptors, Get, Query, Param, Put, ParseUUIDPipe, UseGuards, HttpCode, HttpStatus, Res, StreamableFile } from '@nestjs/common';
+import { Body, Controller, Post, Req, UseInterceptors, Get, Query, Param, Put, HttpCode, HttpStatus, StreamableFile, UnauthorizedException } from '@nestjs/common';
 import { CollaboratorService } from './collaborator.service';
 import { CreateCollaboratorDto } from './dto/create-collaborator.dto';
-import { Collaborator } from '@/entities/collaborator.entity';
+
 import { CreateCollaboratorInterceptor } from './interceptor/create-collaborator.interceptor';
 import { LoginInterceptor } from './interceptor/login.interceptor';
 import { LoginDto } from './dto/login.dto';
@@ -13,7 +13,7 @@ import path from 'path';
 import { UpdateStatusCollaboratorsInterceptor } from './interceptor/update-status-collaborators.interceptor';
 import { ExportCollaboratorsDto } from './dto/export-colllaborators.dto';
 import { ExportCollaboratorsInterceptor } from './interceptor/export-colllaborators.interceptor';
-import type { Response } from 'express';
+
 import { createReadStream } from 'node:fs';
 import { ImportCollaboratorsDto } from './dto/import-collaborators.dto';
 import { ImportCollaboratorsInterceptor } from './interceptor/import-collaborators.interceptor';
@@ -23,7 +23,9 @@ import { FindCollaboratorsQueryDto } from './dto/find-collaborators.dto';
 import { QueryParamsErrorsPipe } from '@/common/pipes/query-params-errors.pipe';
 import { UpdateCollaboratorStatusDto } from './dto/update-collaborator-status.dto';
 import { UpdateCollaboratorsStatusDto } from './dto/update-collaborators-status.dto';
-import {
+import type {
+	CollaboratorRequest,
+	LogoutRes,
 	CreateCollaboratorRes,
 	GetCollaboratorRes,
 	GetCollaboratorsRes,
@@ -46,7 +48,7 @@ export class CollaboratorController {
 
 	@Post('createCollaborator')
 	@UseInterceptors(CreateCollaboratorInterceptor)
-	createCollaborator(@Body() dto: CreateCollaboratorDto, @Req() request): Promise<CreateCollaboratorRes> {
+	createCollaborator(@Body() dto: CreateCollaboratorDto, @Req() request: CollaboratorRequest): Promise<CreateCollaboratorRes> {
 		return this.collaboratorService.createCollaborator(dto, request);
 	}
 
@@ -58,21 +60,17 @@ export class CollaboratorController {
 	}
 
 	@Get('validate_token')
-	validateToken(@Req() request): Promise<ValidateTokenRes> {
+	validateToken(@Req() request: CollaboratorRequest): Promise<ValidateTokenRes> {
 		return this.collaboratorService.validateToken(request.user.id);
 	}
 
 	@Get('logout')
 	@HttpCode(HttpStatus.OK)
-	async logout(@Req() req: any) {
+	async logout(@Req() req: CollaboratorRequest): Promise<LogoutRes> {
 		if (process.env.TOKEN_REVOCATION === 'true') {
-			const jti = req.user.jti;
-			if (!jti) {
-				return {
-					success: false,
-					revoked: false,
-					message: 'No se proporcionó el JTI de acceso.',
-				};
+			const jti = req.user?.jti;
+			if (typeof jti !== 'string' || !jti.trim()) {
+				throw new UnauthorizedException('La sesión no contiene un JTI de acceso válido. Inicia sesión nuevamente.');
 			}
 			await this.authService.revokeToken(jti, req.user.exp);
 			return {
@@ -98,40 +96,46 @@ export class CollaboratorController {
 	}
 
 	@Get('getCollaborator/:id')
-	getCollaborator(@Param('id', ValidateUUID) id): Promise<GetCollaboratorRes> {
+	getCollaborator(@Param('id', ValidateUUID) id: string): Promise<GetCollaboratorRes> {
 		return this.collaboratorService.getCollaborator(id);
 	}
 
 	@Put('updateCollaborator/:id')
 	@UseInterceptors(EditCollaboratorInterceptor)
-	updateCollaborator(@Param('id', ValidateUUID) id: string, @Body() dto: EditCollaboratorDto, @Req() request): Promise<UpdateCollaboratorRes> {
+	updateCollaborator(@Param('id', ValidateUUID) id: string, @Body() dto: EditCollaboratorDto, @Req() request: CollaboratorRequest): Promise<UpdateCollaboratorRes> {
 		return this.collaboratorService.updateCollaborator(id, dto, request);
 	}
 
 	@Put('updateCollaboratorStatus/:id')
-	updateCollaboratorStatus(@Param('id', ValidateUUID) id: string, @Body() dto: UpdateCollaboratorStatusDto, @Req() request): Promise<UpdateCollaboratorStatusRes> {
+	updateCollaboratorStatus(
+		@Param('id', ValidateUUID) id: string,
+		@Body() dto: UpdateCollaboratorStatusDto,
+		@Req() request: CollaboratorRequest
+	): Promise<UpdateCollaboratorStatusRes> {
 		return this.collaboratorService.updateCollaboratorStatus(id, dto, request);
 	}
 
 	@Post('updateCollaboratorsStatus')
 	@UseInterceptors(UpdateStatusCollaboratorsInterceptor)
-	updateCollaboratorsStatus(@Body() dto: UpdateCollaboratorsStatusDto, @Req() request): Promise<UpdateCollaboratorsStatusRes> {
+	updateCollaboratorsStatus(@Body() dto: UpdateCollaboratorsStatusDto, @Req() request: CollaboratorRequest): Promise<UpdateCollaboratorsStatusRes> {
 		return this.collaboratorService.updateCollaboratorsStatus(dto, request);
 	}
 
 	@Post('revokeCollaboratorSessions/:id')
 	@HttpCode(HttpStatus.OK)
-	revokeCollaboratorSessions(@Param('id', ValidateUUID) id: string, @Req() request): Promise<RevokeCollaboratorSessionsRes> {
+	revokeCollaboratorSessions(@Param('id', ValidateUUID) id: string, @Req() request: CollaboratorRequest): Promise<RevokeCollaboratorSessionsRes> {
 		return this.collaboratorService.revokeCollaboratorSessions(id, request);
 	}
 
 	@Post('exportCollaborators')
 	@HttpCode(HttpStatus.OK)
 	@UseInterceptors(ExportCollaboratorsInterceptor)
-	async exportCollaborators(@Body() exportCollaboratorsDto: ExportCollaboratorsDto, @Req() request): Promise<StreamableFile> {
+	async exportCollaborators(@Body() exportCollaboratorsDto: ExportCollaboratorsDto, @Req() request: CollaboratorRequest): Promise<StreamableFile> {
 		const result = await this.collaboratorService.exportCollaborators(exportCollaboratorsDto, request);
 		const fileStream = createReadStream(result.filePath);
-		fileStream.once('close', () => { void result.cleanup().catch(() => undefined); });
+		fileStream.once('close', () => {
+			void result.cleanup().catch(() => undefined);
+		});
 		return new StreamableFile(fileStream, {
 			type: result.contentType,
 			disposition: `attachment; filename="${result.fileName}"`,
@@ -140,7 +144,7 @@ export class CollaboratorController {
 
 	@Post('importCollaborators')
 	@UseInterceptors(ImportCollaboratorsInterceptor)
-	async importCollaborators(@Body() dto: ImportCollaboratorsDto, @Req() request): Promise<ImportCollaboratorsRes> {
+	async importCollaborators(@Body() dto: ImportCollaboratorsDto, @Req() request: CollaboratorRequest): Promise<ImportCollaboratorsRes> {
 		const result = await this.collaboratorService.importCollaborators(dto, request);
 		return result;
 	}

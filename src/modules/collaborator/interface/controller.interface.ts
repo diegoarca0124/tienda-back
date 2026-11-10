@@ -1,5 +1,12 @@
-import { Collaborator } from '@/entities/collaborator.entity';
-import { FindCollaboratorsQueryDto } from '../dto/find-collaborators.dto';
+export interface LogoutRes {
+	success: true;
+	revoked: boolean;
+	message: string;
+}
+export interface CollaboratorRequest {
+	user: { id: string; jti?: string; exp?: number };
+	requestId: string;
+}
 
 export interface CreateCollaboratorRes {
 	data: string;
@@ -9,7 +16,7 @@ export interface CreateCollaboratorRes {
 export interface LoginRes {
 	data: {
 		accessToken: string;
-		collaborator: Pick<Collaborator, 'id' | 'names' | 'surname' | 'email' | 'role'>;
+		collaborator: { id: string; names: string; surname: string; email: string; role: string | null };
 	};
 	message: string;
 }
@@ -20,28 +27,73 @@ export interface ValidateTokenRes {
 }
 
 export interface GetCollaboratorsRes {
-	collaborators: Collaborator[];
+	collaborators: {
+		id: string;
+		names: string;
+		surname: string;
+		email: string;
+		status: boolean;
+		number_document: string;
+		createdAt: Date;
+		fullnames: string | null;
+		type_document: string | null;
+		prefix: string | null;
+		phone: string | null;
+		role: string | null;
+	}[];
 	meta: {
 		totalCollaborators: number;
 		totalPages: number;
 		currentPage: number;
 		limit: number;
 	};
-	filters: Pick<FindCollaboratorsQueryDto, 'filter' | 'status' | 'sort'>;
+	filters: {
+		filter: string;
+		status: 'Todos' | 'Activos' | 'Inactivos';
+		sort: 'Predeterminado' | 'names:asc' | 'names:desc' | 'email:asc' | 'email:desc' | 'number_document:asc' | 'number_document:desc';
+	};
 }
 
 export interface GetCollaboratorRes {
-	data: Collaborator;
+	data: {
+		id: string;
+		names: string;
+		surname: string;
+		email: string;
+		status: boolean;
+		number_document: string;
+		createdAt: Date;
+		type_document: string | null;
+		prefix: string | null;
+		phone: string | null;
+		role: string | null;
+		updatedAt: Date;
+		statusAt: Date | null;
+	};
 	message: string;
 }
 
 export interface UpdateCollaboratorRes {
-	data: Collaborator;
+	data: {
+		id: string;
+		names: string;
+		surname: string;
+		email: string;
+		status: boolean;
+		number_document: string;
+		createdAt: Date;
+		type_document: string | null;
+		prefix: string | null;
+		phone: string | null;
+		role: string | null;
+		updatedAt: Date;
+		statusAt: Date | null;
+	};
 	message: string;
 }
 
 export interface UpdateCollaboratorStatusRes {
-	data: Collaborator;
+	data: { id: string; names: string; status: boolean; statusAt: Date | null };
 	message: string;
 }
 
@@ -70,4 +122,19 @@ export interface ImportCollaboratorsRes {
 	created: number;
 	updated: number;
 	ignored: number;
+}
+
+/** Only used after ImportCollaboratorsInterceptor validates and normalizes every row. */
+export interface NormalizedImportedCollaborator {
+	names: string;
+	surname: string;
+	phone: string;
+	role: string;
+	fullnames?: string;
+	email: string;
+	type_document: string;
+	number_document: string;
+	prefix?: string;
+	index?: number;
+	status: boolean;
 }

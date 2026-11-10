@@ -11,7 +11,18 @@ import { UpdateBrandsStatusDto } from './dto/update-brands-status.dto';
 import { UpdateStatusBrandsInterceptor } from './interceptor/update-status-brands.interceptor';
 import { FindBrandsQueryDto } from './dto/find-brands.dto';
 import { QueryParamsErrorsPipe } from '@/common/pipes/query-params-errors.pipe';
-import type { CreateBrandRes, FilesCreateBrand, GetBrandRes, GetBrandsRes, UpdateBrandRes, UpdateBrandsStatusRes, UpdateBrandStatusRes } from './interfaces/controller.interface';
+import type {
+	BrandRequest,
+	BrandSelectItem,
+	FindBrandProductsRes,
+	CreateBrandRes,
+	FilesCreateBrand,
+	GetBrandRes,
+	GetBrandsRes,
+	UpdateBrandRes,
+	UpdateBrandsStatusRes,
+	UpdateBrandStatusRes,
+} from './interfaces/controller.interface';
 import { UpdateBrandStatusDto } from './dto/update-brand-status.dto';
 import { FindBrandProductsQueryDto } from './dto/find-brand-products.dto';
 
@@ -21,7 +32,7 @@ export class BrandController {
 
 	@Post('createBrand')
 	@UseInterceptors(FileUploadInterceptor.fileInterceptor(), CreateBrandInterceptor)
-	async createBrand(@UploadedFiles() files: FilesCreateBrand, @Body() dto: CreateBrandDto, @Req() request): Promise<CreateBrandRes> {
+	async createBrand(@UploadedFiles() files: FilesCreateBrand, @Body() dto: CreateBrandDto, @Req() request: BrandRequest): Promise<CreateBrandRes> {
 		return this.brandService.createBrand(dto, files, request);
 	}
 
@@ -34,24 +45,29 @@ export class BrandController {
 	}
 
 	@Get('getBrand/:id')
-	getBrand(@Param('id', ValidateUUID) id): Promise<GetBrandRes> {
+	getBrand(@Param('id', ValidateUUID) id: string): Promise<GetBrandRes> {
 		return this.brandService.getBrand(id);
 	}
 
 	@Put('updateBrand/:id')
 	@UseInterceptors(FileUploadInterceptor.fileInterceptor(), EditBrandInterceptor)
-	async updateBrand(@UploadedFiles() files: FilesCreateBrand, @Body() dto: EditBrandDto, @Param('id', ValidateUUID) id: string, @Req() request: any): Promise<UpdateBrandRes> {
+	async updateBrand(
+		@UploadedFiles() files: FilesCreateBrand,
+		@Body() dto: EditBrandDto,
+		@Param('id', ValidateUUID) id: string,
+		@Req() request: BrandRequest
+	): Promise<UpdateBrandRes> {
 		return this.brandService.updateBrand(id, dto, files, request);
 	}
 
 	@Put('updateBrandStatus/:id')
-	updateBrandStatus(@Param('id', ValidateUUID) id: string, @Body() dto: UpdateBrandStatusDto, @Req() request: any): Promise<UpdateBrandStatusRes> {
+	updateBrandStatus(@Param('id', ValidateUUID) id: string, @Body() dto: UpdateBrandStatusDto, @Req() request: BrandRequest): Promise<UpdateBrandStatusRes> {
 		return this.brandService.updateBrandStatus(id, dto, request);
 	}
 
 	@Post('updateBrandsStatus')
 	@UseInterceptors(UpdateStatusBrandsInterceptor)
-	updateBrandsStatus(@Body() dto: UpdateBrandsStatusDto, @Req() request: any): Promise<UpdateBrandsStatusRes> {
+	updateBrandsStatus(@Body() dto: UpdateBrandsStatusDto, @Req() request: BrandRequest): Promise<UpdateBrandsStatusRes> {
 		return this.brandService.updateBrandsStatus(dto, request);
 	}
 
@@ -65,7 +81,7 @@ export class BrandController {
 	}
 
 	@Get('getBrandsSelect')
-	getBrandsSelect() {
+	getBrandsSelect(): Promise<BrandSelectItem[]> {
 		return this.brandService.getBrandsSelect();
 	}
 }

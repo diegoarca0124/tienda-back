@@ -1,5 +1,5 @@
 import { Brand } from '@/entities/brand.entity';
-import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { CreateBrandDto } from './dto/create-brand.dto';
@@ -11,6 +11,9 @@ import { KibanaService } from '@/common/services/kibana/kibana.service';
 import { getPagination } from '@/common/utils/get-pagination.util';
 import { getQualityLabel } from './utils/calculate-total.util';
 import type {
+	BrandRequest,
+	BrandSelectItem,
+	FindBrandProductsRes,
 	CreateBrandRes,
 	FilesCreateBrand,
 	FilesUpdateBrand,
@@ -47,9 +50,9 @@ export class BrandService {
 		private kibanaService: KibanaService
 	) {}
 
-	async createBrand(dto: CreateBrandDto, files: FilesCreateBrand, request: any): Promise<CreateBrandRes> {
+	async createBrand(dto: CreateBrandDto, files: FilesCreateBrand, request: BrandRequest): Promise<CreateBrandRes> {
 		const { logoUrl: _logoUrl, bannerUrl: _bannerUrl, ...brandData } = dto;
-		const imageData: Partial<Pick<Brand, 'logoUrl' | 'bannerUrl'>> = {};
+		const imageData: { logoUrl?: string; bannerUrl?: string } = {};
 		const newImages: string[] = [];
 		let id: string;
 
@@ -74,6 +77,7 @@ export class BrandService {
 				.values({
 					...brandData,
 					...imageData,
+					status: true,
 					slug: slugify(dto.name, {
 						lower: true,
 						strict: true,
@@ -171,13 +175,15 @@ export class BrandService {
 						)
 					: [];
 
-			const brandsWithProducts = brands.map((brand: any) => {
+			const brandsWithProducts = brands.map((brand) => {
 				const latestProducts = products.filter((product) => product.brandId === brand.id).slice(0, 4);
+				const totalProducts = brand.totalProducts ?? 0;
 
 				return {
 					...brand,
+					totalProducts,
 					latestProducts,
-					moreProducts: Math.max((brand.totalProducts ?? 0) - latestProducts.length, 0),
+					moreProducts: Math.max(totalProducts - latestProducts.length, 0),
 				};
 			});
 
@@ -196,13 +202,13 @@ export class BrandService {
 					countries: query.countries,
 				},
 			};
-		} catch (err: any) {
+		} catch (err: unknown) {
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
 	}
 
-	async updateBrandStatus(id: string, dto: UpdateBrandStatusDto, request: any): Promise<UpdateBrandStatusRes> {
+	async updateBrandStatus(id: string, dto: UpdateBrandStatusDto, request: BrandRequest): Promise<UpdateBrandStatusRes> {
 		const { updatedBrand, affectedProducts } = await this.brandRepository.manager.transaction(async (manager) => {
 			const result = await manager
 				.createQueryBuilder()
@@ -216,17 +222,10 @@ export class BrandService {
 				.returning(['id', 'status', 'name'])
 				.execute();
 
-			if (!result.affected) {
-				const brandExists = await manager.exists(Brand, {
-					where: { id },
-				});
-
-				if (!brandExists) {
-					throw new NotFoundException('No se encontró la marca.');
-				}
-
-				throw new BadRequestException(dto.status ? 'La marca ya se encuentra activa.' : 'La marca ya se encuentra inactiva.');
-			}
+			if (result.affected && !result.raw?.length) throw new InternalServerErrorException('No se pudo recuperar el registro actualizado.');
+			const updatedBrand = result.affected ? result.raw[0] : await manager.findOne(Brand, { select: { id: true, name: true, status: true }, where: { id } });
+			if (!updatedBrand) throw new NotFoundException('No se encontró la marca.');
+			if (updatedBrand.status !== dto.status) throw new ConflictException('El estado cambió durante la operación. Intenta nuevamente.');
 
 			let affectedProducts = 0;
 			if (!dto.status) {
@@ -239,7 +238,7 @@ export class BrandService {
 					.execute();
 				affectedProducts = productsResult.affected ?? 0;
 			}
-			return { updatedBrand: result.raw[0], affectedProducts };
+			return { updatedBrand, affectedProducts };
 		});
 
 		this.kibanaService.audit({
@@ -259,11 +258,12 @@ export class BrandService {
 
 	async getBrand(id: string): Promise<GetBrandRes> {
 		try {
-			let brand: any = await this.brandRepository
+			const brand = await this.brandRepository
 				.createQueryBuilder('brand')
 				.select([
 					'brand.id',
 					'brand.name',
+					'brand.status',
 					'brand.logoUrl',
 					'brand.bannerUrl',
 					'brand.prefix',
@@ -286,15 +286,15 @@ export class BrandService {
 				data: brand,
 				message: 'Registro obtenido correctamente.',
 			};
-		} catch (err: any) {
+		} catch (err: unknown) {
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}
 	}
 
-	async updateBrand(id: string, dto: EditBrandDto, files: FilesUpdateBrand, request: any): Promise<UpdateBrandRes> {
+	async updateBrand(id: string, dto: EditBrandDto, files: FilesUpdateBrand, request: BrandRequest): Promise<UpdateBrandRes> {
 		const { logoUrl: _logoUrl, bannerUrl: _bannerUrl, ...brandData } = dto;
-		const imageData: Partial<Pick<Brand, 'logoUrl' | 'bannerUrl'>> = {};
+		const imageData: { logoUrl?: string; bannerUrl?: string } = {};
 		const currentBrand = await this.brandRepository.findOne({
 			select: {
 				id: true,
@@ -340,7 +340,7 @@ export class BrandService {
 					updatedAt: () => 'CURRENT_TIMESTAMP',
 				})
 				.where('id = :id', { id })
-				.returning(['id', 'status', 'name', 'prefix', 'description', 'country', 'websiteUrl', 'logoUrl', 'bannerUrl', 'createdAt', 'updatedAt', 'statusAt'])
+				.returning(['id', 'status', 'name', 'code', 'prefix', 'description', 'country', 'websiteUrl', 'logoUrl', 'bannerUrl', 'createdAt', 'updatedAt', 'statusAt'])
 				.execute();
 
 			if (!result.affected) {
@@ -383,8 +383,9 @@ export class BrandService {
 		};
 	}
 
-	async updateBrandsStatus(dto: UpdateBrandsStatusDto, request: any): Promise<UpdateBrandsStatusRes> {
+	async updateBrandsStatus(dto: UpdateBrandsStatusDto, request: BrandRequest): Promise<UpdateBrandsStatusRes> {
 		const ids = [...new Set(dto.ids)];
+		if (!ids.length) throw new BadRequestException('Debe seleccionar al menos un registro.');
 
 		const { updatedIds, affectedProducts } = await this.brandRepository.manager.transaction(async (manager) => {
 			const result = await manager
@@ -399,21 +400,12 @@ export class BrandService {
 				.returning(['id'])
 				.execute();
 
-			if (!result.affected) {
-				const existingBrand = await manager.count(Brand, {
-					where: {
-						id: In(ids),
-					},
-				});
+			if (result.affected && !result.raw?.length) throw new InternalServerErrorException('No se pudo recuperar el registro actualizado.');
+			const records = await manager.find(Brand, { select: { id: true, status: true }, where: { id: In(ids) } });
+			if (!records.length) throw new NotFoundException('No se encontraron marcas.');
+			if (records.some((record) => record.status !== dto.status)) throw new ConflictException('El estado cambió durante la operación. Intenta nuevamente.');
+			const updatedIds = records.map((record) => record.id);
 
-				if (existingBrand === 0) {
-					throw new NotFoundException('No se encontraron marcas.');
-				}
-
-				throw new BadRequestException(dto.status ? 'Las marcas seleccionadas ya se encuentran activas.' : 'Las marcas seleccionadas ya se encuentran inactivas.');
-			}
-
-			const updatedIds: string[] = result.raw.map((item: { id: string }) => item.id);
 			let affectedProducts = 0;
 			if (!dto.status) {
 				const productsResult = await manager
@@ -447,7 +439,7 @@ export class BrandService {
 		};
 	}
 
-	async findBrandProducts(brandId: string, query: FindBrandProductsQueryDto) {
+	async findBrandProducts(brandId: string, query: FindBrandProductsQueryDto): Promise<FindBrandProductsRes> {
 		try {
 			if (query.minPrice !== undefined && query.maxPrice !== undefined && query.minPrice > query.maxPrice) {
 				throw new BadRequestException({
@@ -497,16 +489,18 @@ export class BrandService {
 			const totalPages = Math.ceil(totalProducts / query.limit);
 			const currentPage = totalPages === 0 ? 1 : Math.min(query.page, totalPages);
 			const skip = (currentPage - 1) * query.limit;
-			let products = await queryBuilder.skip(skip).take(query.limit).getMany();
+			const products = await queryBuilder.skip(skip).take(query.limit).getMany();
 
-			products = products.map((product) => ({
+			const productsWithQuality = products.map((product) => ({
 				...product,
 				quality_label: getQualityLabel(product.quality),
+				status: product.status as 'draft' | 'published',
+				visibility: product.visibility as 'public' | 'private',
 			}));
 
 			return {
 				brand: brand.name,
-				products,
+				products: productsWithQuality,
 				meta: {
 					totalProducts,
 					totalPages,
@@ -531,7 +525,7 @@ export class BrandService {
 		}
 	}
 
-	async getBrandsSelect() {
+	async getBrandsSelect(): Promise<BrandSelectItem[]> {
 		try {
 			let brands = await this.brandRepository
 				.createQueryBuilder('brand')
@@ -539,7 +533,7 @@ export class BrandService {
 				.orderBy('brand.name', 'ASC')
 				.getMany();
 			return brands;
-		} catch (err: any) {
+		} catch (err: unknown) {
 			if (err) throw err;
 			throw new InternalServerErrorException('Ocurrió un problema en servidor.');
 		}

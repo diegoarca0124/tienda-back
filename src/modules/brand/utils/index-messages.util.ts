@@ -1,6 +1,6 @@
 import { ConflictException } from '@nestjs/common';
 
-const messages: Record<string, string> = {
+const messages: { [constraint: string]: string } = {
 	UQ_BRANDS_NAME_NORMALIZED: 'Ya existe una marca con ese nombre.',
 	UQ_BRANDS_SLUG: 'Intenta con un nombre de marca diferente: el slug ya existe.',
 	UQ_BRANDS_PREFIX_NORMALIZED: 'Ya existe una marca con ese prefijo.',
